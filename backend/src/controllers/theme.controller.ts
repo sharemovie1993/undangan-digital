@@ -1,15 +1,34 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db';
 
-const prisma = new PrismaClient();
+/**
+ * 🧠 In-Memory RAM Cache for Themes & Style Kits (5 Menit)
+ */
+let cachedThemesList: { data: any; cachedAt: number } | null = null;
+let cachedStyleKitsList: { data: any; cachedAt: number } | null = null;
+const THEME_CACHE_TTL_MS = 5 * 60 * 1000;
+
+export function invalidateThemeCache() {
+  cachedThemesList = null;
+  cachedStyleKitsList = null;
+}
 
 export class ThemeController {
   /**
    * GET /api/themes - Get all active themes with HTTP Cache-Control header
+   * 🚀 Dioptimasi dengan In-Memory RAM Cache (Latensi < 0.1ms)
    */
   static async getAllThemes(req: FastifyRequest, reply: FastifyReply) {
+    if (cachedThemesList && (Date.now() - cachedThemesList.cachedAt) < THEME_CACHE_TTL_MS) {
+      reply.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+      return reply.status(200).send({
+        success: true,
+        cached: true,
+        data: cachedThemesList.data,
+      });
+    }
+
     try {
-      // Set high-performance public cache header (5 minutes browser cache, 10 minutes stale-while-revalidate)
       reply.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
 
       const themes = await prisma.themePreset.findMany({
@@ -38,8 +57,11 @@ export class ThemeController {
         };
       });
 
+      cachedThemesList = { data: parsedThemes, cachedAt: Date.now() };
+
       return reply.status(200).send({
         success: true,
+        cached: false,
         data: parsedThemes,
       });
     } catch (err: any) {
@@ -50,8 +72,18 @@ export class ThemeController {
 
   /**
    * GET /api/themes/style-kits - Get all master style kits with caching
+   * 🚀 Dioptimasi dengan In-Memory RAM Cache
    */
   static async getAllStyleKits(req: FastifyRequest, reply: FastifyReply) {
+    if (cachedStyleKitsList && (Date.now() - cachedStyleKitsList.cachedAt) < THEME_CACHE_TTL_MS) {
+      reply.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+      return reply.status(200).send({
+        success: true,
+        cached: true,
+        data: cachedStyleKitsList.data,
+      });
+    }
+
     try {
       reply.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
 
@@ -76,8 +108,11 @@ export class ThemeController {
         tags: k.tags ? k.tags.split(',').map((s) => s.trim()) : [],
       }));
 
+      cachedStyleKitsList = { data: parsedKits, cachedAt: Date.now() };
+
       return reply.status(200).send({
         success: true,
+        cached: false,
         data: parsedKits,
       });
     } catch (err: any) {
@@ -141,6 +176,9 @@ export class ThemeController {
           isActive: true,
         },
       });
+
+      // 🧹 Invalidate Cache Tema
+      invalidateThemeCache();
 
       return reply.status(201).send({ success: true, data: theme });
     } catch (err: any) {
