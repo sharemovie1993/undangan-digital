@@ -30,6 +30,7 @@ import { BulkGuestImportModal } from './studio/BulkGuestImportModal';
 import { MobileBottomNav } from './studio/MobileBottomNav';
 import { StyleKitGalleryModal } from './studio/StyleKitGalleryModal';
 import { MasterStyleKit, THEMES } from '../data/presets';
+import { themeRegistry } from '../themes/registry';
 import { generateSlug } from '../utils/slug';
 import { useRealtimeThemes } from '../hooks/useRealtimeThemes';
 
@@ -96,9 +97,9 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
     queryFn: async () => {
       try {
         const res = await api.getRsvps(data.id || data.slug || 'wedding-romeo-juliet');
-        return res.data;
+        return res?.data ?? { rsvps: [] };
       } catch (e) {
-        return null;
+        return { rsvps: [] };
       }
     },
     refetchInterval: 10000,
