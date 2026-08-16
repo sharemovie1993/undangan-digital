@@ -604,15 +604,22 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
 
       {/* 3b. MOBILE CONTENT & BLOCKS BOTTOM SHEET (ONLY ON MOBILE lg:hidden) */}
       {(mobileNavView === 'content' || mobileNavView === 'blocks') && (
-        <aside
-          className={`lg:hidden flex fixed bottom-14 left-0 right-0 ${
-            contentSheetHeight === 'peek'
-              ? 'h-[25vh] max-h-[25vh]'
-              : contentSheetHeight === 'full'
-              ? 'h-[85vh] max-h-[85vh]'
-              : 'h-[52vh] max-h-[52vh]'
-          } z-40 w-full rounded-t-3xl border-t-2 border-[#c4a661]/40 shadow-[0_-15px_40px_rgba(0,0,0,0.85)] bg-[#111115]/95 backdrop-blur-2xl p-4 pb-2 flex-col overflow-y-auto scrollbar-thin space-y-3 transition-all duration-300`}
-        >
+        <>
+          {/* Backdrop Click to Close */}
+          <div
+            className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-200"
+            onClick={() => setMobileNavView('preview')}
+          />
+
+          <aside
+            className={`lg:hidden flex fixed bottom-14 left-0 right-0 ${
+              contentSheetHeight === 'peek'
+                ? 'h-[25vh] max-h-[25vh]'
+                : contentSheetHeight === 'full'
+                ? 'h-[85vh] max-h-[85vh]'
+                : 'h-[52vh] max-h-[52vh]'
+            } z-40 w-full rounded-t-3xl border-t-2 border-[#c4a661]/40 shadow-[0_-15px_40px_rgba(0,0,0,0.85)] bg-[#111115]/98 backdrop-blur-2xl p-4 pb-2 flex-col overflow-y-auto scrollbar-thin space-y-3 transition-all duration-300 animate-in slide-in-from-bottom duration-300`}
+          >
           {/* Mobile Drag Handle & Header Controls */}
           <div className="flex flex-col items-center pt-0 pb-1.5 border-b border-neutral-800 shrink-0">
             <div
@@ -743,6 +750,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
             />
           )}
         </aside>
+      </>
       )}
 
       {/* 4. MODALS & OVERLAYS */}

@@ -677,15 +677,32 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
       {/* 2. MOBILE FLOATING THEME BAR / BOTTOM SHEET (ONLY ON MOBILE lg:hidden) */}
       {mobileNavView === 'theme' && (
         <div className="lg:hidden">
+          {/* Backdrop Click to Close */}
+          <div
+            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-200"
+            onClick={onCloseMobileView}
+          />
+
           {!isAdvancedModeMobile ? (
-            /* ULTRA COMPACT THEME SWITCHER BAR */
-            <div className="fixed bottom-14 left-0 right-0 z-40 px-3 py-2 bg-[#111115]/95 backdrop-blur-2xl border-t border-[#c4a661]/40 shadow-2xl animate-in slide-in-from-bottom-3 duration-200">
+            /* ULTRA COMPACT THEME SWITCHER BAR WITH SLIDE-UP PILL */
+            <aside className="fixed bottom-14 left-0 right-0 z-40 px-3 pt-2 pb-3 bg-[#111115]/98 backdrop-blur-2xl border-t-2 border-[#c4a661]/40 rounded-t-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.85)] animate-in slide-in-from-bottom duration-300">
+              {/* Slide-Up Expand Pill */}
+              <div
+                onClick={() => setIsAdvancedModeMobile(true)}
+                className="w-full flex flex-col items-center pb-1.5 cursor-pointer group"
+              >
+                <div className="w-12 h-1.5 rounded-full bg-neutral-600 group-hover:bg-[#c4a661] transition mb-1" />
+                <span className="text-[9px] text-neutral-400 font-medium group-hover:text-[#c4a661] transition">
+                  ▲ Geser / Tap untuk Pengaturan Rinci
+                </span>
+              </div>
+
               <div className="flex items-center justify-between gap-2 max-w-md mx-auto">
                 <div className="flex items-center gap-1.5 flex-1 bg-black/70 rounded-2xl p-1 border border-neutral-800">
                   <button
                     type="button"
                     onClick={onPrevStyleKit}
-                    className="w-8 h-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+                    className="w-8 h-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white flex items-center justify-center font-bold text-xs cursor-pointer shrink-0"
                     title="Preset Sebelumnya"
                   >
                     ◀
@@ -711,7 +728,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
                   <button
                     type="button"
                     onClick={onNextStyleKit}
-                    className="w-8 h-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+                    className="w-8 h-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white flex items-center justify-center font-bold text-xs cursor-pointer shrink-0"
                     title="Preset Selanjutnya"
                   >
                     ▶
@@ -730,20 +747,21 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
                   type="button"
                   onClick={onCloseMobileView}
                   className="w-8 h-8 rounded-2xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-xs shrink-0 cursor-pointer"
+                  title="Tutup Panel"
                 >
                   ✕
                 </button>
               </div>
-            </div>
+            </aside>
           ) : (
             /* MOBILE ADVANCED THEME SHEET */
             <aside
-              className={`flex fixed bottom-14 left-0 right-0 ${mobileHeightClass} z-40 w-full rounded-t-3xl border-t-2 border-[#c4a661]/40 shadow-[0_-15px_40px_rgba(0,0,0,0.85)] bg-[#111115]/95 backdrop-blur-2xl pb-2 shrink-0 flex-col select-none transition-all duration-300`}
+              className={`flex fixed bottom-14 left-0 right-0 ${mobileHeightClass} z-40 w-full rounded-t-3xl border-t-2 border-[#c4a661]/40 shadow-[0_-15px_40px_rgba(0,0,0,0.85)] bg-[#111115]/98 backdrop-blur-2xl pb-2 shrink-0 flex-col select-none transition-all duration-300 animate-in slide-in-from-bottom duration-300`}
             >
               <div className="flex flex-col items-center pt-2 pb-1.5 px-4 border-b border-neutral-800 shrink-0">
                 <div
                   onClick={() => setSheetHeight(sheetHeight === 'half' ? 'peek' : sheetHeight === 'peek' ? 'full' : 'half')}
-                  className="w-10 h-1 rounded-full bg-neutral-500 mb-1.5 cursor-pointer hover:bg-[#c4a661] transition"
+                  className="w-12 h-1.5 rounded-full bg-neutral-500 mb-1.5 cursor-pointer hover:bg-[#c4a661] transition"
                 />
                 <div className="flex items-center justify-between w-full">
                   <button
