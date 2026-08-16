@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
@@ -86,6 +86,10 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   const [saveToast, setSaveToast] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
+  // ☁️ Debounced Auto-Save (2 Detik setelah pengguna berhenti mengedit)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
   // New Guest Input State
   const [newGuestName, setNewGuestName] = useState('');
   const [newGuestCity, setNewGuestCity] = useState('');
@@ -125,6 +129,42 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   const totalPax = displayWishes.filter((w) => w.status === 'hadir').reduce((acc, w) => acc + (w.pax || 1), 0);
   const totalAttending = displayWishes.filter((w) => w.status === 'hadir').length;
   const totalNotAttending = displayWishes.filter((w) => w.status === 'tidak_hadir').length;
+
+  // ☁️ Auto-Save di Background (Dipanggil setiap kali data berubah)
+  const handleAutoSave = useCallback(async (latestData: typeof data) => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    setAutoSaveStatus('idle');
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        setAutoSaveStatus('saving');
+        const cleanSlug = latestData.slug
+          ? generateSlug(latestData.slug)
+          : generateSlug(latestData.eventTitle || latestData.title);
+        await api.saveInvitation({
+          ...latestData,
+          title: latestData.eventTitle || latestData.title || 'Undangan Digital',
+          slug: cleanSlug,
+          id: latestData.id || cleanSlug,
+          guestList: guests,
+        });
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      } catch {
+        setAutoSaveStatus('idle');
+      }
+    }, 2000);
+  }, [guests]);
+
+  // Trigger auto-save setiap kali data berubah
+  useEffect(() => {
+    if (data.id || data.slug) {
+      handleAutoSave(data);
+    }
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [data, handleAutoSave]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -456,6 +496,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
           guestCount={guests.length}
           wishCount={displayWishes.length}
           isSaving={isSaving}
+          autoSaveStatus={autoSaveStatus}
           onSave={handleSave}
           onViewGuestMode={onViewGuestMode}
           onOpenPricing={() => setIsPricingOpen(true)}

@@ -11,6 +11,7 @@ interface StudioHeaderProps {
   guestCount: number;
   wishCount: number;
   isSaving: boolean;
+  autoSaveStatus?: 'idle' | 'saving' | 'saved';
   onSave: () => void;
   onViewGuestMode: (name: string) => void;
   onOpenPricing: () => void;
@@ -28,6 +29,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   guestCount,
   wishCount,
   isSaving,
+  autoSaveStatus = 'idle',
   onSave,
   onViewGuestMode,
   onOpenPricing,
@@ -173,6 +175,17 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
             <CreditCard className="w-3 h-3 shrink-0" />
             <span>Beli Paket</span>
           </button>
+        )}
+
+        {/* ☁️ Auto-Save Status Indicator */}
+        {autoSaveStatus !== 'idle' && (
+          <span className="hidden sm:flex items-center gap-1 text-[9px] text-neutral-500 whitespace-nowrap">
+            {autoSaveStatus === 'saving' ? (
+              <><span className="animate-spin inline-block">⟳</span> Menyimpan...</>
+            ) : (
+              <><span className="text-emerald-500">✓</span> Tersimpan</>
+            )}
+          </span>
         )}
 
         <button
