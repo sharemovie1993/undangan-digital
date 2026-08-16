@@ -199,7 +199,8 @@ export default function App() {
                 addressOrCity: g.address || '',
                 group: g.category || 'Sahabat',
                 paxQuota: g.pax || 2,
-                hasOpened: false,
+                hasOpened: Boolean(g.hasOpened),
+                openedAt: g.openedAt,
                 isCheckedIn: g.isCheckedIn,
                 qrCode: g.qrCode
               }))
@@ -208,6 +209,11 @@ export default function App() {
             setGuests(evData.guestList);
           } else {
             setGuests([]);
+          }
+
+          // Auto track open if guest opened personalized URL
+          if (toParam) {
+            api.trackGuestOpen(inv.id || inv.slug || 'undangan', toParam).catch(() => {});
           }
         }
       } catch (err) {
@@ -222,7 +228,7 @@ export default function App() {
     setIsEnvelopeOpen(true);
 
     // Track open status specifically for this guest
-    const targetInvId = invitationData.id || invitationData.slug;
+    const targetInvId = invitationData.id || invitationData.slug || localStorage.getItem('absenta_active_invitation_id') || 'undangan';
     if (targetInvId && guestName) {
       api.trackGuestOpen(targetInvId, guestName).catch(() => {});
       setGuests((prev) =>

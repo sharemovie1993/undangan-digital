@@ -276,42 +276,57 @@ export class GuestController {
    */
   static async trackOpen(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as {
-      invitationId: string;
+      invitationId?: string;
       guestName?: string;
       guestId?: string;
     };
 
     const { invitationId, guestName, guestId } = body;
-    if (!invitationId || (!guestName && !guestId)) {
+    if (!guestName && !guestId) {
       return reply.status(400).send({ success: false, message: 'Parameter tidak lengkap.' });
     }
 
     try {
-      const inv = await prisma.invitation.findFirst({
-        where: {
-          OR: [{ id: invitationId }, { slug: invitationId }]
-        }
-      });
+      let inv: any = null;
+      if (invitationId) {
+        inv = await prisma.invitation.findFirst({
+          where: {
+            OR: [{ id: invitationId }, { slug: invitationId }]
+          }
+        });
+      }
+
+      if (!inv) {
+        inv = await prisma.invitation.findFirst({
+          orderBy: { createdAt: 'desc' }
+        });
+      }
 
       if (!inv) {
         return reply.status(404).send({ success: false, message: 'Undangan tidak ditemukan.' });
       }
 
-      // 1. Update status tamu spesifik di database
+      const cleanTarget = guestName ? decodeURIComponent(guestName).trim().toLowerCase() : '';
+
+      // 1. Update status tamu spesifik di database SQLite tabel Guest
       if (guestId) {
         await prisma.guest.updateMany({
           where: { id: guestId, invitationId: inv.id },
           data: { hasOpened: true, openedAt: new Date() }
         });
-      } else if (guestName) {
-        const cleanName = guestName.trim().toLowerCase();
+      } else if (cleanTarget) {
         const allGuests = await prisma.guest.findMany({
           where: { invitationId: inv.id }
         });
 
-        const target = allGuests.find(
-          (g) => g.name.trim().toLowerCase() === cleanName
-        );
+        const target = allGuests.find((g) => {
+          const gName = g.name.trim().toLowerCase();
+          return (
+            gName === cleanTarget ||
+            cleanTarget.includes(gName) ||
+            gName.includes(cleanTarget)
+          );
+        });
 
         if (target) {
           await prisma.guest.update({
@@ -321,18 +336,21 @@ export class GuestController {
         }
       }
 
-      // 2. Update guest di dalam eventDataJson.guestList jika disimpan dalam JSON
+      // 2. Update guest di dalam eventDataJson.guestList jika ada
       if (inv.eventDataJson) {
         try {
           const evData = JSON.parse(inv.eventDataJson);
           if (Array.isArray(evData.guestList)) {
-            const cleanTargetName = guestName?.trim().toLowerCase();
             let changed = false;
 
             evData.guestList = evData.guestList.map((g: any) => {
+              const gNameClean = g.name ? g.name.trim().toLowerCase() : '';
               if (
                 (guestId && g.id === guestId) ||
-                (cleanTargetName && g.name?.trim().toLowerCase() === cleanTargetName)
+                (cleanTarget &&
+                  (gNameClean === cleanTarget ||
+                    cleanTarget.includes(gNameClean) ||
+                    gNameClean.includes(cleanTarget)))
               ) {
                 changed = true;
                 return { ...g, hasOpened: true, openedAt: new Date().toISOString() };
@@ -352,6 +370,7 @@ export class GuestController {
 
       return reply.send({ success: true, message: 'Status buka tamu berhasil dicatat.' });
     } catch (err: any) {
+      console.error('[trackOpen error]', err);
       return reply.status(500).send({ success: false, message: 'Gagal mencatat status buka tamu.' });
     }
   }
