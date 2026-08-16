@@ -58,6 +58,11 @@ class ThemeRegistryEngine {
     return Array.from(this.styleKits.values()).sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
   }
 
+  public getStyleKitsByCategory(category: string): MasterStyleKitDefinition[] {
+    if (category === 'all') return this.getAllStyleKits();
+    return this.getAllStyleKits().filter((k) => k.category === category);
+  }
+
   public getThemesByCategory(category: ThemeCategory | 'all'): ThemeDefinition[] {
     if (category === 'all') return this.getAllThemes();
     return this.getAllThemes().filter((t) => t.category === category);

@@ -93,9 +93,10 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
               { id: 'modern', label: '🌑 Modern Clean' },
               { id: 'festive', label: '🎉 Ceria / Party' },
             ].map((cat) => {
+              const allKits = themeRegistry.getAllStyleKits() || [];
               const count = cat.id === 'all'
-                ? themeRegistry.getAllStyleKits().length
-                : themeRegistry.getStyleKitsByCategory(cat.id).length;
+                ? allKits.length
+                : allKits.filter((k) => k.category === cat.id).length;
 
               return (
                 <button
