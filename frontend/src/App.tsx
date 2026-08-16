@@ -384,31 +384,33 @@ export default function App() {
         backgroundImage: `radial-gradient(circle at 50% 0%, rgba(196, 166, 97, 0.12) 0%, transparent 65%), radial-gradient(circle at center, #1a1a24 0%, #0a0a0b 100%)`,
       }}
     >
-      {/* Top Floating Control Bar for easy demo switching */}
-      <div className="no-print fixed top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-[#1f1f27] bg-[#111115]/90 px-4 py-1.5 shadow-2xl backdrop-blur-md text-xs text-[#e2e2e7]">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#c4a661] animate-pulse" />
-          <span className="font-serif font-bold tracking-wide text-[#c4a661]">
-            {invitationData.eventTitle}
-          </span>
+      {/* Top Floating Control Bar - Only visible for authenticated owner/editor */}
+      {isAuthenticated && (
+        <div className="no-print fixed top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-white/10 bg-[#111115]/95 px-3 py-1.5 shadow-2xl backdrop-blur-md text-xs text-[#e2e2e7] max-w-[95vw] whitespace-nowrap">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#c4a661] animate-pulse shrink-0" />
+            <span className="font-serif font-bold text-[#c4a661] truncate max-w-[110px] sm:max-w-[200px] text-[11px]">
+              {invitationData.eventTitle || 'Undangan'}
+            </span>
+          </div>
+          <div className="h-3 w-px bg-white/10 shrink-0" />
+          <button
+            onClick={() => setViewMode('studio')}
+            className="flex items-center gap-1 text-[11px] font-semibold text-neutral-300 hover:text-[#c4a661] transition shrink-0 cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3 h-3" />
+            <span>Editor Studio</span>
+          </button>
+          <div className="h-3 w-px bg-white/10 shrink-0" />
+          <button
+            onClick={() => setViewMode('print')}
+            className="flex items-center gap-1 text-[11px] font-semibold text-neutral-300 hover:text-[#c4a661] transition shrink-0 cursor-pointer"
+          >
+            <Printer className="w-3 h-3" />
+            <span>Print</span>
+          </button>
         </div>
-        <div className="h-3 w-px bg-[#1f1f27]" />
-        <button
-          onClick={() => setViewMode('studio')}
-          className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-300 hover:text-[#c4a661] transition"
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          <span>Editor Studio</span>
-        </button>
-        <div className="h-3 w-px bg-[#1f1f27]" />
-        <button
-          onClick={() => setViewMode('print')}
-          className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-300 hover:text-[#c4a661] transition"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          <span>Print Studio</span>
-        </button>
-      </div>
+      )}
 
       {/* 430px Centered Mobile Canvas Frame (Images 1, 2, 3) */}
       <div
