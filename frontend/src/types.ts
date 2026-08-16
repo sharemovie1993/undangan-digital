@@ -12,25 +12,44 @@ export type ThemeToken =
   | 'botanical_sage'
   | 'terracotta_cream'
   | 'celestial_blue'
-  | 'javanese_heritage';
+  | 'javanese_heritage'
+  | 'jawa_joglo'
+  | 'sunda_parahyangan'
+  | 'minang_suntiang'
+  | 'bali_aesthetic';
+
+export type ArchetypeStyle =
+  | 'royal_arch'
+  | 'islamic_dome'
+  | 'modern_glass'
+  | 'organic_wave'
+  | 'jawa_joglo'
+  | 'sunda_parahyangan'
+  | 'minang_suntiang'
+  | 'bali_aesthetic';
 
 export type FontPairingId =
   | 'royal_serif'
   | 'romantic_calligraphy'
   | 'islamic_arabic'
   | 'modern_clean'
-  | 'playful_party';
+  | 'playful_party'
+  | 'nusantara_heritage';
 
 export type FrameShapeId =
   | 'royal_arch'
   | 'islamic_dome'
   | 'soft_oval'
-  | 'double_border';
+  | 'double_border'
+  | 'jawa_joglo'
+  | 'sunda_parahyangan'
+  | 'minang_suntiang'
+  | 'bali_aesthetic';
 
 export interface MasterStyleKit {
   id: string;
   name: string;
-  category: 'royal' | 'islamic' | 'romantic' | 'modern' | 'festive';
+  category: 'royal' | 'islamic' | 'romantic' | 'modern' | 'festive' | 'traditional';
   tagline: string;
   themeId: ThemeToken;
   fontPairingId: FontPairingId;

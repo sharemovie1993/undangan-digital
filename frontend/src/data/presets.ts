@@ -260,6 +260,96 @@ export const THEMES = {
     secondaryButton: 'border-[#9c6828]/40 text-[#9c6828] hover:bg-[#f3ead3]',
     headerBg: 'bg-[#fbf8f0] text-neutral-900',
     previewGradient: 'from-[#fcedcd] via-[#d6a95e] to-[#9c6828]'
+  },
+
+  // --- KOLEKSI ADAT NUSANTARA (TRADITIONAL HERITAGE) ---
+  jawa_joglo: {
+    id: 'jawa_joglo' as const,
+    name: 'Jawa Klasik (Batik & Joglo)',
+    subtitle: 'Gunungan Wayang, Batik Parang & Ukiran Jati Emas',
+    category: 'royal',
+    mode: 'dark' as const,
+    archetype: 'jawa_joglo' as const,
+    primary: '#c4974f',
+    secondary: '#e5c07b',
+    bg: '#0f0c08',
+    cardBg: '#1a140d',
+    textMain: '#f7ede1',
+    textMuted: '#ad9c87',
+    border: '#382a19',
+    accentBg: '#261c10',
+    goldFoil: 'linear-gradient(135deg, #e5c07b 0%, #fff0c7 30%, #c4974f 70%, #8c6224 100%)',
+    badge: 'bg-[#261c10] text-amber-300 border-amber-600/30',
+    button: 'bg-gradient-to-r from-[#9c6828] via-[#c4974f] to-[#734b18] hover:opacity-95 text-neutral-950 font-bold shadow-lg shadow-black/50 border border-amber-500/40',
+    secondaryButton: 'border-amber-600/40 text-amber-300 hover:bg-[#261c10]',
+    headerBg: 'bg-[#0f0c08] text-amber-100',
+    previewGradient: 'from-[#c4974f] via-[#734b18] to-[#261c10]'
+  },
+  sunda_parahyangan: {
+    id: 'sunda_parahyangan' as const,
+    name: 'Sunda Parahyangan (Megamendung)',
+    subtitle: 'Sejuk Pegunungan Priangan & Aksen Melati Ronce',
+    category: 'romantic',
+    mode: 'light' as const,
+    archetype: 'sunda_parahyangan' as const,
+    primary: '#2d6a4f',
+    secondary: '#52b788',
+    bg: '#f4f9f6',
+    cardBg: '#ffffff',
+    textMain: '#132a1f',
+    textMuted: '#4f7362',
+    border: '#d0e5da',
+    accentBg: '#e6f2eb',
+    goldFoil: 'linear-gradient(135deg, #52b788 0%, #d8f3dc 30%, #2d6a4f 70%, #1b4332 100%)',
+    badge: 'bg-[#e6f2eb] text-[#2d6a4f] border-[#2d6a4f]/30',
+    button: 'bg-gradient-to-r from-[#2d6a4f] via-[#40916c] to-[#1b4332] hover:opacity-95 text-white font-bold shadow-md shadow-emerald-950/15',
+    secondaryButton: 'border-[#2d6a4f]/40 text-[#2d6a4f] hover:bg-[#e6f2eb]',
+    headerBg: 'bg-[#f4f9f6] text-neutral-900',
+    previewGradient: 'from-[#b7e4c7] via-[#52b788] to-[#2d6a4f]'
+  },
+  minang_suntiang: {
+    id: 'minang_suntiang' as const,
+    name: 'Minang Suntiang (Rumah Gadang)',
+    subtitle: 'Kemegahan Emas Merah Ranah Minang & Gonjong Lima',
+    category: 'royal',
+    mode: 'dark' as const,
+    archetype: 'minang_suntiang' as const,
+    primary: '#b91c1c',
+    secondary: '#d4af37',
+    bg: '#0d0406',
+    cardBg: '#1c080b',
+    textMain: '#fde8ea',
+    textMuted: '#be8f94',
+    border: '#3d1218',
+    accentBg: '#2a0c10',
+    goldFoil: 'linear-gradient(135deg, #d4af37 0%, #fff3b0 30%, #b91c1c 70%, #aa771c 100%)',
+    badge: 'bg-[#2a0c10] text-amber-300 border-amber-500/30',
+    button: 'bg-gradient-to-r from-[#b91c1c] via-[#d4af37] to-[#881313] hover:opacity-95 text-neutral-950 font-bold shadow-lg shadow-black/50 border border-amber-400/40',
+    secondaryButton: 'border-amber-400/40 text-amber-300 hover:bg-[#2a0c10]',
+    headerBg: 'bg-[#0d0406] text-red-100',
+    previewGradient: 'from-[#b91c1c] via-[#d4af37] to-[#1c080b]'
+  },
+  bali_aesthetic: {
+    id: 'bali_aesthetic' as const,
+    name: 'Bali Aesthetic (Kamboja & Candi)',
+    subtitle: 'Gapura Candi Bentar, Bunga Kamboja & Janur Penjor',
+    category: 'royal',
+    mode: 'light' as const,
+    archetype: 'bali_aesthetic' as const,
+    primary: '#ad6a28',
+    secondary: '#dca458',
+    bg: '#fcf8f2',
+    cardBg: '#ffffff',
+    textMain: '#281a0b',
+    textMuted: '#735739',
+    border: '#eedecb',
+    accentBg: '#f8ede0',
+    goldFoil: 'linear-gradient(135deg, #dca458 0%, #fff1da 30%, #ad6a28 70%, #7d4814 100%)',
+    badge: 'bg-[#f8ede0] text-[#ad6a28] border-[#ad6a28]/30',
+    button: 'bg-gradient-to-r from-[#ad6a28] via-[#cf8b42] to-[#8a4e15] hover:opacity-95 text-amber-50 font-bold shadow-md shadow-amber-950/15',
+    secondaryButton: 'border-[#ad6a28]/40 text-[#ad6a28] hover:bg-[#f8ede0]',
+    headerBg: 'bg-[#fcf8f2] text-neutral-900',
+    previewGradient: 'from-[#fae2c0] via-[#dca458] to-[#ad6a28]'
   }
 };
 
@@ -287,6 +377,14 @@ export const FONT_PRESETS = {
     bodyFamily: "'Plus Jakarta Sans', sans-serif",
     previewText: 'Rayyan Al-Farizi',
     description: 'Anggun Islami (Amiri + Jakarta Sans)'
+  },
+  nusantara_heritage: {
+    id: 'nusantara_heritage' as const,
+    name: 'Nusantara Keraton Serif',
+    headingFamily: "'Playfair Display', serif",
+    bodyFamily: "'Plus Jakarta Sans', sans-serif",
+    previewText: 'Raden & Ayu',
+    description: 'Klasik Nusantara (Playfair + Jakarta Sans)'
   },
   modern_clean: {
     id: 'modern_clean' as const,
@@ -318,6 +416,30 @@ export const FRAME_SHAPES = {
     name: 'Islamic Dome',
     className: 'rounded-t-[100px] rounded-b-2xl',
     badge: 'Kubah Masjid'
+  },
+  jawa_joglo: {
+    id: 'jawa_joglo' as const,
+    name: 'Jawa Gunungan',
+    className: 'rounded-t-[70px] rounded-b-xl border-2',
+    badge: 'Joglo Keraton'
+  },
+  sunda_parahyangan: {
+    id: 'sunda_parahyangan' as const,
+    name: 'Sunda Megamendung',
+    className: 'rounded-t-3xl rounded-b-3xl border-2',
+    badge: 'Liku Awan'
+  },
+  minang_suntiang: {
+    id: 'minang_suntiang' as const,
+    name: 'Minang Gonjong',
+    className: 'rounded-t-2xl rounded-b-2xl border-4',
+    badge: 'Gonjong Emas'
+  },
+  bali_aesthetic: {
+    id: 'bali_aesthetic' as const,
+    name: 'Bali Candi Bentar',
+    className: 'rounded-2xl border-2',
+    badge: 'Candi Frangipani'
   },
   soft_oval: {
     id: 'soft_oval' as const,
@@ -478,6 +600,60 @@ export const MASTER_STYLE_KITS = {
     primaryColor: '#9c6828',
     description: 'Pesona adat Jawa ningrat berlatar gading dengan aksen batik prada emas klasik.',
     badge: '☀️ Tradisional'
+  },
+
+  // --- STYLE KITS ADAT NUSANTARA ---
+  jawa_joglo_klasik: {
+    id: 'jawa_joglo_klasik',
+    name: 'Jawa Klasik Joglo & Wayang',
+    category: 'traditional' as const,
+    tagline: 'Filosofi Luhur Gunungan & Jati Emas',
+    themeId: 'jawa_joglo' as const,
+    fontPairingId: 'nusantara_heritage' as const,
+    frameShape: 'jawa_joglo' as const,
+    previewGradient: 'from-amber-700 via-yellow-600 to-amber-950',
+    primaryColor: '#c4974f',
+    description: 'Mahakarya budaya Jawa dengan Gunungan Wayang, ornamen Prada Jawi, dan ukiran Joglo.',
+    badge: '🏛️ Jawa Klasik'
+  },
+  sunda_priangan_megamendung: {
+    id: 'sunda_priangan_megamendung',
+    name: 'Sunda Parahyangan Megamendung',
+    category: 'traditional' as const,
+    tagline: 'Kelembutan Awan & Bunga Melati Priangan',
+    themeId: 'sunda_parahyangan' as const,
+    fontPairingId: 'romantic_calligraphy' as const,
+    frameShape: 'sunda_parahyangan' as const,
+    previewGradient: 'from-emerald-300 via-teal-400 to-emerald-700',
+    primaryColor: '#2d6a4f',
+    description: 'Nuansa alam Parahyangan yang asri dengan ornamen lengkung Megamendung dan harum melati.',
+    badge: '🌸 Sunda Priangan'
+  },
+  minang_suntiang_gadang: {
+    id: 'minang_suntiang_gadang',
+    name: 'Minang Suntiang Rumah Gadang',
+    category: 'traditional' as const,
+    tagline: 'Keagungan Suntiang & Gonjong Ranah Minang',
+    themeId: 'minang_suntiang' as const,
+    fontPairingId: 'royal_serif' as const,
+    frameShape: 'minang_suntiang' as const,
+    previewGradient: 'from-red-600 via-amber-500 to-red-950',
+    primaryColor: '#b91c1c',
+    description: 'Kemewahan adat Minangkabau dengan mahkota Suntiang emas dan 5 atap Gonjong megah.',
+    badge: '👑 Minang Megah'
+  },
+  bali_aesthetic_frangipani: {
+    id: 'bali_aesthetic_frangipani',
+    name: 'Bali Aesthetic Candi Frangipani',
+    category: 'traditional' as const,
+    tagline: 'Eksotisme Candi Bentar & Kamboja Bali',
+    themeId: 'bali_aesthetic' as const,
+    fontPairingId: 'nusantara_heritage' as const,
+    frameShape: 'bali_aesthetic' as const,
+    previewGradient: 'from-amber-200 via-yellow-400 to-amber-700',
+    primaryColor: '#ad6a28',
+    description: 'Sentuhan Pulau Dewata yang magis dengan Gapura Candi Bentar, Bunga Kamboja, dan Janur.',
+    badge: '🌿 Bali Exotic'
   }
 };
 

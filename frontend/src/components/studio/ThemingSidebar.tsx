@@ -40,7 +40,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
   onCloseMobileView,
 }) => {
   const [activeInspectorTab, setActiveInspectorTab] = useState<'event' | 'theme' | 'font' | 'frame' | 'print'>('theme');
-  const [themeToneFilter, setThemeToneFilter] = useState<'all' | 'light' | 'dark'>('all');
+  const [themeToneFilter, setThemeToneFilter] = useState<'all' | 'light' | 'dark' | 'traditional'>('all');
   const [isAdvancedModeMobile, setIsAdvancedModeMobile] = useState(false);
   const [sheetHeight, setSheetHeight] = useState<'peek' | 'half' | 'full'>('half');
 
@@ -192,11 +192,11 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
         {activeInspectorTab === 'theme' && (
           <div className="space-y-3">
             {/* Tone Filter Buttons */}
-            <div className="flex bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-[11px] font-semibold">
+            <div className="grid grid-cols-4 bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-[10px] font-semibold gap-0.5">
               <button
                 type="button"
                 onClick={() => setThemeToneFilter('all')}
-                className={`flex-1 py-1 rounded-lg transition cursor-pointer text-center ${
+                className={`py-1 rounded-lg transition cursor-pointer text-center ${
                   themeToneFilter === 'all'
                     ? 'bg-[#c4a661] text-neutral-950 font-bold shadow-xs'
                     : 'text-neutral-400 hover:text-white'
@@ -207,7 +207,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
               <button
                 type="button"
                 onClick={() => setThemeToneFilter('light')}
-                className={`flex-1 py-1 rounded-lg transition cursor-pointer text-center flex items-center justify-center gap-1 ${
+                className={`py-1 rounded-lg transition cursor-pointer text-center flex items-center justify-center gap-0.5 ${
                   themeToneFilter === 'light'
                     ? 'bg-[#c4a661] text-neutral-950 font-bold shadow-xs'
                     : 'text-amber-200/80 hover:text-white'
@@ -218,7 +218,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
               <button
                 type="button"
                 onClick={() => setThemeToneFilter('dark')}
-                className={`flex-1 py-1 rounded-lg transition cursor-pointer text-center flex items-center justify-center gap-1 ${
+                className={`py-1 rounded-lg transition cursor-pointer text-center flex items-center justify-center gap-0.5 ${
                   themeToneFilter === 'dark'
                     ? 'bg-[#c4a661] text-neutral-950 font-bold shadow-xs'
                     : 'text-neutral-400 hover:text-white'
@@ -226,11 +226,25 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
               >
                 <span>🌙 Gelap</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setThemeToneFilter('traditional')}
+                className={`py-1 rounded-lg transition cursor-pointer text-center flex items-center justify-center gap-0.5 ${
+                  themeToneFilter === 'traditional'
+                    ? 'bg-[#c4a661] text-neutral-950 font-bold shadow-xs'
+                    : 'text-amber-400/90 hover:text-white'
+                }`}
+              >
+                <span>🏛️ Adat</span>
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-1.5 max-h-[380px] overflow-y-auto pr-0.5 scrollbar-thin">
               {Object.values(THEMES)
                 .filter((th: any) => {
+                  if (themeToneFilter === 'traditional') {
+                    return ['jawa_joglo', 'sunda_parahyangan', 'minang_suntiang', 'bali_aesthetic', 'javanese_heritage'].includes(th.id);
+                  }
                   if (themeToneFilter === 'light') return th.mode === 'light';
                   if (themeToneFilter === 'dark') return th.mode !== 'light';
                   return true;
