@@ -8,9 +8,11 @@ import {
   Sparkles,
   Check,
   QrCode,
+  Search,
 } from 'lucide-react';
 import { InvitationData, EventType, ThemeToken } from '../../types';
 import { THEMES, FONT_PRESETS, FRAME_SHAPES } from '../../data/presets';
+import { themeRegistry } from '../../themes/registry';
 
 interface ThemingSidebarProps {
   data: InvitationData;
@@ -41,6 +43,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
 }) => {
   const [activeInspectorTab, setActiveInspectorTab] = useState<'event' | 'theme' | 'font' | 'frame' | 'print'>('theme');
   const [themeToneFilter, setThemeToneFilter] = useState<'all' | 'light' | 'dark' | 'traditional'>('all');
+  const [themeSearchQuery, setThemeSearchQuery] = useState('');
   const [isAdvancedModeMobile, setIsAdvancedModeMobile] = useState(false);
   const [sheetHeight, setSheetHeight] = useState<'peek' | 'half' | 'full'>('half');
 
@@ -190,7 +193,27 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
 
         {/* TAB: THEME & COLOR */}
         {activeInspectorTab === 'theme' && (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
+            {/* Search Input for Themes */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={themeSearchQuery}
+                onChange={(e) => setThemeSearchQuery(e.target.value)}
+                placeholder="Cari tema / adat..."
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-8 pr-3 py-1.5 text-[11px] text-white placeholder-neutral-500 focus:outline-none focus:border-[#c4a661] transition"
+              />
+              {themeSearchQuery && (
+                <button
+                  onClick={() => setThemeSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-[10px]"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             {/* Tone Filter Buttons */}
             <div className="grid grid-cols-4 bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-[10px] font-semibold gap-0.5">
               <button
@@ -202,7 +225,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
                     : 'text-neutral-400 hover:text-white'
                 }`}
               >
-                Semua ({Object.values(THEMES).length})
+                Semua
               </button>
               <button
                 type="button"
@@ -239,17 +262,11 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 max-h-[380px] overflow-y-auto pr-0.5 scrollbar-thin">
-              {Object.values(THEMES)
-                .filter((th: any) => {
-                  if (themeToneFilter === 'traditional') {
-                    return ['jawa_joglo', 'sunda_parahyangan', 'minang_suntiang', 'bali_aesthetic', 'javanese_heritage'].includes(th.id);
-                  }
-                  if (themeToneFilter === 'light') return th.mode === 'light';
-                  if (themeToneFilter === 'dark') return th.mode !== 'light';
-                  return true;
-                })
-                .map((th) => {
+            <div className="grid grid-cols-2 gap-1.5 max-h-[350px] overflow-y-auto pr-0.5 scrollbar-thin">
+              {themeRegistry.searchThemes(themeSearchQuery, {
+                category: themeToneFilter === 'traditional' ? 'traditional' : undefined,
+                tone: themeToneFilter === 'light' || themeToneFilter === 'dark' ? themeToneFilter : undefined,
+              }).map((th) => {
                 const isSelected = data.theme === th.id;
                 return (
                   <button

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, X, Check, ArrowRight, Palette, Type, Image as ImageIcon } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Sparkles, X, Check, ArrowRight, Palette, Type, Image as ImageIcon, Search } from 'lucide-react';
 import { MasterStyleKit } from '../../types';
-import { MASTER_STYLE_KITS, FONT_PRESETS, FRAME_SHAPES, THEMES } from '../../data/presets';
+import { FONT_PRESETS, FRAME_SHAPES, THEMES } from '../../data/presets';
+import { themeRegistry } from '../../themes/registry';
 
 interface StyleKitGalleryModalProps {
   isOpen: boolean;
@@ -22,18 +23,15 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
   onApplyKit,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   if (!isOpen) return null;
 
-  const kits = Object.values(MASTER_STYLE_KITS);
-  const filteredKits =
-    selectedCategory === 'all'
-      ? kits
-      : kits.filter((k) => k.category === selectedCategory);
+  const filteredKits = themeRegistry.searchStyleKits(searchQuery, selectedCategory);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-[#111115] border border-[#c4a661]/40 rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl my-auto">
+      <div className="relative w-full max-w-4xl bg-[#111115] border border-[#c4a661]/40 rounded-3xl p-6 md:p-8 space-y-5 shadow-2xl my-auto">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-neutral-800 pb-4">
           <div className="flex items-center gap-3">
@@ -62,136 +60,179 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
           </button>
         </div>
 
-        {/* Category Filters */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {[
-            { id: 'all', label: 'Semua Koleksi' },
-            { id: 'royal', label: '👑 Royal Palace' },
-            { id: 'traditional', label: '🏛️ Adat Nusantara' },
-            { id: 'islamic', label: '🌿 Nuansa Islami' },
-            { id: 'romantic', label: '🌸 Romantis' },
-            { id: 'modern', label: '🌑 Modern Clean' },
-            { id: 'festive', label: '🎉 Ceria / Party' },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
-                selectedCategory === cat.id
-                  ? 'bg-[#c4a661] text-neutral-950 shadow-md font-bold'
-                  : 'bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        {/* Search Bar & Category Filters */}
+        <div className="space-y-3">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari tema, motif adat, warna (e.g. Jawa, Sunda, Sage, Gold, Pink)..."
+              className="w-full bg-neutral-900/90 border border-neutral-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#c4a661] transition"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {[
+              { id: 'all', label: 'Semua Koleksi' },
+              { id: 'royal', label: '👑 Royal Palace' },
+              { id: 'traditional', label: '🏛️ Adat Nusantara' },
+              { id: 'islamic', label: '🌿 Nuansa Islami' },
+              { id: 'romantic', label: '🌸 Romantis' },
+              { id: 'modern', label: '🌑 Modern Clean' },
+              { id: 'festive', label: '🎉 Ceria / Party' },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#c4a661] text-neutral-950 shadow-md font-bold'
+                    : 'bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Grid of Master Style Kits */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[55vh] overflow-y-auto pr-1 scrollbar-thin">
-          {filteredKits.map((kit) => {
-            const fontInfo = FONT_PRESETS[kit.fontPairingId];
-            const frameInfo = FRAME_SHAPES[kit.frameShape];
-            const themeInfo = THEMES[kit.themeId];
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[50vh] overflow-y-auto pr-1 scrollbar-thin">
+          {filteredKits.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-neutral-400 text-xs">
+              Tidak ada tema yang cocok dengan pencarian "{searchQuery}".
+            </div>
+          ) : (
+            filteredKits.map((kit) => {
+              const fontInfo = FONT_PRESETS[kit.fontPairingId as keyof typeof FONT_PRESETS];
+              const frameInfo = FRAME_SHAPES[kit.frameShape as keyof typeof FRAME_SHAPES];
+              const themeInfo = THEMES[kit.themeId as keyof typeof THEMES];
 
-            const isCurrentlyActive =
-              currentThemeId === kit.themeId &&
-              (currentFontId === kit.fontPairingId || (!currentFontId && kit.fontPairingId === 'royal_serif')) &&
-              (currentFrameId === kit.frameShape || (!currentFrameId && kit.frameShape === 'royal_arch'));
+              const isCurrentlyActive =
+                currentThemeId === kit.themeId &&
+                (currentFontId === kit.fontPairingId || (!currentFontId && kit.fontPairingId === 'royal_serif')) &&
+                (currentFrameId === kit.frameShape || (!currentFrameId && kit.frameShape === 'royal_arch'));
 
-            return (
-              <motion.div
-                key={kit.id}
-                whileHover={{ y: -3 }}
-                className={`relative rounded-2xl p-4.5 border transition-all duration-200 flex flex-col justify-between bg-gradient-to-b from-neutral-900/90 to-neutral-950 ${
-                  isCurrentlyActive
-                    ? 'border-[#c4a661] ring-2 ring-[#c4a661]/40 shadow-[0_0_25px_rgba(196,166,97,0.2)]'
-                    : 'border-neutral-800/80 hover:border-neutral-700 hover:shadow-lg'
-                }`}
-              >
-                <div>
-                  {/* Top Bar with Badge & Color Swatch */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 border border-white/5">
-                      {kit.badge}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={`w-4 h-4 rounded-full bg-gradient-to-br ${kit.previewGradient} border border-white/30 shadow-xs`}
-                      />
-                      <span className="text-[10px] font-mono text-neutral-400">
-                        {themeInfo?.name?.split(' ')[0]}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Font Rendering Preview Box */}
-                  <div className="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800/60 mb-3 text-center">
-                    <div
-                      className="text-base font-bold text-white truncate"
-                      style={{
-                        fontFamily: fontInfo?.headingFamily,
-                        color: kit.primaryColor,
-                      }}
-                    >
-                      {fontInfo?.previewText || kit.name}
-                    </div>
-                    <div className="text-[10px] text-neutral-400 mt-0.5 truncate">
-                      {kit.tagline}
-                    </div>
-                  </div>
-
-                  {/* Composition Specs */}
-                  <div className="space-y-1.5 mb-4 text-[11px]">
-                    <div className="flex items-center justify-between text-neutral-400">
-                      <span className="flex items-center gap-1.5">
-                        <Type className="w-3 h-3 text-[#c4a661]" />
-                        <span>Tipografi</span>
-                      </span>
-                      <span className="text-neutral-200 font-medium truncate max-w-[120px]">
-                        {fontInfo?.name?.split(' ')[0]}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-neutral-400">
-                      <span className="flex items-center gap-1.5">
-                        <ImageIcon className="w-3 h-3 text-[#c4a661]" />
-                        <span>Frame Foto</span>
-                      </span>
-                      <span className="text-neutral-200 font-medium truncate max-w-[120px]">
-                        {frameInfo?.name}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Apply Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    onApplyKit(kit);
-                    onClose();
-                  }}
-                  className={`w-full py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+              return (
+                <motion.div
+                  key={kit.id}
+                  whileHover={{ y: -3 }}
+                  className={`relative rounded-2xl p-4.5 border transition-all duration-200 flex flex-col justify-between bg-gradient-to-b from-neutral-900/90 to-neutral-950 ${
                     isCurrentlyActive
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-[#c4a661] text-neutral-950 hover:bg-[#d5b874] shadow-md'
+                      ? 'border-[#c4a661] ring-2 ring-[#c4a661]/40 shadow-[0_0_25px_rgba(196,166,97,0.2)]'
+                      : 'border-neutral-800/80 hover:border-neutral-700 hover:shadow-lg'
                   }`}
                 >
-                  {isCurrentlyActive ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Sedang Digunakan</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Terapkan Gaya Ini</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </>
-                  )}
-                </button>
-              </motion.div>
-            );
-          })}
+                  <div>
+                    {/* Top Bar with Badge & Color Swatch */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 border border-white/5">
+                        {kit.badge}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={`w-4 h-4 rounded-full bg-gradient-to-br ${kit.previewGradient} border border-white/30 shadow-xs`}
+                        />
+                        <span className="text-[10px] font-mono text-neutral-400">
+                          {themeInfo?.name?.split(' ')[0]}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Font Rendering Preview Box */}
+                    <div className="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800/60 mb-3 text-center">
+                      <div
+                        className="text-base font-bold truncate"
+                        style={{
+                          fontFamily: fontInfo?.headingFamily,
+                          color: kit.primaryColor,
+                        }}
+                      >
+                        {fontInfo?.previewText || kit.name}
+                      </div>
+                      <div className="text-[10px] text-neutral-400 mt-0.5 truncate">
+                        {kit.tagline}
+                      </div>
+                    </div>
+
+                    {/* Composition Specs */}
+                    <div className="space-y-1.5 mb-4 text-[11px]">
+                      <div className="flex items-center justify-between text-neutral-400">
+                        <span className="flex items-center gap-1.5">
+                          <Type className="w-3 h-3 text-[#c4a661]" />
+                          <span>Tipografi</span>
+                        </span>
+                        <span className="text-white font-medium truncate max-w-[120px]">
+                          {fontInfo?.name?.split(' ')[0]}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-neutral-400">
+                        <span className="flex items-center gap-1.5">
+                          <ImageIcon className="w-3 h-3 text-[#c4a661]" />
+                          <span>Bentuk Bingkai</span>
+                        </span>
+                        <span className="text-white font-medium truncate max-w-[120px]">
+                          {frameInfo?.name}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-neutral-400">
+                        <span className="flex items-center gap-1.5">
+                          <Palette className="w-3 h-3 text-[#c4a661]" />
+                          <span>Palet Warna</span>
+                        </span>
+                        <span className="text-white font-medium truncate max-w-[120px]">
+                          {themeInfo?.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-neutral-400 line-clamp-2 mb-4 leading-relaxed">
+                      {kit.description}
+                    </p>
+                  </div>
+
+                  {/* Apply Button */}
+                  <button
+                    onClick={() => {
+                      onApplyKit(kit as any);
+                      onClose();
+                    }}
+                    className={`w-full py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-md ${
+                      isCurrentlyActive
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
+                        : 'bg-[#c4a661] text-neutral-950 hover:bg-[#d5b874]'
+                    }`}
+                  >
+                    {isCurrentlyActive ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Sedang Aktif</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Terapkan Preset Ini</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+                </motion.div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
