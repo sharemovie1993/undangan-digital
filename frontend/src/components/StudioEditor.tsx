@@ -214,10 +214,44 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
     }
   };
 
-  const handleBulkImportGuests = async (importedGuests: GuestRecipient[]) => {
+  const handleBulkImportGuests = async (importedGuests: GuestRecipient[], mode: 'merge' | 'replace' = 'merge') => {
     if (!importedGuests || importedGuests.length === 0) return;
 
-    const nextGuests = [...importedGuests, ...guests];
+    let nextGuests: GuestRecipient[] = [];
+
+    if (mode === 'replace') {
+      nextGuests = importedGuests;
+    } else {
+      // Smart Idempotent Upsert Map (Keyed by normalized trimmed lowercase name)
+      const guestMap = new Map<string, GuestRecipient>();
+
+      // 1. Populate existing guests
+      guests.forEach((g) => {
+        const key = g.name.trim().toLowerCase();
+        guestMap.set(key, g);
+      });
+
+      // 2. Merge / Update from newly imported list
+      importedGuests.forEach((imported) => {
+        const key = imported.name.trim().toLowerCase();
+        const existing = guestMap.get(key);
+
+        if (existing) {
+          // Update details while strictly preserving original ID and RSVP status
+          guestMap.set(key, {
+            ...existing,
+            addressOrCity: imported.addressOrCity || existing.addressOrCity,
+            group: imported.group || existing.group,
+            paxQuota: imported.paxQuota || existing.paxQuota,
+          });
+        } else {
+          guestMap.set(key, imported);
+        }
+      });
+
+      nextGuests = Array.from(guestMap.values());
+    }
+
     onUpdateGuests(nextGuests);
     setIsBulkModalOpen(false);
 
@@ -748,6 +782,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
       <BulkGuestImportModal
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
+        existingGuests={guests}
         onImportGuests={handleBulkImportGuests}
       />
 

@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
-import { Upload, X, FileSpreadsheet, Download, Check, AlertCircle, Sparkles, FileText } from 'lucide-react';
+import { Upload, X, FileSpreadsheet, Download, Check, AlertCircle, Sparkles, FileText, ShieldCheck, RefreshCw } from 'lucide-react';
 import { downloadGuestTemplateExcel, parseExcelOrCsvFile, ParsedGuestRow } from '../../utils/excelGuests';
 import { GuestRecipient } from '../../types';
 
 interface BulkGuestImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImportGuests: (guests: GuestRecipient[]) => void;
+  existingGuests?: GuestRecipient[];
+  onImportGuests: (guests: GuestRecipient[], mode: 'merge' | 'replace') => void;
 }
 
 export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
   isOpen,
   onClose,
+  existingGuests = [],
   onImportGuests,
 }) => {
   const [activeTab, setActiveTab] = useState<'excel' | 'text'>('excel');
+  const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge');
   const [bulkText, setBulkText] = useState('');
   const [parsedRows, setParsedRows] = useState<ParsedGuestRow[]>([]);
   const [isParsing, setIsParsing] = useState(false);
@@ -46,6 +49,11 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
     }
   };
 
+  // Calculate duplicate & new guest counts for idempotent feedback
+  const existingNameSet = new Set(existingGuests.map((g) => g.name.trim().toLowerCase()));
+  const duplicateRows = parsedRows.filter((r) => existingNameSet.has(r.name.trim().toLowerCase()));
+  const newRows = parsedRows.filter((r) => !existingNameSet.has(r.name.trim().toLowerCase()));
+
   const handleProcessTextImport = (e: React.FormEvent) => {
     e.preventDefault();
     if (!bulkText.trim()) return;
@@ -67,7 +75,7 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
       };
     });
 
-    onImportGuests(generated);
+    onImportGuests(generated, importMode);
     onClose();
   };
 
@@ -83,7 +91,7 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
       hasOpened: false,
     }));
 
-    onImportGuests(generated);
+    onImportGuests(generated, importMode);
     onClose();
   };
 
@@ -104,7 +112,7 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
                 <span className="text-[9.5px] px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">
                   Excel & CSV
                 </span>
-                <span className="text-[10.5px] text-neutral-400">Multi-baris instan</span>
+                <span className="text-[10.5px] text-neutral-400">Idempoten & Anti-Duplikasi</span>
               </div>
             </div>
           </div>
@@ -212,26 +220,96 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
               </div>
             )}
 
-            {/* Parsed Preview Table */}
+            {/* Parsed Preview Table with Idempotent Anti-Duplicate Analysis */}
             {parsedRows.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px] text-neutral-400">
-                  <span className="font-semibold text-emerald-400 flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Terdeteksi {parsedRows.length} Tamu Siap Diimpor:</span>
-                  </span>
+              <div className="space-y-2.5">
+                {/* Idempotent Strategy Selector */}
+                <div className="p-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 space-y-2">
+                  <div className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Mode Penggabungan Data:</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <label
+                      className={`p-2.5 rounded-xl border flex items-start gap-2 cursor-pointer transition ${
+                        importMode === 'merge'
+                          ? 'border-[#c4a661] bg-[#c4a661]/15 text-white'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="importMode"
+                        checked={importMode === 'merge'}
+                        onChange={() => setImportMode('merge')}
+                        className="mt-0.5 accent-[#c4a661]"
+                      />
+                      <div>
+                        <div className="font-bold">Perbarui & Gabung (Aman)</div>
+                        <div className="text-[10px] text-neutral-400 mt-0.5">
+                          Tamu yang sama diperbarui, tamu baru ditambahkan (tanpa duplikat).
+                        </div>
+                      </div>
+                    </label>
+
+                    <label
+                      className={`p-2.5 rounded-xl border flex items-start gap-2 cursor-pointer transition ${
+                        importMode === 'replace'
+                          ? 'border-amber-500 bg-amber-500/15 text-white'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="importMode"
+                        checked={importMode === 'replace'}
+                        onChange={() => setImportMode('replace')}
+                        className="mt-0.5 accent-amber-500"
+                      />
+                      <div>
+                        <div className="font-bold">Gantikan Seluruh Daftar</div>
+                        <div className="text-[10px] text-neutral-400 mt-0.5">
+                          Hapus daftar tamu lama dan gunakan isi file Excel baru secara utuh.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Idempotent Count Badge */}
+                  {importMode === 'merge' && duplicateRows.length > 0 && (
+                    <div className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        <strong>{newRows.length}</strong> tamu baru akan ditambahkan • <strong>{duplicateRows.length}</strong> tamu sudah ada akan diperbarui datanya (0 duplikat).
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="max-h-40 overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-950 divide-y divide-neutral-900 text-[11px] scrollbar-thin">
-                  {parsedRows.slice(0, 50).map((r, i) => (
-                    <div key={i} className="p-2 px-3 flex items-center justify-between">
-                      <div className="font-medium text-white truncate max-w-[200px]">{r.name}</div>
-                      <div className="text-neutral-500 text-[10px] flex items-center gap-2">
-                        <span>{r.addressOrCity || '-'}</span>
-                        <span className="px-1.5 py-0.2 rounded bg-neutral-900 text-neutral-400 border border-neutral-800">{r.group}</span>
+                {/* Preview List */}
+                <div className="max-h-36 overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-950 divide-y divide-neutral-900 text-[11px] scrollbar-thin">
+                  {parsedRows.slice(0, 50).map((r, i) => {
+                    const isDuplicate = existingNameSet.has(r.name.trim().toLowerCase());
+                    return (
+                      <div key={i} className="p-2 px-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 truncate max-w-[200px]">
+                          <span className="font-medium text-white truncate">{r.name}</span>
+                          {isDuplicate && importMode === 'merge' && (
+                            <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              Update
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-neutral-500 text-[10px] flex items-center gap-2">
+                          <span>{r.addressOrCity || '-'}</span>
+                          <span className="px-1.5 py-0.2 rounded bg-neutral-900 text-neutral-400 border border-neutral-800">
+                            {r.group}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {parsedRows.length > 50 && (
                     <div className="p-2 text-center text-[10px] text-neutral-500 italic">
                       + {parsedRows.length - 50} tamu lainnya...
@@ -257,7 +335,9 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
                 className="px-5 py-2 rounded-xl bg-[#c4a661] text-neutral-950 font-bold hover:bg-[#d5b874] transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md"
               >
                 <Check className="w-4 h-4" />
-                <span>Impor {parsedRows.length} Tamu Sekarang</span>
+                <span>
+                  {importMode === 'replace' ? 'Gantikan Semua Tamu' : `Impor ${parsedRows.length} Tamu`}
+                </span>
               </button>
             </div>
           </div>
