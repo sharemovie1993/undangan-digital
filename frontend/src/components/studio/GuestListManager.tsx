@@ -47,13 +47,23 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
   const isTrial = data.isWatermarked;
   const isLimitReached = isTrial && guests.length >= 5;
 
+  // Helper checking for guest open and attendance status
+  const isGuestAttending = (g: GuestRecipient) =>
+    g.isAttending === true || (g as any).attendance === 'HADIR' || (g as any).status === 'hadir';
+
+  const isGuestNotAttending = (g: GuestRecipient) =>
+    g.isAttending === false || (g as any).attendance === 'TIDAK_HADIR' || (g as any).status === 'tidak_hadir';
+
+  const isGuestOpened = (g: GuestRecipient) =>
+    Boolean(g.hasOpened || g.isCheckedIn || isGuestAttending(g) || isGuestNotAttending(g));
+
   // Realtime Live Analytics Calculations
   const totalCount = guests.length;
-  const openedCount = guests.filter((g) => g.hasOpened || g.isAttending !== null || g.isCheckedIn).length;
+  const openedCount = guests.filter((g) => isGuestOpened(g)).length;
   const unopenedCount = totalCount - openedCount;
-  const attendingCount = guests.filter((g) => g.isAttending === true).length;
-  const notAttendingCount = guests.filter((g) => g.isAttending === false).length;
-  const checkedInCount = guests.filter((g) => g.isCheckedIn).length;
+  const attendingCount = guests.filter((g) => isGuestAttending(g)).length;
+  const notAttendingCount = guests.filter((g) => isGuestNotAttending(g)).length;
+  const checkedInCount = guests.filter((g) => Boolean(g.isCheckedIn)).length;
 
   // Filter guests by search, category, and open/attendance status
   const filteredGuests = guests.filter((guest) => {
@@ -65,7 +75,7 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
     const matchesGroup =
       selectedGroupFilter === 'all' || (guest.group && guest.group.toLowerCase() === selectedGroupFilter.toLowerCase());
 
-    const isOpened = guest.hasOpened || guest.isAttending !== null || guest.isCheckedIn;
+    const isOpened = isGuestOpened(guest);
     const matchesStatus =
       selectedStatusFilter === 'all'
         ? true
@@ -74,9 +84,9 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
         : selectedStatusFilter === 'opened'
         ? isOpened
         : selectedStatusFilter === 'attending'
-        ? guest.isAttending === true
+        ? isGuestAttending(guest)
         : selectedStatusFilter === 'not_attending'
-        ? guest.isAttending === false
+        ? isGuestNotAttending(guest)
         : true;
 
     return matchesSearch && matchesGroup && matchesStatus;
@@ -466,15 +476,13 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
 
                   {/* Attendance & Open Status Badge */}
                   <div>
-                    {guest.isAttending !== null && guest.isAttending !== undefined ? (
-                      <span
-                        className={`text-[9px] px-2 py-0.5 rounded-full font-bold shrink-0 flex items-center gap-1 ${
-                          guest.isAttending
-                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                        }`}
-                      >
-                        {guest.isAttending ? '✓ Hadir' : '✕ Tidak Hadir'}
+                    {isGuestAttending(guest) ? (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+                        ✓ Hadir
+                      </span>
+                    ) : isGuestNotAttending(guest) ? (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0 flex items-center gap-1">
+                        ✕ Tidak Hadir
                       </span>
                     ) : isOpened ? (
                       <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium shrink-0 flex items-center gap-1">
