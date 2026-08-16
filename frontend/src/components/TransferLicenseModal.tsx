@@ -138,7 +138,7 @@ export const TransferLicenseModal: React.FC<TransferLicenseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-md p-4 py-6 overflow-y-auto">
+    <div className="fixed inset-0 z-[70] flex items-start justify-center bg-black/80 backdrop-blur-md p-4 py-6 overflow-y-auto">
       <div className="relative w-full max-w-lg rounded-2xl border border-amber-500/40 bg-[#111115] text-[#e2e2e7] shadow-2xl flex flex-col my-auto max-h-[calc(100dvh-3rem)] overflow-y-auto">
         <button
           onClick={onClose}

@@ -97,7 +97,7 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
   const textLinesCount = bulkText.split('\n').filter((l) => l.trim()).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md">
       <div className="w-full max-w-xl max-h-[85vh] flex flex-col bg-[#111115] border border-[#c4a661]/40 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
         {/* 1. FIXED TOP HEADER */}
         <div className="flex items-start justify-between p-4 sm:p-6 pb-3.5 border-b border-neutral-800/90 bg-[#111115] shrink-0">

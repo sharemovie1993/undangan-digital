@@ -94,7 +94,7 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
     (currentFrameId === previewKit.frameShape || (!currentFrameId && previewKit.frameShape === 'royal_arch'));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}

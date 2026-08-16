@@ -208,7 +208,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2.5 sm:p-4 md:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-md p-2.5 sm:p-4 md:p-6 overflow-y-auto">
       <div className="relative w-full max-w-lg md:max-w-3xl lg:max-w-4xl rounded-3xl border border-[#c4a661]/40 bg-[#111115] text-[#e2e2e7] shadow-2xl p-4 sm:p-6 md:p-7 flex flex-col max-h-[92vh] my-auto">
         {/* Close Button */}
         <button

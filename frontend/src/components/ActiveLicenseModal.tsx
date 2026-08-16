@@ -32,15 +32,15 @@ export const ActiveLicenseModal: React.FC<ActiveLicenseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-md p-4 py-6 overflow-y-auto">
-      <div className="relative w-full max-w-lg rounded-2xl border border-emerald-500/40 bg-[#111115] text-[#e2e2e7] shadow-2xl flex flex-col my-auto max-h-[calc(100dvh-3rem)] overflow-y-auto">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
+      <div className="relative w-full max-w-lg rounded-2xl border border-emerald-500/40 bg-[#111115] text-[#e2e2e7] shadow-2xl flex flex-col my-auto max-h-[calc(100dvh-2rem)] overflow-hidden">
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-5 md:p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-neutral-400 hover:text-white p-2 rounded-full bg-neutral-800/60 cursor-pointer"
+          className="absolute top-3.5 right-3.5 text-neutral-400 hover:text-white p-2 rounded-full bg-neutral-800/80 cursor-pointer z-10"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
         {/* Header Badge */}
