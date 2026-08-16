@@ -72,7 +72,7 @@ export const registerApiRoutes = (fastify: FastifyInstance) => {
   fastify.get('/api/themes', ThemeController.getAllThemes);
   fastify.get('/api/themes/style-kits', ThemeController.getAllStyleKits);
   fastify.get('/api/style-kits', ThemeController.getAllStyleKits);
-  fastify.post('/api/themes', ThemeController.createTheme);
+  fastify.post('/api/themes', { preHandler: [verifyAuth] }, ThemeController.createTheme);
 
   // 10. Easy-Tunnel WireGuard Engine
   registerEasyTunnelRoutes(fastify);
