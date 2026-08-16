@@ -10,10 +10,11 @@ interface ProfileSectionProps {
 }
 
 export const ProfileSection: React.FC<ProfileSectionProps> = ({ data }) => {
+  const theme = THEMES[data.theme] || THEMES.champagne_gold;
   const isWedding = data.eventType === 'wedding';
   const isKhitan = data.eventType === 'khitanan' || data.eventType === 'aqiqah';
   const isBirthday = data.eventType === 'birthday';
-  const activePrimary = data.themeConfig?.primaryColor || THEMES[data.theme]?.primary || '#c4a661';
+  const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
 
   // Typography & Frame Shape from themeConfig
   const fontPreset = data.themeConfig?.fontPairingId ? FONT_PRESETS[data.themeConfig.fontPairingId] : null;
@@ -87,7 +88,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ data }) => {
         transition={{ duration: 0.6, delay: 0.1 }}
         className="max-w-md mx-auto mb-10 px-4"
       >
-        <p className="text-xs md:text-sm text-neutral-300 leading-relaxed font-light">
+        <p className="text-xs md:text-sm leading-relaxed font-light" style={{ color: theme.textMuted }}>
           {data.openingQuoteText || 'Maha Suci Allah yang telah menciptakan makhluk-Nya berpasang-pasangan.'}
         </p>
         {data.openingQuoteSource && (
@@ -120,8 +121,8 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ data }) => {
                 <div
                   className={`relative ${
                     frameClass.includes('rounded-full') ? 'w-48 h-48' : 'w-52 h-72'
-                  } ${frameClass} border-2 shadow-xl overflow-hidden bg-neutral-900`}
-                  style={{ borderColor: `${activePrimary}90` }}
+                  } ${frameClass} border-2 shadow-xl overflow-hidden`}
+                  style={{ backgroundColor: theme.cardBg, borderColor: `${activePrimary}90` }}
                 >
                   <img
                     src={person.photoUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=500&auto=format&fit=crop&q=80'}
@@ -147,20 +148,20 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ data }) => {
                 </span>
 
                 <h3
-                  className="text-2xl font-bold text-white mt-1 transition-all"
-                  style={{ fontFamily: headingFontFamily }}
+                  className="text-2xl font-bold mt-1 transition-all"
+                  style={{ fontFamily: headingFontFamily, color: theme.textMain }}
                 >
                   {person.name || person.fullName}
                 </h3>
 
-                <p className="text-xs text-neutral-400 font-light leading-relaxed max-w-[260px] mx-auto">
+                <p className="text-xs font-light leading-relaxed max-w-[260px] mx-auto" style={{ color: theme.textMuted }}>
                   {person.bio ? (
                     person.bio
                   ) : person.fatherName && person.motherName ? (
                     <>
                       Putra/Putri dari <br />
-                      <strong className="text-neutral-200 font-medium">{person.fatherName}</strong> &{' '}
-                      <strong className="text-neutral-200 font-medium">{person.motherName}</strong>
+                      <strong className="font-medium" style={{ color: theme.textMain }}>{person.fatherName}</strong> &{' '}
+                      <strong className="font-medium" style={{ color: theme.textMain }}>{person.motherName}</strong>
                     </>
                   ) : (
                     'Putra/Putri tercinta'

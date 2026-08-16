@@ -84,7 +84,7 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
             </div>
 
             {/* Event Title */}
-            <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-white mb-6">
+            <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight mb-6" style={{ color: theme.textMain }}>
               {data.eventTitle}
             </h1>
 
@@ -93,13 +93,13 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
               className="rounded-2xl p-4 mb-8 border"
               style={{ backgroundColor: theme.accentBg, borderColor: `${activePrimary}30` }}
             >
-              <p className="text-[10px] uppercase tracking-widest text-neutral-400 mb-1">
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: theme.textMuted }}>
                 Kepada Yth. Bapak/Ibu/Saudara/i:
               </p>
-              <h2 className="font-serif text-lg font-bold text-white tracking-wide">
+              <h2 className="font-serif text-lg font-bold tracking-wide" style={{ color: theme.textMain }}>
                 {effectiveGuest}
               </h2>
-              <p className="text-[9px] text-neutral-500 mt-1 italic">
+              <p className="text-[9px] mt-1 italic opacity-70" style={{ color: theme.textMuted }}>
                 *Mohon maaf apabila ada kesalahan penulisan nama/gelar
               </p>
             </div>

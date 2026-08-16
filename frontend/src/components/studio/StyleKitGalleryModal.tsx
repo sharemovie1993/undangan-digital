@@ -67,6 +67,7 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
           {[
             { id: 'all', label: 'Semua Koleksi' },
             { id: 'royal', label: '👑 Royal Palace' },
+            { id: 'traditional', label: '🏛️ Adat Nusantara' },
             { id: 'islamic', label: '🌿 Nuansa Islami' },
             { id: 'romantic', label: '🌸 Romantis' },
             { id: 'modern', label: '🌑 Modern Clean' },
