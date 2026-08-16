@@ -68,9 +68,11 @@ export const registerApiRoutes = (fastify: FastifyInstance) => {
   fastify.get('/api/stitch/manifests', StitchController.getManifests);
   fastify.post('/api/stitch/validate', StitchController.validateComposition);
 
-  // 9. Realtime Themes & Master Style Kits Catalog
-  fastify.get('/api/themes', ThemeController.getThemes);
-  fastify.get('/api/style-kits', ThemeController.getStyleKits);
+  // 9. Realtime Themes & Master Style Kits Catalog (Database-Driven)
+  fastify.get('/api/themes', ThemeController.getAllThemes);
+  fastify.get('/api/themes/style-kits', ThemeController.getAllStyleKits);
+  fastify.get('/api/style-kits', ThemeController.getAllStyleKits);
+  fastify.post('/api/themes', ThemeController.createTheme);
 
   // 10. Easy-Tunnel WireGuard Engine
   registerEasyTunnelRoutes(fastify);

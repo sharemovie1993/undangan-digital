@@ -136,3 +136,44 @@ model EasyTunnel {
   @@map("easy_tunnels")
 }
 
+model ThemePreset {
+  id             String   @id // e.g. "jawa_joglo"
+  name           String   // e.g. "Jawa Klasik (Batik & Joglo)"
+  subtitle       String?
+  category       String   // traditional, royal, islamic, romantic, modern, festive
+  mode           String   @default("dark") // dark, light
+  archetype      String   @default("royal_arch")
+  paletteJson    String   // JSON { primary, secondary, bg, cardBg, textMain, textMuted, border, accentBg, goldFoil, button, secondaryButton, headerBg, previewGradient }
+  typographyJson String?  // JSON { fontPairingId, headingFamily, bodyFamily }
+  ornamentsJson  String?  // JSON { archetype, frameShape, motif }
+  tags           String?  // e.g. "jawa,joglo,wayang,batik"
+  isPremium      Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("theme_presets")
+}
+
+model StyleKitPreset {
+  id              String   @id // e.g. "jawa_joglo_klasik"
+  name            String
+  category        String   // traditional, royal, islamic, romantic, modern, festive
+  tagline         String
+  themeId         String
+  fontPairingId   String
+  frameShape      String
+  previewGradient String
+  primaryColor    String
+  description     String
+  badge           String
+  tags            String?
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("style_kit_presets")
+}
+
