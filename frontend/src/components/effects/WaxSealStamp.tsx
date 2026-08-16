@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'motion/react';
 import { WaxSealColorId } from '../../types';
 
@@ -43,13 +43,13 @@ const WAX_COLORS: Record<WaxSealColorId, { base: string; light: string; dark: st
   },
 };
 
-export const WaxSealStamp: React.FC<WaxSealStampProps> = ({
+export const WaxSealStamp = memo(function WaxSealStamp({
   monogram = 'V & A',
   colorId = 'gold',
   isOpen = false,
   onClick,
   className = '',
-}) => {
+}: WaxSealStampProps) {
   const palette = WAX_COLORS[colorId] || WAX_COLORS.gold;
 
   // Extract initials (e.g. "V & A" -> "V&A")
@@ -107,4 +107,7 @@ export const WaxSealStamp: React.FC<WaxSealStampProps> = ({
       </motion.div>
     </div>
   );
-};
+});
+
+WaxSealStamp.displayName = 'WaxSealStamp';
+

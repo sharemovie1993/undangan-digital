@@ -41,6 +41,7 @@ import { api } from './api/client';
 import { ToastProvider } from './context/ToastContext';
 import { ConfirmProvider } from './context/ConfirmContext';
 import { romanticAudio } from './utils/audioPlayer';
+import { useTexturePreloader } from './utils/texturePreloader';
 
 // Code-Splitting / Lazy Loading for Heavy Studio & Dashboard Engines
 const PrintStudio = React.lazy(() =>
@@ -66,6 +67,9 @@ const StudioFallback = () => (
 );
 
 export default function App() {
+  // 📱 Mobile-First Texture Preloading: Preload texture backgrounds on idle
+  useTexturePreloader();
+
   // Application View Mode: 'dashboard' (Multi-Invitation Dashboard), 'studio' (Studio Editor), 'print' (Print Studio), 'invitation' (Guest View)
   const [viewMode, setViewMode] = useState<'dashboard' | 'studio' | 'print' | 'invitation'>('studio');
 

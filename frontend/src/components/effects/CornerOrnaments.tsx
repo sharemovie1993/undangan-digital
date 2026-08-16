@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { CornerOrnamentId, SectionDividerId } from '../../types';
 
 interface CornerOrnamentsProps {
@@ -7,11 +7,11 @@ interface CornerOrnamentsProps {
   className?: string;
 }
 
-export const CornerOrnaments: React.FC<CornerOrnamentsProps> = ({
+export const CornerOrnaments = memo(function CornerOrnaments({
   type = 'none',
   primaryColor = '#c4a661',
   className = '',
-}) => {
+}: CornerOrnamentsProps) {
   if (!type || type === 'none') return null;
 
   if (type === 'batik_prada') {
@@ -92,7 +92,9 @@ export const CornerOrnaments: React.FC<CornerOrnamentsProps> = ({
   }
 
   return null;
-};
+});
+
+CornerOrnaments.displayName = 'CornerOrnaments';
 
 interface SectionDividerProps {
   type?: SectionDividerId;
@@ -100,11 +102,11 @@ interface SectionDividerProps {
   className?: string;
 }
 
-export const SectionDivider: React.FC<SectionDividerProps> = ({
+export const SectionDivider = memo(function SectionDivider({
   type = 'gold_line',
   primaryColor = '#c4a661',
   className = '',
-}) => {
+}: SectionDividerProps) {
   if (!type || type === 'none') return null;
 
   if (type === 'batik_parang') {
@@ -142,4 +144,7 @@ export const SectionDivider: React.FC<SectionDividerProps> = ({
       <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-current opacity-40" style={{ color: primaryColor }} />
     </div>
   );
-};
+});
+
+SectionDivider.displayName = 'SectionDivider';
+

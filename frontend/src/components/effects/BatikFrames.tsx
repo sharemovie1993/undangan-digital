@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { FrameShapeId } from '../../types';
 
 interface BatikFrameWrapperProps {
@@ -8,12 +8,12 @@ interface BatikFrameWrapperProps {
   children: React.ReactNode;
 }
 
-export const BatikFrameWrapper: React.FC<BatikFrameWrapperProps> = ({
+export const BatikFrameWrapper = memo(function BatikFrameWrapper({
   shapeId = 'royal_arch',
   primaryColor = '#c4a661',
   className = '',
   children,
-}) => {
+}: BatikFrameWrapperProps) {
   // If standard arch/border, render normal wrapper
   if (shapeId === 'batik_parang_arch') {
     return (
@@ -179,4 +179,7 @@ export const BatikFrameWrapper: React.FC<BatikFrameWrapperProps> = ({
 
   // Fallback to basic styled wrapper
   return <div className={`relative ${className}`}>{children}</div>;
-};
+});
+
+BatikFrameWrapper.displayName = 'BatikFrameWrapper';
+
