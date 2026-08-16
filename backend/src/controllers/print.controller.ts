@@ -79,10 +79,13 @@ export class PrintController {
   }
 
   /**
-   * Download PDF Kertas Stiker Label Tamu Tom & Jerry 103
+   * Download PDF Kertas Stiker Label Tamu Tom & Jerry (103: 12 label & 108: 18 label)
    */
   static async downloadStickers(request: FastifyRequest, reply: FastifyReply) {
     const { invitationId } = request.params as { invitationId: string };
+    const query = (request.query as any) || {};
+    const templateType: '103' | '108' = query.template === '108' ? '108' : '103';
+
     try {
       const perm = await PrintController.checkPermission(invitationId);
       if (!perm.allowed) {
@@ -112,9 +115,9 @@ export class PrintController {
         ];
       }
 
-      const pdfBuffer = await PdfPrintService.generateStickerLabelsPdf(labelData);
+      const pdfBuffer = await PdfPrintService.generateStickerLabelsPdf(labelData, templateType);
       reply.header('Content-Type', 'application/pdf');
-      reply.header('Content-Disposition', `attachment; filename="stiker-label-tom-jerry-103.pdf"`);
+      reply.header('Content-Disposition', `attachment; filename="stiker-label-tom-jerry-${templateType}.pdf"`);
       return reply.send(pdfBuffer);
     } catch (err: any) {
       return reply.status(500).send({ success: false, message: 'Gagal men-generate PDF stiker label.' });

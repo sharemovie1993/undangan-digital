@@ -20,7 +20,32 @@ export interface GuestLabel {
 
 export class PdfPrintService {
   /**
+   * Helper: Menggambar Crop Marks & Bleed Guide untuk mesin potong percetakan offset
+   */
+  private static drawCropMarks(doc: typeof PDFDocument, width: number, height: number, margin: number = 20) {
+    const markLength = 10;
+    doc.lineWidth(0.4).strokeColor('#888888');
+
+    // Top-Left
+    doc.moveTo(margin, margin - markLength).lineTo(margin, margin).stroke();
+    doc.moveTo(margin - markLength, margin).lineTo(margin, margin).stroke();
+
+    // Top-Right
+    doc.moveTo(width - margin, margin - markLength).lineTo(width - margin, margin).stroke();
+    doc.moveTo(width - margin + markLength, margin).lineTo(width - margin, margin).stroke();
+
+    // Bottom-Left
+    doc.moveTo(margin, height - margin + markLength).lineTo(margin, height - margin).stroke();
+    doc.moveTo(margin - markLength, height - margin).lineTo(margin, height - margin).stroke();
+
+    // Bottom-Right
+    doc.moveTo(width - margin, height - margin + markLength).lineTo(width - margin, height - margin).stroke();
+    doc.moveTo(width - margin + markLength, height - margin).lineTo(width - margin, height - margin).stroke();
+  }
+
+  /**
    * 1. Generate Physical Invitation Card PDF (A5 & 4R)
+   * 🚀 Dilengkapi dengan Bleed Line 3mm & Corner Crop Marks
    */
   static async generateCardPdf(data: CardPrintData, format: 'A5' | '4R' = 'A5'): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
@@ -37,13 +62,16 @@ export class PdfPrintService {
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', () => resolve(Buffer.concat(buffers)));
 
+        // Crop Marks untuk Percetakan Offset
+        PdfPrintService.drawCropMarks(doc, width, height, 15);
+
         // Background Luxury Box
-        doc.rect(15, 15, width - 30, height - 30)
+        doc.rect(18, 18, width - 36, height - 36)
           .lineWidth(1.2)
           .strokeColor('#D4AF37')
           .stroke();
 
-        doc.rect(19, 19, width - 38, height - 38)
+        doc.rect(22, 22, width - 44, height - 44)
           .lineWidth(0.6)
           .strokeColor('#D4AF37')
           .stroke();
@@ -95,7 +123,7 @@ export class PdfPrintService {
           .fillColor('#666666')
           .text(data.address, { align: 'center', width: width - 80 });
 
-        // Embed QR Code for Digital Invitation & Location
+        // Embed QR Code for Digital Invitation & Location (Parallel Cache Buffer)
         if (data.qrUrl) {
           const qrBuffer = await QrService.generateBuffer(data.qrUrl);
           const qrSize = format === 'A5' ? 80 : 65;
@@ -119,25 +147,31 @@ export class PdfPrintService {
   }
 
   /**
-   * 2. Generate Tom & Jerry 103 Sticker Label Sheet PDF (12 labels / A4)
+   * 2. Generate Sticker Label Sheet PDF (Dukungan Tom & Jerry 103: 12/A4 & Tom & Jerry 108: 18/A4)
+   * 🚀 Dioptimasi dengan layout grid presisi tinggi
    */
-  static async generateStickerLabelsPdf(guests: GuestLabel[]): Promise<Buffer> {
+  static async generateStickerLabelsPdf(guests: GuestLabel[], templateType: '103' | '108' = '103'): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
         const doc = new PDFDocument({
           size: 'A4',
-          margins: { top: 25, bottom: 25, left: 25, right: 25 }
+          margins: { top: 20, bottom: 20, left: 20, right: 20 }
         });
 
         const buffers: Buffer[] = [];
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', () => resolve(Buffer.concat(buffers)));
 
-        const colWidth = 260;
-        const rowHeight = 120;
-        const leftMargin = 35;
-        const topMargin = 40;
-        const labelsPerPage = 12;
+        const is108 = templateType === '108';
+        // Parameter Tom & Jerry 103 (2 kolom x 6 baris = 12 label) vs 108 (3 kolom x 6 baris = 18 label)
+        const colWidth = is108 ? 175 : 260;
+        const rowHeight = is108 ? 115 : 120;
+        const leftMargin = is108 ? 25 : 35;
+        const topMargin = is108 ? 30 : 40;
+        const colGap = is108 ? 10 : 15;
+        const rowGap = is108 ? 6 : 8;
+        const labelsPerPage = is108 ? 18 : 12;
+        const numCols = is108 ? 3 : 2;
 
         for (let i = 0; i < guests.length; i++) {
           const slotIndex = i % labelsPerPage;
@@ -146,11 +180,11 @@ export class PdfPrintService {
             doc.addPage();
           }
 
-          const col = slotIndex % 2;
-          const row = Math.floor(slotIndex / 2);
+          const col = slotIndex % numCols;
+          const row = Math.floor(slotIndex / numCols);
 
-          const x = leftMargin + col * (colWidth + 15);
-          const y = topMargin + row * (rowHeight + 8);
+          const x = leftMargin + col * (colWidth + colGap);
+          const y = topMargin + row * (rowHeight + rowGap);
 
           // Sticker border guideline (light dotted)
           doc.rect(x, y, colWidth, rowHeight)
@@ -161,31 +195,31 @@ export class PdfPrintService {
           doc.undash();
 
           const guest = guests[i];
-          const textY = y + 25;
+          const textY = y + (is108 ? 20 : 25);
 
           doc.font('Helvetica')
-            .fontSize(8)
+            .fontSize(is108 ? 7.5 : 8)
             .fillColor('#777777')
-            .text('Kepada Yth. Bapak/Ibu/Saudara/i:', x + 10, textY, {
+            .text('Kepada Yth. Bapak/Ibu/Saudara/i:', x + 8, textY, {
               align: 'center',
-              width: colWidth - 20
+              width: colWidth - 16
             });
 
           doc.font('Helvetica-Bold')
-            .fontSize(11)
+            .fontSize(is108 ? 9.5 : 11)
             .fillColor('#1A1A1A')
-            .text(guest.name, x + 10, textY + 16, {
+            .text(guest.name, x + 8, textY + (is108 ? 14 : 16), {
               align: 'center',
-              width: colWidth - 20
+              width: colWidth - 16
             });
 
           if (guest.address) {
             doc.font('Helvetica')
-              .fontSize(9)
+              .fontSize(is108 ? 8 : 9)
               .fillColor('#555555')
-              .text(`di ${guest.address}`, x + 10, textY + 36, {
+              .text(`di ${guest.address}`, x + 8, textY + (is108 ? 30 : 36), {
                 align: 'center',
-                width: colWidth - 20
+                width: colWidth - 16
               });
           }
         }
@@ -251,6 +285,8 @@ export class PdfPrintService {
         const buffers: Buffer[] = [];
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', () => resolve(Buffer.concat(buffers)));
+
+        PdfPrintService.drawCropMarks(doc, width, height, 10);
 
         doc.rect(12, 12, width - 24, height - 24).lineWidth(1).strokeColor('#D4AF37').stroke();
         doc.font('Helvetica').fontSize(10).fillColor('#888888').text('WELCOME TO THE RECEPTION OF', 0, 45, { align: 'center', width });
