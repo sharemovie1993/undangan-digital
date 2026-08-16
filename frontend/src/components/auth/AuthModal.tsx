@@ -31,14 +31,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         const res = await api.login({ email, password });
         if (res.data?.token) {
           localStorage.setItem('absenta_auth_token', res.data.token);
-          onSuccess(res.data.user);
+          localStorage.setItem('absenta_auth_user', JSON.stringify(res.data.user));
+          window.dispatchEvent(new Event('auth_updated'));
+          onSuccess(res.data.user, res.data.token);
           onClose();
         }
       } else {
         const res = await api.register({ name, email, phone, password, role });
         if (res.data?.token) {
           localStorage.setItem('absenta_auth_token', res.data.token);
-          onSuccess(res.data.user);
+          localStorage.setItem('absenta_auth_user', JSON.stringify(res.data.user));
+          window.dispatchEvent(new Event('auth_updated'));
+          onSuccess(res.data.user, res.data.token);
           onClose();
         }
       }
