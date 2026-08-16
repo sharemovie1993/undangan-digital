@@ -54,8 +54,7 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
   const duplicateRows = parsedRows.filter((r) => existingNameSet.has(r.name.trim().toLowerCase()));
   const newRows = parsedRows.filter((r) => !existingNameSet.has(r.name.trim().toLowerCase()));
 
-  const handleProcessTextImport = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleProcessTextImport = () => {
     if (!bulkText.trim()) return;
 
     const lines = bulkText.split('\n').filter((l) => l.trim());
@@ -95,11 +94,13 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
     onClose();
   };
 
+  const textLinesCount = bulkText.split('\n').filter((l) => l.trim()).length;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="w-full max-w-xl bg-[#111115] border border-[#c4a661]/40 rounded-3xl p-5 sm:p-7 space-y-4 shadow-2xl my-auto animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="flex items-start justify-between border-b border-neutral-800 pb-3 shrink-0">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md">
+      <div className="w-full max-w-xl max-h-[85vh] flex flex-col bg-[#111115] border border-[#c4a661]/40 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+        {/* 1. FIXED TOP HEADER */}
+        <div className="flex items-start justify-between p-4 sm:p-6 pb-3.5 border-b border-neutral-800/90 bg-[#111115] shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-md shrink-0">
               <FileSpreadsheet className="w-5 h-5" />
@@ -125,266 +126,264 @@ export const BulkGuestImportModal: React.FC<BulkGuestImportModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Toggle: Upload Excel vs Paste Text */}
-        <div className="flex items-center gap-1.5 bg-neutral-950 p-1 rounded-xl border border-neutral-800 shrink-0">
-          <button
-            type="button"
-            onClick={() => setActiveTab('excel')}
-            className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer truncate ${
-              activeTab === 'excel'
-                ? 'bg-[#c4a661] text-neutral-950 shadow-md font-bold'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Upload File Excel</span>
-          </button>
+        {/* 2. SCROLLABLE MIDDLE CONTENT BODY */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 text-xs scrollbar-thin">
+          {/* Tab Toggle: Upload Excel vs Paste Text */}
+          <div className="flex items-center gap-1.5 bg-neutral-950 p-1 rounded-xl border border-neutral-800 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('excel')}
+              className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer truncate ${
+                activeTab === 'excel'
+                  ? 'bg-[#c4a661] text-neutral-950 shadow-md font-bold'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Upload File Excel</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('text')}
-            className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer truncate ${
-              activeTab === 'text'
-                ? 'bg-[#c4a661] text-neutral-950 shadow-md font-bold'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Tempel Teks Massal</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('text')}
+              className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer truncate ${
+                activeTab === 'text'
+                  ? 'bg-[#c4a661] text-neutral-950 shadow-md font-bold'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Tempel Teks Massal</span>
+            </button>
+          </div>
+
+          {/* TAB 1: EXCEL UPLOAD */}
+          {activeTab === 'excel' && (
+            <div className="space-y-3.5">
+              {/* Download Template Banner */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-2xl bg-neutral-900/80 border border-neutral-800 gap-2.5">
+                <div className="text-[11px] text-neutral-300 leading-relaxed">
+                  <span className="font-semibold text-[#c4a661]">Belum punya file Excel?</span> Unduh template siap pakai dengan kolom standar.
+                </div>
+                <button
+                  type="button"
+                  onClick={downloadGuestTemplateExcel}
+                  className="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0"
+                >
+                  <Download className="w-3.5 h-3.5 shrink-0" />
+                  <span>Unduh Template .xlsx</span>
+                </button>
+              </div>
+
+              {/* Dropzone File Picker */}
+              <div className="relative border-2 border-dashed border-neutral-700 hover:border-[#c4a661] rounded-2xl p-4 sm:p-5 text-center transition bg-neutral-950/60 group cursor-pointer">
+                <input
+                  type="file"
+                  accept=".xlsx, .xls, .csv"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <div className="flex flex-col items-center justify-center gap-2 pointer-events-none px-2">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-[#c4a661] group-hover:scale-110 transition shrink-0">
+                    <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                  <div className="max-w-full">
+                    {uploadedFileName ? (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold max-w-full">
+                        <Check className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                        <span className="truncate max-w-[220px] sm:max-w-[340px]">{uploadedFileName}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs font-bold text-white">
+                          Klik atau Tarik File Excel / CSV ke Sini
+                        </p>
+                        <p className="text-[10.5px] text-neutral-500 mt-0.5">
+                          Mendukung file Microsoft Excel (.xlsx, .xls) dan CSV (.csv)
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Parsing Spinner */}
+              {isParsing && (
+                <div className="p-3 text-center text-neutral-400 text-xs flex items-center justify-center gap-2">
+                  <span className="w-3.5 h-3.5 border-2 border-[#c4a661] border-t-transparent rounded-full animate-spin" />
+                  <span>Sedang membaca & menganalisis file Excel...</span>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              {/* Parsed Preview Table with Idempotent Anti-Duplicate Analysis */}
+              {parsedRows.length > 0 && (
+                <div className="space-y-2.5">
+                  {/* Idempotent Strategy Selector */}
+                  <div className="p-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 space-y-2">
+                    <div className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Mode Penggabungan Data:</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                      <label
+                        className={`p-2 rounded-xl border flex items-start gap-2 cursor-pointer transition ${
+                          importMode === 'merge'
+                            ? 'border-[#c4a661] bg-[#c4a661]/15 text-white'
+                            : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="importMode"
+                          checked={importMode === 'merge'}
+                          onChange={() => setImportMode('merge')}
+                          className="mt-0.5 accent-[#c4a661]"
+                        />
+                        <div>
+                          <div className="font-bold">Perbarui & Gabung (Aman)</div>
+                          <div className="text-[9.5px] text-neutral-400 mt-0.5">
+                            Tamu yang sama diperbarui, tamu baru ditambahkan (tanpa duplikat).
+                          </div>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`p-2 rounded-xl border flex items-start gap-2 cursor-pointer transition ${
+                          importMode === 'replace'
+                            ? 'border-amber-500 bg-amber-500/15 text-white'
+                            : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="importMode"
+                          checked={importMode === 'replace'}
+                          onChange={() => setImportMode('replace')}
+                          className="mt-0.5 accent-amber-500"
+                        />
+                        <div>
+                          <div className="font-bold">Gantikan Seluruh Daftar</div>
+                          <div className="text-[9.5px] text-neutral-400 mt-0.5">
+                            Hapus daftar tamu lama dan gunakan isi file Excel baru secara utuh.
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Idempotent Count Badge */}
+                    {importMode === 'merge' && duplicateRows.length > 0 && (
+                      <div className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          <strong>{newRows.length}</strong> baru • <strong>{duplicateRows.length}</strong> sudah ada diperbarui (0 duplikat).
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Preview List */}
+                  <div className="max-h-28 overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-950 divide-y divide-neutral-900 text-[11px] scrollbar-thin">
+                    {parsedRows.slice(0, 50).map((r, i) => {
+                      const isDuplicate = existingNameSet.has(r.name.trim().toLowerCase());
+                      return (
+                        <div key={i} className="p-1.5 px-3 flex items-center justify-between">
+                          <div className="flex items-center gap-2 truncate max-w-[180px]">
+                            <span className="font-medium text-white truncate">{r.name}</span>
+                            {isDuplicate && importMode === 'merge' && (
+                              <span className="text-[8px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                Update
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-neutral-500 text-[10px] flex items-center gap-2">
+                            <span>{r.addressOrCity || '-'}</span>
+                            <span className="px-1.5 py-0.2 rounded bg-neutral-900 text-neutral-400 border border-neutral-800">
+                              {r.group}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {parsedRows.length > 50 && (
+                      <div className="p-1.5 text-center text-[10px] text-neutral-500 italic">
+                        + {parsedRows.length - 50} tamu lainnya...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: TEXT PASTE */}
+          {activeTab === 'text' && (
+            <div className="space-y-3.5">
+              <p className="text-[11px] text-neutral-400 leading-relaxed">
+                Tempel daftar nama tamu (1 nama per baris). Format: <code className="text-[#c4a661]">Nama, Kota, Kategori</code>
+              </p>
+
+              <textarea
+                required
+                rows={5}
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                placeholder={
+                  'Contoh:\nBpk. Dr. Hendra Suprayogi, Jakarta, VVIP\nIbu Hj. Aminah & Keluarga, Bandung, Keluarga\nSahabat Kuliah Angkatan 2019, Surabaya, Sahabat\ndr. Farhan Maulana, Jakarta, Kolega'
+                }
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:border-[#c4a661] font-mono text-[11px] leading-relaxed"
+              />
+
+              <div className="flex items-center justify-between text-neutral-500 text-[11px]">
+                <span>Format: Nama, Kota, Kategori</span>
+                <span>{textLinesCount} Baris terdeteksi</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* TAB 1: EXCEL UPLOAD */}
-        {activeTab === 'excel' && (
-          <div className="space-y-3.5 text-xs">
-            {/* Download Template Banner */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-2xl bg-neutral-900/80 border border-neutral-800 gap-2.5">
-              <div className="text-[11px] text-neutral-300 leading-relaxed">
-                <span className="font-semibold text-[#c4a661]">Belum punya file Excel?</span> Unduh template siap pakai dengan kolom standar.
-              </div>
-              <button
-                type="button"
-                onClick={downloadGuestTemplateExcel}
-                className="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0"
-              >
-                <Download className="w-3.5 h-3.5 shrink-0" />
-                <span>Unduh Template .xlsx</span>
-              </button>
-            </div>
+        {/* 3. PINNED STICKY BOTTOM FOOTER (ALWAYS VISIBLE) */}
+        <div className="p-3.5 sm:p-5 border-t border-neutral-800 bg-[#141419] shrink-0 flex items-center justify-end gap-2.5 z-10">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-medium text-xs transition cursor-pointer"
+          >
+            Batal
+          </button>
 
-            {/* Dropzone File Picker */}
-            <div className="relative border-2 border-dashed border-neutral-700 hover:border-[#c4a661] rounded-2xl p-5 text-center transition bg-neutral-950/60 group cursor-pointer">
-              <input
-                type="file"
-                accept=".xlsx, .xls, .csv"
-                onChange={handleFileUpload}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              />
-              <div className="flex flex-col items-center justify-center gap-2 pointer-events-none px-2">
-                <div className="w-10 h-10 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-[#c4a661] group-hover:scale-110 transition shrink-0">
-                  <Upload className="w-5 h-5" />
-                </div>
-                <div className="max-w-full">
-                  {uploadedFileName ? (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold max-w-full">
-                      <Check className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-                      <span className="truncate max-w-[240px] sm:max-w-[340px]">{uploadedFileName}</span>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-xs font-bold text-white">
-                        Klik atau Tarik File Excel / CSV ke Sini
-                      </p>
-                      <p className="text-[10.5px] text-neutral-500 mt-0.5">
-                        Mendukung file Microsoft Excel (.xlsx, .xls) dan CSV (.csv)
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Parsing Spinner */}
-            {isParsing && (
-              <div className="p-3 text-center text-neutral-400 text-xs flex items-center justify-center gap-2">
-                <span className="w-3.5 h-3.5 border-2 border-[#c4a661] border-t-transparent rounded-full animate-spin" />
-                <span>Sedang membaca & menganalisis file Excel...</span>
-              </div>
-            )}
-
-            {/* Error Message */}
-            {errorMsg && (
-              <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            {/* Parsed Preview Table with Idempotent Anti-Duplicate Analysis */}
-            {parsedRows.length > 0 && (
-              <div className="space-y-2.5">
-                {/* Idempotent Strategy Selector */}
-                <div className="p-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 space-y-2">
-                  <div className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Mode Penggabungan Data:</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-                    <label
-                      className={`p-2.5 rounded-xl border flex items-start gap-2 cursor-pointer transition ${
-                        importMode === 'merge'
-                          ? 'border-[#c4a661] bg-[#c4a661]/15 text-white'
-                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="importMode"
-                        checked={importMode === 'merge'}
-                        onChange={() => setImportMode('merge')}
-                        className="mt-0.5 accent-[#c4a661]"
-                      />
-                      <div>
-                        <div className="font-bold">Perbarui & Gabung (Aman)</div>
-                        <div className="text-[10px] text-neutral-400 mt-0.5">
-                          Tamu yang sama diperbarui, tamu baru ditambahkan (tanpa duplikat).
-                        </div>
-                      </div>
-                    </label>
-
-                    <label
-                      className={`p-2.5 rounded-xl border flex items-start gap-2 cursor-pointer transition ${
-                        importMode === 'replace'
-                          ? 'border-amber-500 bg-amber-500/15 text-white'
-                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="importMode"
-                        checked={importMode === 'replace'}
-                        onChange={() => setImportMode('replace')}
-                        className="mt-0.5 accent-amber-500"
-                      />
-                      <div>
-                        <div className="font-bold">Gantikan Seluruh Daftar</div>
-                        <div className="text-[10px] text-neutral-400 mt-0.5">
-                          Hapus daftar tamu lama dan gunakan isi file Excel baru secara utuh.
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* Idempotent Count Badge */}
-                  {importMode === 'merge' && duplicateRows.length > 0 && (
-                    <div className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                      <span>
-                        <strong>{newRows.length}</strong> tamu baru akan ditambahkan • <strong>{duplicateRows.length}</strong> tamu sudah ada akan diperbarui datanya (0 duplikat).
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Preview List */}
-                <div className="max-h-36 overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-950 divide-y divide-neutral-900 text-[11px] scrollbar-thin">
-                  {parsedRows.slice(0, 50).map((r, i) => {
-                    const isDuplicate = existingNameSet.has(r.name.trim().toLowerCase());
-                    return (
-                      <div key={i} className="p-2 px-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2 truncate max-w-[200px]">
-                          <span className="font-medium text-white truncate">{r.name}</span>
-                          {isDuplicate && importMode === 'merge' && (
-                            <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                              Update
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-neutral-500 text-[10px] flex items-center gap-2">
-                          <span>{r.addressOrCity || '-'}</span>
-                          <span className="px-1.5 py-0.2 rounded bg-neutral-900 text-neutral-400 border border-neutral-800">
-                            {r.group}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {parsedRows.length > 50 && (
-                    <div className="p-2 text-center text-[10px] text-neutral-500 italic">
-                      + {parsedRows.length - 50} tamu lainnya...
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="pt-2 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-medium transition cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmExcelImport}
-                disabled={parsedRows.length === 0}
-                className="px-5 py-2 rounded-xl bg-[#c4a661] text-neutral-950 font-bold hover:bg-[#d5b874] transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md"
-              >
-                <Check className="w-4 h-4" />
-                <span>
-                  {importMode === 'replace' ? 'Gantikan Semua Tamu' : `Impor ${parsedRows.length} Tamu`}
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: TEXT PASTE */}
-        {activeTab === 'text' && (
-          <form onSubmit={handleProcessTextImport} className="space-y-3.5 text-xs">
-            <p className="text-[11px] text-neutral-400 leading-relaxed">
-              Tempel daftar nama tamu (1 nama per baris). Format: <code className="text-[#c4a661]">Nama, Kota, Kategori</code>
-            </p>
-
-            <textarea
-              required
-              rows={6}
-              value={bulkText}
-              onChange={(e) => setBulkText(e.target.value)}
-              placeholder={
-                'Contoh:\nBpk. Dr. Hendra Suprayogi, Jakarta, VVIP\nIbu Hj. Aminah & Keluarga, Bandung, Keluarga\nSahabat Kuliah Angkatan 2019, Surabaya, Sahabat\ndr. Farhan Maulana, Jakarta, Kolega'
-              }
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:border-[#c4a661] font-mono text-[11px] leading-relaxed"
-            />
-
-            <div className="flex items-center justify-between text-neutral-500 text-[11px]">
-              <span>Format: Nama, Kota, Kategori</span>
-              <span>{bulkText.split('\n').filter((l) => l.trim()).length} Baris terdeteksi</span>
-            </div>
-
-            <div className="pt-2 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-medium transition cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={!bulkText.trim()}
-                className="px-5 py-2 rounded-xl bg-[#c4a661] text-neutral-950 font-bold hover:bg-[#d5b874] transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md"
-              >
-                <Check className="w-4 h-4" />
-                <span>Impor Tamu Teks</span>
-              </button>
-            </div>
-          </form>
-        )}
+          {activeTab === 'excel' ? (
+            <button
+              type="button"
+              onClick={handleConfirmExcelImport}
+              disabled={parsedRows.length === 0}
+              className="px-5 py-2 rounded-xl bg-[#c4a661] text-neutral-950 font-bold text-xs hover:bg-[#d5b874] transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md"
+            >
+              <Check className="w-4 h-4" />
+              <span>
+                {importMode === 'replace' ? 'Gantikan Semua Tamu' : `Impor ${parsedRows.length} Tamu`}
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleProcessTextImport}
+              disabled={!bulkText.trim()}
+              className="px-5 py-2 rounded-xl bg-[#c4a661] text-neutral-950 font-bold text-xs hover:bg-[#d5b874] transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md"
+            >
+              <Check className="w-4 h-4" />
+              <span>Impor {textLinesCount} Tamu Teks</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
