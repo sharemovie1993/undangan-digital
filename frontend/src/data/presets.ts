@@ -601,6 +601,32 @@ export const MASTER_STYLE_KITS = {
     description: 'Pesona adat Jawa ningrat berlatar gading dengan aksen batik prada emas klasik.',
     badge: '☀️ Tradisional'
   },
+  terracotta_boho_light: {
+    id: 'terracotta_boho_light',
+    name: 'Terracotta Bohemian Sunset',
+    category: 'romantic' as const,
+    tagline: 'Hangatnya Bumi & Senja Bohemian',
+    themeId: 'terracotta_cream' as const,
+    fontPairingId: 'nusantara_heritage' as const,
+    frameShape: 'royal_arch' as const,
+    previewGradient: 'from-orange-100 via-amber-200 to-orange-400',
+    primaryColor: '#b35d3d',
+    description: 'Kombinasi warna terracotta hangat dengan background krem lembut dan tipografi elegan.',
+    badge: '☀️ Rustic Boho'
+  },
+  celestial_blue_modern: {
+    id: 'celestial_blue_modern',
+    name: 'Celestial Ice Blue Modern',
+    category: 'modern' as const,
+    tagline: 'Kesejukan Langit Biru & Silver',
+    themeId: 'celestial_blue' as const,
+    fontPairingId: 'modern_clean' as const,
+    frameShape: 'double_border' as const,
+    previewGradient: 'from-blue-100 via-sky-200 to-blue-400',
+    primaryColor: '#3d6e94',
+    description: 'Nuansa biru es lembut kontemporer dengan garis ganda modern yang bersih dan segar.',
+    badge: '☀️ Modern Cerah'
+  },
 
   // --- STYLE KITS ADAT NUSANTARA ---
   jawa_joglo_klasik: {
