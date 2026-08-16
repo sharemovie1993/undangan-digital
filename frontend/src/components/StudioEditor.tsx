@@ -285,6 +285,35 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
 
   const handleApplyMasterStyleKit = (kit: MasterStyleKit) => {
     const selectedTheme = themeRegistry.getTheme(kit.themeId);
+
+    // Smart default textures & particles per style kit
+    const defaultTexture = kit.textureId || (
+      kit.category === 'traditional' ? 'linen' :
+      kit.category === 'royal' ? 'linen' :
+      kit.category === 'romantic' ? 'cotton' :
+      kit.category === 'islamic' ? 'linen' : 'grain'
+    );
+
+    const defaultParticle = kit.particleEffect || (
+      kit.category === 'traditional' ? 'jasmine_petals' :
+      kit.category === 'royal' ? 'gold_dust' :
+      kit.category === 'romantic' ? 'rose_petals' :
+      kit.category === 'islamic' ? 'gold_dust' : 'bokeh_glow'
+    );
+
+    const defaultWaxColor = kit.waxSealColor || (
+      kit.category === 'royal' ? 'gold' :
+      kit.category === 'traditional' ? 'maroon' :
+      kit.category === 'islamic' ? 'sage' :
+      kit.category === 'romantic' ? 'rose' : 'navy'
+    );
+
+    const defaultCorner = kit.cornerOrnament || (
+      kit.category === 'traditional' ? 'batik_prada' :
+      kit.category === 'royal' ? 'royal_crown' :
+      kit.category === 'modern' ? 'art_deco' : 'none'
+    );
+
     onUpdateData({
       ...data,
       theme: kit.themeId,
@@ -297,6 +326,10 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
         fontPairingId: kit.fontPairingId,
         frameShape: kit.frameShape,
         archetypeStyle: selectedTheme?.archetype as any,
+        textureId: defaultTexture,
+        particleEffect: defaultParticle,
+        waxSealColor: defaultWaxColor,
+        cornerOrnament: defaultCorner,
       },
     });
   };

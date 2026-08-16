@@ -77,4 +77,8 @@ export interface MasterStyleKitDefinition {
   badge: string;
   tags?: string[];
   sortOrder?: number;
+  textureId?: TexturePatternId;
+  particleEffect?: ParticleEffectId;
+  waxSealColor?: WaxSealColorId;
+  cornerOrnament?: CornerOrnamentId;
 }
