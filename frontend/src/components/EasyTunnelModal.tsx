@@ -19,7 +19,8 @@ import {
   X,
   Radio,
   Server,
-  Activity
+  Activity,
+  Sparkles
 } from 'lucide-react';
 
 interface EasyTunnelModalProps {
@@ -61,6 +62,8 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
   const [selectedPkg, setSelectedPkg] = useState('');
   const [selectedPayment, setSelectedPayment] = useState('QRIS2');
   const [customerName, setCustomerName] = useState('');
+  const [renewKey, setRenewKey] = useState('');
+  const [renewSlug, setRenewSlug] = useState('');
   const [buyLoading, setBuyLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [isInvoicePaid, setIsInvoicePaid] = useState(false);
@@ -245,6 +248,17 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
     }
   };
 
+  const handleRenew = (tunnel: any) => {
+    setRenewKey(tunnel.licenseKey);
+    setRenewSlug(tunnel.slug);
+    setCustomerName(tunnel.appName || 'Studio Undangan Digital');
+    setSetupPort(tunnel.localPort || 443);
+    setInvoiceData(null);
+    setIsInvoicePaid(false);
+    setActiveTab('buy');
+    showToast('info', `Mode Perpanjangan aktif untuk ${tunnel.slug}.absenta.id`);
+  };
+
   const handleBuy = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName || !selectedPkg) {
@@ -258,11 +272,13 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
         plan_id: selectedPkg,
         payment_method: selectedPayment,
         app_name: setupName || 'Studio Undangan Digital',
-        local_port: setupPort || 443
+        local_port: setupPort || 443,
+        subdomain_slug: renewSlug || undefined,
+        renew_license_key: renewKey || undefined
       });
       if (res.success && res.data) {
         setInvoiceData(res.data);
-        showToast('success', 'Invoice pembayaran berhasil diterbitkan!');
+        showToast('success', renewKey ? 'Invoice perpanjangan lisensi berhasil diterbitkan!' : 'Invoice pembayaran berhasil diterbitkan!');
       } else {
         showToast('error', res.message || 'Gagal menerbitkan invoice.');
       }
@@ -568,6 +584,19 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
 
                           {/* Actions */}
                           <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleRenew(tunnel)}
+                              className={`px-3 py-2 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 ${
+                                isExpired
+                                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20 border-amber-400 animate-pulse'
+                                  : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30'
+                              }`}
+                              title="Perpanjang Masa Aktif Lisensi"
+                            >
+                              <CreditCard className="w-3.5 h-3.5" />
+                              Perpanjang
+                            </button>
+
                             {isConnected ? (
                               <button
                                 onClick={() => handleStop(tunnel.id, tunnel.appName)}
@@ -729,75 +758,103 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
             </form>
           )}
 
-          {/* TAB 3: BELI LISENSI BARU (QRIS) */}
+          {/* TAB 3: BELI LISENSI BARU / PERPANJANGAN (QRIS) */}
           {activeTab === 'buy' && (
             <div className="space-y-5">
               {!invoiceData ? (
-                <form onSubmit={handleBuy} className="space-y-4 max-w-xl mx-auto">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-300">Nama Instansi / Pemesan</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Studio Undangan Luxe"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-amber-500 focus:outline-none text-sm text-slate-200"
-                    />
-                  </div>
-
-                  {/* Packages */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Pilih Paket Durasi</label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {packages.map((pkg) => (
-                        <div
-                          key={pkg.id}
-                          onClick={() => setSelectedPkg(pkg.id)}
-                          className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                            selectedPkg === pkg.id
-                              ? 'bg-amber-500/10 border-amber-400 shadow-md shadow-amber-500/10'
-                              : 'bg-slate-950/40 border-slate-800 hover:border-slate-700'
-                          }`}
-                        >
-                          <div className="font-bold text-sm text-slate-200">{pkg.title || pkg.duration}</div>
-                          <div className="text-xs font-semibold text-amber-400 mt-1">{pkg.price}</div>
-                          {pkg.badge && (
-                            <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/20 text-amber-300">
-                              {pkg.badge}
-                            </span>
-                          )}
+                <div className="max-w-xl mx-auto space-y-4">
+                  {renewKey && (
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/15 via-amber-600/10 to-transparent border border-amber-500/30 flex items-center justify-between text-xs text-amber-300 shadow-lg shadow-amber-500/5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                          <Sparkles className="w-5 h-5" />
                         </div>
-                      ))}
+                        <div>
+                          <div className="font-bold text-amber-200 text-sm">Mode Perpanjangan Lisensi (Renewal)</div>
+                          <div className="mt-0.5 text-slate-300 font-mono text-[11px]">
+                            Lisensi: <span className="text-amber-400 font-bold">{renewKey}</span>
+                          </div>
+                          <div className="text-slate-400 text-[11px]">
+                            Subdomain: <strong className="text-slate-200">https://{renewSlug}.absenta.id</strong> (Terkunci & Tidak Berubah)
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setRenewKey(''); setRenewSlug(''); }}
+                        className="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all"
+                      >
+                        Batal
+                      </button>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Payment Methods */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Metode Pembayaran</label>
-                    <select
-                      value={selectedPayment}
-                      onChange={(e) => setSelectedPayment(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-amber-500 focus:outline-none text-sm text-slate-200"
+                  <form onSubmit={handleBuy} className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-slate-300">Nama Instansi / Pemesan</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Studio Undangan Luxe"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-amber-500 focus:outline-none text-sm text-slate-200"
+                      />
+                    </div>
+
+                    {/* Packages */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Pilih Paket Durasi Perpanjangan</label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {packages.map((pkg) => (
+                          <div
+                            key={pkg.id}
+                            onClick={() => setSelectedPkg(pkg.id)}
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                              selectedPkg === pkg.id
+                                ? 'bg-amber-500/10 border-amber-400 shadow-md shadow-amber-500/10'
+                                : 'bg-slate-950/40 border-slate-800 hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="font-bold text-sm text-slate-200">{pkg.title || pkg.duration}</div>
+                            <div className="text-xs font-semibold text-amber-400 mt-1">{pkg.price}</div>
+                            {pkg.badge && (
+                              <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/20 text-amber-300">
+                                {pkg.badge}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Payment Methods */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Metode Pembayaran</label>
+                      <select
+                        value={selectedPayment}
+                        onChange={(e) => setSelectedPayment(e.target.value)}
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-amber-500 focus:outline-none text-sm text-slate-200"
+                      >
+                        <option value="QRIS2">QRIS Instant (Semua Bank & E-Wallet)</option>
+                        {paymentChannels.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.name} ({c.type})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={buyLoading}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
                     >
-                      <option value="QRIS2">QRIS Instant (Semua Bank & E-Wallet)</option>
-                      {paymentChannels.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name} ({c.type})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={buyLoading}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
-                  >
-                    {buyLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                    Terbitkan Invoice & Bayar Sekarang
-                  </button>
-                </form>
+                      {buyLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                      {renewKey ? 'Terbitkan Invoice & Perpanjang Sekarang' : 'Terbitkan Invoice & Bayar Sekarang'}
+                    </button>
+                  </form>
+                </div>
               ) : isInvoicePaid ? (
                 /* Invoice Paid Success Card */
                 <div className="max-w-md mx-auto p-6 rounded-2xl bg-slate-950 border border-emerald-500/40 text-center space-y-5 animate-in zoom-in-95 duration-300">
@@ -807,7 +864,9 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
                   <div>
                     <h4 className="font-bold text-xl text-emerald-400">Pembayaran Berhasil!</h4>
                     <p className="text-xs text-slate-300 mt-1">
-                      Invoice <span className="font-mono text-white font-bold">{invoiceData.invoice_number}</span> telah terverifikasi lunas.
+                      {renewKey
+                        ? `Lisensi ${renewKey} berhasil diperpanjang! Masa aktif telah ditambahkan di Server Lisensi.`
+                        : `Invoice ${invoiceData.invoice_number} telah terverifikasi lunas.`}
                     </p>
                   </div>
 
@@ -834,64 +893,84 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
                     </div>
                   )}
 
-                  <button
-                    onClick={async () => {
-                      if (!invoiceData.license_key) {
+                  {renewKey ? (
+                    <button
+                      type="button"
+                      onClick={() => {
                         setInvoiceData(null);
                         setIsInvoicePaid(false);
-                        setActiveTab('setup');
-                        return;
-                      }
-                      setSetupLoading(true);
-                      try {
-                        const targetSlug = setupSlug || invoiceData.subdomain_slug || 'undangan';
-                        const res = await api.setupEasyTunnel({
-                          license_key: invoiceData.license_key,
-                          subdomain_slug: targetSlug,
-                          local_port: setupPort || 443,
-                          app_name: setupName || 'Studio Undangan Digital'
-                        });
-                        showToast('success', res.message || 'Terowongan berhasil dikonfigurasi & diaktifkan!');
-                        setInvoiceData(null);
-                        setIsInvoicePaid(false);
+                        setRenewKey('');
+                        setRenewSlug('');
                         setActiveTab('list');
                         loadData();
-                      } catch (err: any) {
-                        showToast('error', err.message || 'Gagal konfigurasi otomatis. Silakan pasang manual.');
-                        setSetupKey(invoiceData.license_key);
-                        setActiveTab('setup');
-                      } finally {
-                        setSetupLoading(false);
-                      }
-                    }}
-                    disabled={setupLoading}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {setupLoading ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Memasang Terowongan...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4" />
-                        <span>⚡ Pasang & Hubungkan Terowongan Sekarang</span>
-                      </>
-                    )}
-                  </button>
+                      }}
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Kembali ke Daftar Terowongan
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={async () => {
+                          if (!invoiceData.license_key) {
+                            setInvoiceData(null);
+                            setIsInvoicePaid(false);
+                            setActiveTab('setup');
+                            return;
+                          }
+                          setSetupLoading(true);
+                          try {
+                            const targetSlug = setupSlug || invoiceData.subdomain_slug || 'undangan';
+                            const res = await api.setupEasyTunnel({
+                              license_key: invoiceData.license_key,
+                              subdomain_slug: targetSlug,
+                              local_port: setupPort || 443,
+                              app_name: setupName || 'Studio Undangan Digital'
+                            });
+                            showToast('success', res.message || 'Terowongan berhasil dikonfigurasi & diaktifkan!');
+                            setInvoiceData(null);
+                            setIsInvoicePaid(false);
+                            setActiveTab('list');
+                            loadData();
+                          } catch (err: any) {
+                            showToast('error', err.message || 'Gagal konfigurasi otomatis. Silakan pasang manual.');
+                            setSetupKey(invoiceData.license_key);
+                            setActiveTab('setup');
+                          } finally {
+                            setSetupLoading(false);
+                          }
+                        }}
+                        disabled={setupLoading}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {setupLoading ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span>Memasang Terowongan...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-4 h-4" />
+                            <span>⚡ Pasang & Hubungkan Terowongan Sekarang</span>
+                          </>
+                        )}
+                      </button>
 
-                  <button
-                    onClick={() => {
-                      if (invoiceData.license_key) setSetupKey(invoiceData.license_key);
-                      setInvoiceData(null);
-                      setIsInvoicePaid(false);
-                      setActiveTab('list');
-                      loadData();
-                    }}
-                    className="text-xs text-slate-400 hover:text-white cursor-pointer"
-                  >
-                    Tutup & Pasang Nanti
-                  </button>
+                      <button
+                        onClick={() => {
+                          if (invoiceData.license_key) setSetupKey(invoiceData.license_key);
+                          if (invoiceData.subdomain_slug) setSetupSlug(invoiceData.subdomain_slug);
+                          setInvoiceData(null);
+                          setIsInvoicePaid(false);
+                          setActiveTab('setup');
+                        }}
+                        className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        Atur Parameter / Konfigurasi Manual
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
                 /* Invoice Waiting Payment Display */

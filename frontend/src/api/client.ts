@@ -265,7 +265,7 @@ export const api = {
     const res = await apiClient.get('/api/easy-tunnel/payment-channels');
     return res.data;
   },
-  buyEasyTunnelLicense: async (data: { school_name: string; plan_id: string; payment_method: string; subdomain_slug?: string; app_name?: string; local_port?: number }) => {
+  buyEasyTunnelLicense: async (data: { school_name: string; plan_id: string; payment_method: string; subdomain_slug?: string; app_name?: string; local_port?: number; renew_license_key?: string }) => {
     const res = await apiClient.post('/api/easy-tunnel/buy-license', data);
     return res.data;
   },
