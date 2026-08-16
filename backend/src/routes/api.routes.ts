@@ -38,6 +38,7 @@ export const registerApiRoutes = (fastify: FastifyInstance) => {
   fastify.post('/api/guests/add', GuestController.add);
   fastify.post('/api/guests/bulk', GuestController.bulkImport);
   fastify.post('/api/guests/checkin', GuestController.checkIn);
+  fastify.post('/api/guests/track-open', GuestController.trackOpen);
   fastify.get('/api/guests/:invitationId/export-csv', GuestController.exportCsv);
   fastify.delete('/api/guests/:id', GuestController.delete);
 

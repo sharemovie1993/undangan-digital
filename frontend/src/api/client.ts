@@ -123,6 +123,10 @@ export const api = {
     const res = await apiClient.post('/api/guests/checkin', { qrCode });
     return res.data;
   },
+  trackGuestOpen: async (invitationId: string, guestName?: string, guestId?: string) => {
+    const res = await apiClient.post('/api/guests/track-open', { invitationId, guestName, guestId });
+    return res.data;
+  },
   deleteGuest: async (id: string) => {
     const res = await apiClient.delete(`/api/guests/${id}`);
     return res.data;

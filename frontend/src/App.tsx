@@ -220,6 +220,19 @@ export default function App() {
 
   const handleOpenEnvelope = () => {
     setIsEnvelopeOpen(true);
+
+    // Track open status specifically for this guest
+    const targetInvId = invitationData.id || invitationData.slug;
+    if (targetInvId && guestName) {
+      api.trackGuestOpen(targetInvId, guestName).catch(() => {});
+      setGuests((prev) =>
+        prev.map((g) =>
+          g.name.trim().toLowerCase() === guestName.trim().toLowerCase()
+            ? { ...g, hasOpened: true }
+            : g
+        )
+      );
+    }
   };
 
   const handleAddWish = (newWish: Omit<WishMessage, 'id' | 'createdAt' | 'likes'>) => {

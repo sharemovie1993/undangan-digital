@@ -272,6 +272,91 @@ export class GuestController {
   }
 
   /**
+   * Melacak status ketika tamu tertentu membuka amplop undangan
+   */
+  static async trackOpen(request: FastifyRequest, reply: FastifyReply) {
+    const body = request.body as {
+      invitationId: string;
+      guestName?: string;
+      guestId?: string;
+    };
+
+    const { invitationId, guestName, guestId } = body;
+    if (!invitationId || (!guestName && !guestId)) {
+      return reply.status(400).send({ success: false, message: 'Parameter tidak lengkap.' });
+    }
+
+    try {
+      const inv = await prisma.invitation.findFirst({
+        where: {
+          OR: [{ id: invitationId }, { slug: invitationId }]
+        }
+      });
+
+      if (!inv) {
+        return reply.status(404).send({ success: false, message: 'Undangan tidak ditemukan.' });
+      }
+
+      // 1. Update status tamu spesifik di database
+      if (guestId) {
+        await prisma.guest.updateMany({
+          where: { id: guestId, invitationId: inv.id },
+          data: { hasOpened: true, openedAt: new Date() }
+        });
+      } else if (guestName) {
+        const cleanName = guestName.trim().toLowerCase();
+        const allGuests = await prisma.guest.findMany({
+          where: { invitationId: inv.id }
+        });
+
+        const target = allGuests.find(
+          (g) => g.name.trim().toLowerCase() === cleanName
+        );
+
+        if (target) {
+          await prisma.guest.update({
+            where: { id: target.id },
+            data: { hasOpened: true, openedAt: new Date() }
+          });
+        }
+      }
+
+      // 2. Update guest di dalam eventDataJson.guestList jika disimpan dalam JSON
+      if (inv.eventDataJson) {
+        try {
+          const evData = JSON.parse(inv.eventDataJson);
+          if (Array.isArray(evData.guestList)) {
+            const cleanTargetName = guestName?.trim().toLowerCase();
+            let changed = false;
+
+            evData.guestList = evData.guestList.map((g: any) => {
+              if (
+                (guestId && g.id === guestId) ||
+                (cleanTargetName && g.name?.trim().toLowerCase() === cleanTargetName)
+              ) {
+                changed = true;
+                return { ...g, hasOpened: true, openedAt: new Date().toISOString() };
+              }
+              return g;
+            });
+
+            if (changed) {
+              await prisma.invitation.update({
+                where: { id: inv.id },
+                data: { eventDataJson: JSON.stringify(evData) }
+              });
+            }
+          }
+        } catch {}
+      }
+
+      return reply.send({ success: true, message: 'Status buka tamu berhasil dicatat.' });
+    } catch (err: any) {
+      return reply.status(500).send({ success: false, message: 'Gagal mencatat status buka tamu.' });
+    }
+  }
+
+  /**
    * Menghapus tamu
    */
   static async delete(request: FastifyRequest, reply: FastifyReply) {

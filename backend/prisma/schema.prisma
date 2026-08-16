@@ -59,6 +59,8 @@ model Guest {
   address       String?     // Alamat untuk label stiker Tom & Jerry 103
   category      String?     @default("Tamu Undangan") // VIP, Keluarga, Teman Kantor, Sahabat
   qrCode        String      @unique // Token QR unik untuk check-in resepsi & cetak
+  hasOpened     Boolean     @default(false)
+  openedAt      DateTime?
   isCheckedIn   Boolean     @default(false)
   checkedInAt   DateTime?
   pax           Int         @default(1)
