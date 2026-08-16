@@ -7,6 +7,9 @@ class RomanticAudioEngine {
   private isPlaying: boolean = false;
   private isBuffering: boolean = false;
   private volume: number = 0.6;
+  private baseVolume: number = 0.6;
+  private isDucked: boolean = false;
+  private wasPlayingBeforeHidden: boolean = false;
   private listeners: Set<(playing: boolean) => void> = new Set();
 
   // Web Audio Synth Fallback (Lookahead Scheduler)
@@ -32,7 +35,34 @@ class RomanticAudioEngine {
   constructor() {
     if (typeof window !== 'undefined') {
       this.initAudioElement();
+      this.setupLifecycleGuards();
     }
+  }
+
+  // 📱 Mobile-First Tab & App Lifecycle Guard
+  private setupLifecycleGuards() {
+    if (typeof document === 'undefined') return;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        if (this.isPlaying) {
+          this.wasPlayingBeforeHidden = true;
+          // Soft pause when tab in background to save mobile battery
+          if (this.audioElement) {
+            this.audioElement.pause();
+          }
+          this.stopSynth();
+        }
+      } else if (document.visibilityState === 'visible') {
+        if (this.wasPlayingBeforeHidden) {
+          this.wasPlayingBeforeHidden = false;
+          this.play();
+        }
+      }
+    });
+
+    window.addEventListener('pagehide', () => this.destroy());
+    window.addEventListener('beforeunload', () => this.destroy());
   }
 
   private initAudioElement() {
@@ -136,8 +166,29 @@ class RomanticAudioEngine {
     }
   }
 
+  // 📱 Audio Ducking for Video Preview & Dialog Overlays
+  public duck(factor: number = 0.2) {
+    if (this.isDucked) return;
+    this.isDucked = true;
+    this.baseVolume = this.volume;
+    const duckedVol = Math.max(0, this.baseVolume * factor);
+    if (this.audioElement) {
+      this.audioElement.volume = duckedVol;
+    }
+    if (this.gainNode && this.ctx) {
+      this.gainNode.gain.setValueAtTime(duckedVol, this.ctx.currentTime);
+    }
+  }
+
+  public unduck() {
+    if (!this.isDucked) return;
+    this.isDucked = false;
+    this.setVolume(this.baseVolume);
+  }
+
   public setVolume(val: number) {
     this.volume = Math.max(0, Math.min(1, val));
+    this.baseVolume = this.volume;
     if (this.audioElement) {
       this.audioElement.volume = this.volume;
     }
@@ -152,6 +203,21 @@ class RomanticAudioEngine {
 
   public getIsPlaying() {
     return this.isPlaying;
+  }
+
+  public destroy() {
+    this.stopSynth();
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.audioElement.src = '';
+      this.audioElement = null;
+    }
+    if (this.ctx && this.ctx.state !== 'closed') {
+      try {
+        this.ctx.close();
+      } catch {}
+      this.ctx = null;
+    }
   }
 
   public subscribe(cb: (playing: boolean) => void) {

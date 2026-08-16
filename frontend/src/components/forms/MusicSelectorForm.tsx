@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { InvitationData } from '../../types';
 import { Music, Upload, Loader2, Play, Pause, Check, Volume2 } from 'lucide-react';
 import { api } from '../../api/client';
+import { romanticAudio } from '../../utils/audioPlayer';
 
 interface MusicSelectorFormProps {
   data: InvitationData;
@@ -31,7 +32,7 @@ const PRESET_TRACKS = [
   }
 ];
 
-export const MusicSelectorForm: React.FC<MusicSelectorFormProps> = ({ data, onChange }) => {
+export const MusicSelectorForm = memo(function MusicSelectorForm({ data, onChange }: MusicSelectorFormProps) {
   const currentUrl = data.audioTrack?.url || data.musicUrl || '';
   const [isUploading, setIsUploading] = useState(false);
   const [playingPreviewUrl, setPlayingPreviewUrl] = useState<string | null>(null);
@@ -44,16 +45,19 @@ export const MusicSelectorForm: React.FC<MusicSelectorFormProps> = ({ data, onCh
 
     audio.onended = () => {
       setPlayingPreviewUrl(null);
+      romanticAudio.unduck();
     };
 
     audio.onerror = () => {
       setPlayingPreviewUrl(null);
+      romanticAudio.unduck();
     };
 
     return () => {
       audio.pause();
       audio.src = '';
       audioRef.current = null;
+      romanticAudio.unduck();
     };
   }, []);
 
@@ -64,7 +68,9 @@ export const MusicSelectorForm: React.FC<MusicSelectorFormProps> = ({ data, onCh
     if (playingPreviewUrl === url) {
       audioRef.current.pause();
       setPlayingPreviewUrl(null);
+      romanticAudio.unduck();
     } else {
+      romanticAudio.duck(0.1);
       audioRef.current.pause();
       audioRef.current.src = url;
       audioRef.current.play().then(() => {
@@ -72,6 +78,7 @@ export const MusicSelectorForm: React.FC<MusicSelectorFormProps> = ({ data, onCh
       }).catch((err) => {
         console.warn('Audio play prevented:', err);
         setPlayingPreviewUrl(null);
+        romanticAudio.unduck();
       });
     }
   };
@@ -252,4 +259,7 @@ export const MusicSelectorForm: React.FC<MusicSelectorFormProps> = ({ data, onCh
       </div>
     </div>
   );
-};
+});
+
+MusicSelectorForm.displayName = 'MusicSelectorForm';
+
