@@ -39,8 +39,11 @@ export class WireguardManager {
     if (this.isWindows()) {
       return fs.existsSync(WINDOWS_WG_PATH);
     } else {
+      if (fs.existsSync('/usr/bin/wg-quick') || fs.existsSync('/usr/sbin/wg-quick') || fs.existsSync('/usr/local/bin/wg-quick')) {
+        return true;
+      }
       try {
-        execSync('which wg-quick', { stdio: 'pipe', windowsHide: true });
+        execSync('command -v wg-quick || which wg-quick', { stdio: 'pipe', windowsHide: true });
         return true;
       } catch {
         return false;
