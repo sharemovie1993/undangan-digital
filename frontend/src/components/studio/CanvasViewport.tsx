@@ -80,12 +80,12 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
             onAddWish={onAddWish}
             stitchBlocks={data.stitchBlocks}
           />
-
-          {/* Integrated Floating Music Player */}
-          {data.enabledBlocks?.music !== false && (
-            <FloatingMusicPlayer data={data} />
-          )}
         </div>
+
+        {/* Pinned Static Floating Music Player (Does not move on scroll) */}
+        {data.enabledBlocks?.music !== false && (
+          <FloatingMusicPlayer data={data} position="absolute" />
+        )}
       </div>
     </div>
   );
