@@ -1,0 +1,6 @@
+{
+  "name": "Luxury Digital Invitation Studio",
+  "description": "Luxurious multi-event digital invitation platform supporting Wedding, Khitanan, Aqiqah, and Birthday with live countdown, envelope opening, RSVP guestbook, digital gift bank, music player, and 300 DPI / Tom & Jerry 103 print studio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

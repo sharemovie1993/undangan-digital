@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production Builds
+dist/
+*/dist/
+
+# Environment variables
+.env
+*/.env
+.env.local
+.env.*.local
+
+# Databases
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+dev.db
+backend/prisma/dev.db
+
+# Storage / Uploads
+uploads/
+*/uploads/
+public/uploads/
+backend/uploads/
+
+# Data cache
+backend/data/*.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archives
+*.zip
+*.tar.gz
+
+# System / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

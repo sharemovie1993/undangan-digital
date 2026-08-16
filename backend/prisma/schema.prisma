@@ -1,0 +1,123 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  phone        String?       @unique
+  name         String
+  password     String
+  role         String        @default("USER") // USER, RESELLER, PERCETAKAN, ADMIN
+  quotaTokens  Int           @default(0)
+  avatarUrl    String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  invitations  Invitation[]
+  orders       Order[]
+  mediaUploads MediaUpload[]
+}
+
+model Invitation {
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventType       String        @default("WEDDING") // WEDDING, KHITANAN, AQIQAH, BIRTHDAY, TASYAKURAN
+  title           String        // e.g. "The Wedding of Romeo & Juliet"
+  slug            String        @unique // e.g. "wedding-romeo-juliet"
+  customDomain    String?       @unique
+  themeId         String        @default("champagne_gold") // champagne_gold, emerald_sage, velvet_navy
+  themeConfig     String?       // Custom JSON tokens (color, fonts)
+  stitchBlocks    String?       // Reorderable blocks configuration JSON
+  printConfig     String?       // Print settings JSON (A5, 4R, bleed)
+  eventDataJson   String        // Full event data JSON
+  status          String        @default("DRAFT") // DRAFT, ACTIVE, ARCHIVED
+  isWatermark     Boolean       @default(true)
+  allowPrintKit   Boolean       @default(false)
+  licenseKey      String?       @unique
+  planId          String?       // UND-BASIC, UND-GOLD, UND-PLATINUM, UND-RESELLER
+  expiresAt       DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  guests          Guest[]
+  rsvps           Rsvp[]
+  mediaUploads    MediaUpload[]
+}
+
+model Guest {
+  id            String      @id @default(uuid())
+  invitationId  String
+  invitation    Invitation  @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  name          String
+  phone         String?
+  address       String?     // Alamat untuk label stiker Tom & Jerry 103
+  category      String?     @default("Tamu Undangan") // VIP, Keluarga, Teman Kantor, Sahabat
+  qrCode        String      @unique // Token QR unik untuk check-in resepsi & cetak
+  isCheckedIn   Boolean     @default(false)
+  checkedInAt   DateTime?
+  pax           Int         @default(1)
+  createdAt     DateTime    @default(now())
+}
+
+model Rsvp {
+  id            String      @id @default(uuid())
+  invitationId  String
+  invitation    Invitation  @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  name          String
+  attendance    String      // HADIR, TIDAK_HADIR, RAGU
+  pax           Int         @default(1)
+  message       String?
+  likes         Int         @default(0)
+  createdAt     DateTime    @default(now())
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitationId    String?
+  invoiceNumber   String      @unique // INV dari Server Lisensi
+  planId          String      // Plan dari Server Lisensi
+  planName        String?
+  amount          Float
+  status          String      @default("unpaid") // unpaid, paid, expired
+  paymentMethod   String      @default("QRIS2")
+  paymentDataJson String?     // QR URL, VA number, payment instructions
+  licenseKey      String?
+  paidAt          DateTime?
+  createdAt       DateTime    @default(now())
+}
+
+model MediaUpload {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitationId  String?
+  invitation    Invitation? @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+  originalName  String
+  fileName      String      @unique
+  fileUrl       String
+  mimeType      String
+  sizeBytes     Int
+  createdAt     DateTime    @default(now())
+}
+
+model OtpVerification {
+  id         String   @id @default(uuid())
+  phone      String   @unique
+  otp        String
+  attempts   Int      @default(0)
+  mode       String   @default("login")
+  role       String?
+  name       String?
+  email      String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+
