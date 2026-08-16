@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { motion } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Send, CheckCircle2, XCircle, HelpCircle, Heart, User, Users, MessageSquareQuote, Loader2 } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, HelpCircle, Heart, User, Users, MessageSquareQuote, Loader2, ChevronDown } from 'lucide-react';
 import { InvitationData, WishMessage } from '../types';
 import { DEFAULT_WISHES, FONT_PRESETS } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
@@ -16,12 +16,113 @@ interface RsvpWishesSectionProps {
   defaultGuestName?: string;
 }
 
-export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
+// ─────────────────────────────────────────────────────────────────────────────
+// 📱 WishCardItem — Memoized Card Component untuk Mencegah Re-render Seluruh List
+// ─────────────────────────────────────────────────────────────────────────────
+interface WishCardItemProps {
+  item: WishMessage;
+  hasLiked: boolean;
+  onToggleLike: (id: string) => void;
+  activePrimary: string;
+  cardBg: string;
+  headingFont: string;
+  theme: any;
+}
+
+const WishCardItem = memo(function WishCardItem({
+  item,
+  hasLiked,
+  onToggleLike,
+  activePrimary,
+  cardBg,
+  headingFont,
+  theme,
+}: WishCardItemProps) {
+  const totalLikes = (item.likes || 0) + (hasLiked ? 1 : 0);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border p-4 shadow-md backdrop-blur-md contain-content"
+      style={{
+        backgroundColor: `${cardBg}f5`,
+        borderColor: `${activePrimary}30`,
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          {/* Avatar Initials */}
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-full font-bold text-sm border shrink-0"
+            style={{
+              backgroundColor: `${activePrimary}20`,
+              borderColor: `${activePrimary}50`,
+              color: activePrimary,
+              fontFamily: headingFont,
+            }}
+          >
+            {(item.senderName || 'T').charAt(0).toUpperCase()}
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-xs" style={{ color: theme.textMain }}>
+                {item.senderName || 'Tamu'}
+              </span>
+
+              {/* Attendance Badge */}
+              <span
+                className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                  item.status === 'hadir'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : item.status === 'tidak_hadir'
+                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                }`}
+              >
+                {item.status === 'hadir'
+                  ? `Hadir (${item.pax || 1} Pax)`
+                  : item.status === 'tidak_hadir'
+                  ? 'Tidak Hadir'
+                  : 'Ragu'}
+              </span>
+            </div>
+            <span className="text-[10px] font-light" style={{ color: theme.textMuted }}>
+              {item.relationship || 'Tamu Undangan'} • {item.createdAt || 'Baru saja'}
+            </span>
+          </div>
+        </div>
+
+        {/* Like Button */}
+        <button
+          onClick={() => onToggleLike(item.id)}
+          className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] transition cursor-pointer ${
+            hasLiked ? 'text-rose-400 font-semibold' : 'hover:opacity-100'
+          }`}
+          style={{ color: hasLiked ? '#fb7185' : theme.textMuted }}
+        >
+          <Heart
+            className={`w-3.5 h-3.5 ${hasLiked ? 'fill-rose-500 text-rose-500' : ''}`}
+          />
+          <span>{totalLikes}</span>
+        </button>
+      </div>
+
+      <p className="mt-2.5 text-xs leading-relaxed pl-11" style={{ color: theme.textMain }}>
+        {item.message}
+      </p>
+    </motion.div>
+  );
+});
+WishCardItem.displayName = 'WishCardItem';
+
+export const RsvpWishesSection = memo(function RsvpWishesSection({
   data,
   wishes: initialWishes = DEFAULT_WISHES,
   onAddWish,
   defaultGuestName = '',
-}) => {
+}: RsvpWishesSectionProps) {
   const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || theme.bg || '#0a0a0b';
@@ -38,6 +139,9 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+
+  // 📱 Mobile-First Virtualization / Progressive Pagination (5 items per batch)
+  const [visibleCount, setVisibleCount] = useState(5);
 
   // TanStack Query: Fetch Live RSVPs from SQLite Backend
   const { data: serverRsvps } = useQuery({
@@ -122,12 +226,11 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
     });
   };
 
-  const toggleLike = async (wishId: string) => {
-    const isLiked = likedIds.has(wishId);
-
+  const toggleLike = useCallback(async (wishId: string) => {
     setLikedIds((prev) => {
       const next = new Set(prev);
-      if (isLiked) {
+      const isCurrentlyLiked = next.has(wishId);
+      if (isCurrentlyLiked) {
         next.delete(wishId);
       } else {
         next.add(wishId);
@@ -135,14 +238,12 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
       return next;
     });
 
-    if (!isLiked) {
-      try {
-        await api.likeRsvp(wishId);
-      } catch (e) {
-        // silent fallback
-      }
+    try {
+      await api.likeRsvp(wishId);
+    } catch {
+      // silent fallback
     }
-  };
+  }, []);
 
   // Safe defensive array normalization
   const rawWishes = Array.isArray(serverRsvps)
@@ -154,6 +255,8 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
     : [];
 
   const displayWishes: WishMessage[] = Array.isArray(rawWishes) ? rawWishes : [];
+  const visibleWishes = displayWishes.slice(0, visibleCount);
+  const remainingCount = displayWishes.length - visibleCount;
 
   return (
     <section
@@ -397,8 +500,8 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
             <span className="text-[10px] font-mono" style={{ color: theme.textMuted }}>Live SQLite</span>
           </div>
 
-          {/* Wishes List */}
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-1 scrollbar-thin">
+          {/* Wishes List — 📱 Progressive Paginated List for Low-End Mobile Performance */}
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-1 scrollbar-thin touch-scroll">
             {!Array.isArray(displayWishes) || displayWishes.length === 0 ? (
               <div
                 className="rounded-2xl border p-6 text-center shadow-md backdrop-blur-md"
@@ -412,90 +515,46 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
                 <p className="text-[11px] mt-1" style={{ color: theme.textMuted }}>Jadilah yang pertama mengirimkan ucapan doa restu dan konfirmasi kehadiran di atas!</p>
               </div>
             ) : (
-              displayWishes.map((item) => {
-                const hasLiked = likedIds.has(item.id);
-                const totalLikes = (item.likes || 0) + (hasLiked ? 1 : 0);
-
-                return (
-                  <motion.div
+              <>
+                {visibleWishes.map((item) => (
+                  <WishCardItem
                     key={item.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl border p-4 shadow-md backdrop-blur-md"
-                    style={{
-                      backgroundColor: `${cardBg}f5`,
-                      borderColor: `${activePrimary}30`,
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        {/* Avatar Initials */}
-                        <div
-                          className="flex h-9 w-9 items-center justify-center rounded-full font-bold text-sm border shrink-0"
-                          style={{
-                            backgroundColor: `${activePrimary}20`,
-                            borderColor: `${activePrimary}50`,
-                            color: activePrimary,
-                            fontFamily: headingFont,
-                          }}
-                        >
-                          {(item.senderName || 'T').charAt(0).toUpperCase()}
-                        </div>
+                    item={item}
+                    hasLiked={likedIds.has(item.id)}
+                    onToggleLike={toggleLike}
+                    activePrimary={activePrimary}
+                    cardBg={cardBg}
+                    headingFont={headingFont}
+                    theme={theme}
+                  />
+                ))}
 
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-xs" style={{ color: theme.textMain }}>
-                              {item.senderName || 'Tamu'}
-                            </span>
-
-                            {/* Attendance Badge */}
-                            <span
-                              className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                                item.status === 'hadir'
-                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                  : item.status === 'tidak_hadir'
-                                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                              }`}
-                            >
-                              {item.status === 'hadir'
-                                ? `Hadir (${item.pax || 1} Pax)`
-                                : item.status === 'tidak_hadir'
-                                ? 'Tidak Hadir'
-                                : 'Ragu'}
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-light" style={{ color: theme.textMuted }}>
-                            {item.relationship || 'Tamu Undangan'} • {item.createdAt || 'Baru saja'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Like Button */}
-                      <button
-                        onClick={() => toggleLike(item.id)}
-                        className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] transition cursor-pointer ${
-                          hasLiked ? 'text-rose-400 font-semibold' : 'hover:opacity-100'
-                        }`}
-                        style={{ color: hasLiked ? '#fb7185' : theme.textMuted }}
-                      >
-                        <Heart
-                          className={`w-3.5 h-3.5 ${hasLiked ? 'fill-rose-500 text-rose-500' : ''}`}
-                        />
-                        <span>{totalLikes}</span>
-                      </button>
-                    </div>
-
-                    <p className="mt-2.5 text-xs leading-relaxed pl-11" style={{ color: theme.textMain }}>
-                      {item.message}
-                    </p>
-                  </motion.div>
-                );
-              })
+                {/* 📱 Load More Button for Mobile Virtualization */}
+                {remainingCount > 0 && (
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setVisibleCount((prev) => prev + 10)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition shadow-md cursor-pointer border"
+                      style={{
+                        backgroundColor: `${activePrimary}15`,
+                        borderColor: `${activePrimary}40`,
+                        color: activePrimary,
+                      }}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      <span>Muat {Math.min(remainingCount, 10)} Ucapan Lainnya ({remainingCount} tersisa)</span>
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
       </div>
     </section>
   );
-};
+});
+
+RsvpWishesSection.displayName = 'RsvpWishesSection';
+
