@@ -616,14 +616,42 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
 
                         {/* Diagnostics result dropdown */}
                         {diagnostics[tunnel.id] && (
-                          <div className="mt-3 pt-3 border-t border-slate-800 text-xs font-mono bg-slate-900/90 p-3 rounded-lg text-slate-300 overflow-x-auto">
-                            <div className="flex items-center justify-between mb-1 text-[11px] font-sans text-slate-400">
-                              <span>Log Diagnostik WireGuard:</span>
-                              <span>{diagnostics[tunnel.id].timestamp}</span>
+                          <div className="mt-3 pt-3 border-t border-slate-800 text-xs font-mono bg-slate-950/90 p-3.5 rounded-xl text-slate-300 overflow-x-auto border border-slate-800/80 shadow-inner">
+                            <div className="flex items-center justify-between mb-2 text-[11px] font-sans text-slate-400 border-b border-slate-800/60 pb-1.5">
+                              <span className="font-semibold text-amber-400 flex items-center gap-1.5">
+                                <Activity className="w-3.5 h-3.5" />
+                                Hasil Diagnostik Jaringan & Tunnel:
+                              </span>
+                              <span>{diagnostics[tunnel.id].timestamp || new Date().toLocaleTimeString()}</span>
                             </div>
-                            <pre className="text-[11px] text-amber-300">
-                              {JSON.stringify(diagnostics[tunnel.id], null, 2)}
-                            </pre>
+                            {Array.isArray(diagnostics[tunnel.id].details) ? (
+                              <div className="space-y-1 text-[11px] leading-relaxed">
+                                {diagnostics[tunnel.id].details.map((line: string, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className={`${
+                                      line.includes('✅')
+                                        ? 'text-emerald-400 font-medium'
+                                        : line.includes('❌')
+                                        ? 'text-rose-400 font-semibold'
+                                        : line.includes('⚠️')
+                                        ? 'text-amber-400 font-semibold'
+                                        : line.includes('1️⃣') || line.includes('2️⃣') || line.includes('3️⃣') || line.includes('4️⃣')
+                                        ? 'text-sky-300 font-bold mt-1.5'
+                                        : line.includes('💡')
+                                        ? 'text-amber-300 font-medium'
+                                        : 'text-slate-300'
+                                    }`}
+                                  >
+                                    {line}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <pre className="text-[11px] text-amber-300">
+                                {JSON.stringify(diagnostics[tunnel.id], null, 2)}
+                              </pre>
+                            )}
                           </div>
                         )}
                       </div>
