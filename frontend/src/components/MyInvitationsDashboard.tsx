@@ -20,13 +20,15 @@ import {
   CreditCard,
   Zap,
   RefreshCw,
-  Key
+  Key,
+  Globe
 } from 'lucide-react';
 import { EventType, ThemeToken } from '../types';
 import { VendorAuthModal } from './auth/VendorAuthModal';
 import { PricingModal } from './PricingModal';
 import { TransferLicenseModal } from './TransferLicenseModal';
 import { ActiveLicenseModal } from './ActiveLicenseModal';
+import { EasyTunnelModal } from './EasyTunnelModal';
 import { useAuth } from '../hooks/useAuth';
 import { useInvitations } from '../hooks/useInvitations';
 import { useToast } from '../context/ToastContext';
@@ -105,6 +107,7 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isActiveLicenseModalOpen, setIsActiveLicenseModalOpen] = useState(false);
+  const [isEasyTunnelModalOpen, setIsEasyTunnelModalOpen] = useState(false);
   const [activeLicenseTarget, setActiveLicenseTarget] = useState<any>(null);
   const [pricingTargetInvitation, setPricingTargetInvitation] = useState<any>(null);
   const [transferTargetInvitation, setTransferTargetInvitation] = useState<any>(null);
@@ -371,6 +374,16 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
 
           {currentUser && (
             <>
+              <button
+                onClick={() => setIsEasyTunnelModalOpen(true)}
+                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
+                title="Akses Publik Instan & Terowongan WireGuard"
+              >
+                <Globe className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                <span className="hidden md:inline">Easy Tunnel</span>
+                <span className="md:hidden text-[11px]">Tunnel</span>
+              </button>
+
               <button
                 onClick={() => handleOpenPricingForInvitation()}
                 className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#c4a661]/15 hover:bg-[#c4a661]/25 border border-[#c4a661]/40 text-[#c4a661] font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
@@ -907,6 +920,12 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
           setIsActiveLicenseModalOpen(false);
           handleOpenPricingForInvitation(activeLicenseTarget);
         }}
+      />
+
+      {/* Easy-Tunnel WireGuard Modal */}
+      <EasyTunnelModal
+        isOpen={isEasyTunnelModalOpen}
+        onClose={() => setIsEasyTunnelModalOpen(false)}
       />
     </div>
   );

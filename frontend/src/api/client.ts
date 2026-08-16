@@ -200,5 +200,71 @@ export const api = {
   getStyleKits: async () => {
     const res = await apiClient.get('/api/style-kits');
     return res.data;
+  },
+
+  // Easy-Tunnel WireGuard
+  getEasyTunnels: async () => {
+    const res = await apiClient.get('/api/easy-tunnel');
+    return res.data;
+  },
+  getEasyTunnelById: async (id: string) => {
+    const res = await apiClient.get(`/api/easy-tunnel/${id}`);
+    return res.data;
+  },
+  setupEasyTunnel: async (data: { license_key: string; subdomain_slug: string; local_port: number; app_name: string }) => {
+    const res = await apiClient.post('/api/easy-tunnel/setup', data);
+    return res.data;
+  },
+  startEasyTunnel: async (id: string) => {
+    const res = await apiClient.post(`/api/easy-tunnel/${id}/start`);
+    return res.data;
+  },
+  stopEasyTunnel: async (id: string) => {
+    const res = await apiClient.post(`/api/easy-tunnel/${id}/stop`);
+    return res.data;
+  },
+  deleteEasyTunnel: async (id: string) => {
+    const res = await apiClient.delete(`/api/easy-tunnel/${id}`);
+    return res.data;
+  },
+  diagnoseEasyTunnel: async (id: string) => {
+    const res = await apiClient.get(`/api/easy-tunnel/${id}/diagnose`);
+    return res.data;
+  },
+  setEasyTunnelCustomDomain: async (id: string, custom_domain: string) => {
+    const res = await apiClient.post(`/api/easy-tunnel/${id}/custom-domain`, { custom_domain });
+    return res.data;
+  },
+  removeEasyTunnelCustomDomain: async (id: string) => {
+    const res = await apiClient.delete(`/api/easy-tunnel/${id}/custom-domain`);
+    return res.data;
+  },
+  checkWgInstalled: async () => {
+    const res = await apiClient.get('/api/easy-tunnel/wg-check');
+    return res.data;
+  },
+  installWg: async () => {
+    const res = await apiClient.post('/api/easy-tunnel/wg-install');
+    return res.data;
+  },
+  getEasyTunnelPackages: async () => {
+    const res = await apiClient.get('/api/easy-tunnel/packages');
+    return res.data;
+  },
+  getEasyTunnelPaymentChannels: async () => {
+    const res = await apiClient.get('/api/easy-tunnel/payment-channels');
+    return res.data;
+  },
+  buyEasyTunnelLicense: async (data: { school_name: string; plan_id: string; payment_method: string; subdomain_slug?: string; app_name?: string; local_port?: number }) => {
+    const res = await apiClient.post('/api/easy-tunnel/buy-license', data);
+    return res.data;
+  },
+  checkEasyTunnelInvoice: async (invoice: string) => {
+    const res = await apiClient.get(`/api/easy-tunnel/invoice-status/${invoice}`);
+    return res.data;
+  },
+  validateEasyTunnelKey: async (key: string) => {
+    const res = await apiClient.get(`/api/easy-tunnel/validate/${key}`);
+    return res.data;
   }
 };

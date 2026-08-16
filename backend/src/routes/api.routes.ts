@@ -8,6 +8,7 @@ import { PrintController } from '../controllers/print.controller';
 import { UploadController } from '../controllers/upload.controller';
 import { StitchController } from '../controllers/stitch.controller';
 import { ThemeController } from '../controllers/theme.controller';
+import { registerEasyTunnelRoutes } from '../modules/easy-tunnel/routes/easy-tunnel.routes';
 import { verifyAuth, optionalAuth } from '../middlewares/auth.middleware';
 
 export const registerApiRoutes = (fastify: FastifyInstance) => {
@@ -70,4 +71,7 @@ export const registerApiRoutes = (fastify: FastifyInstance) => {
   // 9. Realtime Themes & Master Style Kits Catalog
   fastify.get('/api/themes', ThemeController.getThemes);
   fastify.get('/api/style-kits', ThemeController.getStyleKits);
+
+  // 10. Easy-Tunnel WireGuard Engine
+  registerEasyTunnelRoutes(fastify);
 };

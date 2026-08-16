@@ -5,6 +5,8 @@ import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import { registerApiRoutes } from './routes/api.routes';
 import { config } from './config/app.config';
+import { WireguardManager } from './services/wireguardManager';
+import { EasyTunnelService } from './modules/easy-tunnel/services/easy-tunnel.service';
 import fs from 'fs';
 
 const fastify = Fastify({
@@ -16,10 +18,11 @@ const fastify = Fastify({
 
 const start = async () => {
   try {
-    // Ensure upload directory exists
+    // Ensure upload directory and tunnels directory exist
     if (!fs.existsSync(config.uploadDir)) {
       fs.mkdirSync(config.uploadDir, { recursive: true });
     }
+    WireguardManager.ensureTunnelsDir();
 
     // CORS configuration
     await fastify.register(cors, {
@@ -56,6 +59,11 @@ const start = async () => {
 
     await fastify.listen({ port: config.port, host: config.host });
     console.log(`[LuxeInvite Backend 360] Server running on http://localhost:${config.port}`);
+
+    // Auto-start active Easy-Tunnel tunnels in background
+    EasyTunnelService.autoStartActiveTunnels().catch(err => {
+      console.warn('[EasyTunnel] Auto-start error on boot:', err.message);
+    });
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

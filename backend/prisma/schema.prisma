@@ -121,3 +121,18 @@ model OtpVerification {
   createdAt  DateTime @default(now())
 }
 
+model EasyTunnel {
+  id           String    @id @default(uuid())
+  appName      String    @map("app_name")
+  licenseKey   String    @unique @map("license_key")
+  slug         String    @unique
+  localPort    Int       @map("local_port")
+  status       String    @default("inactive") // active, inactive, expired
+  customDomain String?   @map("custom_domain")
+  expiresAt    DateTime? @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("easy_tunnels")
+}
+
