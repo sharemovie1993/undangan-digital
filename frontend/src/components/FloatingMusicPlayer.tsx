@@ -10,7 +10,7 @@ interface FloatingMusicPlayerProps {
   position?: 'fixed' | 'absolute';
 }
 
-export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = memo(({ data, position = 'absolute' }) => {
+export const FloatingMusicPlayer = memo(function FloatingMusicPlayer({ data, position = 'absolute' }: FloatingMusicPlayerProps) {
   const theme = THEMES[data.theme] || THEMES.champagne_gold;
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const cardBg = data.themeConfig?.cardBgColor || theme.cardBg || '#121216';

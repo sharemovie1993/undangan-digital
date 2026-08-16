@@ -7,6 +7,7 @@ import { themeRegistry } from '../themes/registry';
 
 interface GallerySectionProps {
   data: InvitationData;
+  theme?: string;
 }
 
 // Progressive Image Component with Shimmer Placeholder
@@ -63,9 +64,7 @@ const GalleryImageItem: React.FC<{
   );
 };
 
-
-
-export const GallerySection: React.FC<GallerySectionProps> = React.memo(({ data }) => {
+export const GallerySection = React.memo(function GallerySection({ data }: GallerySectionProps) {
   const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || theme.bg || '#0a0a0b';

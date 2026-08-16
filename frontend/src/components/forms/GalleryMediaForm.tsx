@@ -11,7 +11,7 @@ interface GalleryMediaFormProps {
   onChange: (newData: InvitationData) => void;
 }
 
-export const GalleryMediaForm: React.FC<GalleryMediaFormProps> = memo(({ data, onChange }) => {
+export const GalleryMediaForm = memo(function GalleryMediaForm({ data, onChange }: GalleryMediaFormProps) {
   const gallery = data.gallery || [];
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [newCaption, setNewCaption] = useState('');

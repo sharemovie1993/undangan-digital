@@ -1,4 +1,4 @@
-﻿import React, { useCallback, memo } from 'react';
+import React, { useCallback, memo } from 'react';
 import { InvitationData } from '../../types';
 import { Calendar, MapPin, Clock, Plus, Trash2 } from 'lucide-react';
 import { useLocalField } from '../../hooks/useLocalField';
@@ -29,10 +29,7 @@ const getIndonesianDatePreview = (dateString?: string) => {
   return dateString;
 };
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// ðŸ“± EventSessionRow â€” React.memo per sesi dengan local-buffered input
-//    Mencegah semua sesi re-render saat salah satu sesi diketik
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// EventSessionRow — React.memo per sesi dengan local-buffered input
 interface EventSession {
   title?: string;
   date?: string;
@@ -193,7 +190,6 @@ const EventSessionRow = memo(({ ev, index, eventType, canRemove, onUpdate, onRem
 });
 EventSessionRow.displayName = 'EventSessionRow';
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const EventScheduleForm: React.FC<EventScheduleFormProps> = ({ data, onChange }) => {
   const events: EventSession[] = data.events && data.events.length > 0 ? data.events : [
     {

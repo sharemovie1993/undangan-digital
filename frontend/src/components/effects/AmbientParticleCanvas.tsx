@@ -20,11 +20,11 @@ interface Particle {
   color: string;
 }
 
-export const AmbientParticleCanvas: React.FC<AmbientParticleCanvasProps> = memo(({
+export const AmbientParticleCanvas = memo(function AmbientParticleCanvas({
   effect = 'none',
   primaryColor = '#c4a661',
   isDark = true,
-}) => {
+}: AmbientParticleCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {

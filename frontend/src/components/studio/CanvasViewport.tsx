@@ -18,7 +18,7 @@ interface CanvasViewportProps {
   onOpenStyleGallery?: () => void;
 }
 
-export const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
+export const CanvasViewport = memo(function CanvasViewport({
   data,
   deviceFrame,
   isPhoneEnvelopeOpen,
@@ -29,7 +29,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
   onPrevStyleKit,
   onNextStyleKit,
   onOpenStyleGallery,
-}) => {
+}: CanvasViewportProps) {
   const activeTheme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || activeTheme?.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || activeTheme?.bg || '#0a0a0b';

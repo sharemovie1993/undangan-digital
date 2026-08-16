@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 📱 SmartImage — Universal Lazy-Load Image Component
  *
  * Fitur Mobile-First:
@@ -22,7 +22,7 @@ interface SmartImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   shimmerColor?: string;
 }
 
-export const SmartImage = memo(({
+export const SmartImage = memo(function SmartImage({
   src,
   alt = '',
   priority = false,
@@ -31,7 +31,7 @@ export const SmartImage = memo(({
   className = '',
   style,
   ...rest
-}: SmartImageProps) => {
+}: SmartImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
 
