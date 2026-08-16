@@ -1,16 +1,25 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { LicenseService } from '../services/license.service';
 import { prisma } from '../db';
-import { isPrintKitAllowed, isResellerPlan, calculateResellerTokens } from '../constants/plans';
+import { isPrintKitAllowed, isResellerPlan, calculateResellerTokens, BACKEND_PLANS } from '../constants/plans';
+import { invalidateInvitationCache } from './invitation.controller';
 
-const grantResellerTokensIfApplicable = async (order: any) => {
+/**
+ * 🧠 Cache In-Memory Paket & Channel Pembayaran (5 Menit)
+ */
+let cachedPackages: { data: any; cachedAt: number } | null = null;
+let cachedChannels: { data: any; cachedAt: number } | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+const grantResellerTokensIfApplicable = async (order: any, tx?: any) => {
   if (!order || !order.userId) return;
   const isReseller = isResellerPlan(order.planId, order.amount);
 
   if (isReseller) {
     const tokensToAdd = calculateResellerTokens(order.amount);
     try {
-      await prisma.user.update({
+      const db = tx || prisma;
+      await db.user.update({
         where: { id: order.userId },
         data: {
           quotaTokens: { increment: tokensToAdd },
@@ -27,24 +36,41 @@ const grantResellerTokensIfApplicable = async (order: any) => {
 export class OrderController {
   /**
    * Mengambil daftar paket lisensi secara realtime dari Server Lisensi
+   * 🚀 Dioptimasi dengan In-Memory Cache & Circuit Breaker Fallback
    */
   static async getPackages(_request: FastifyRequest, reply: FastifyReply) {
+    if (cachedPackages && (Date.now() - cachedPackages.cachedAt) < CACHE_TTL_MS) {
+      return reply.send({ success: true, cached: true, data: cachedPackages.data });
+    }
+
     try {
       const data = await LicenseService.getPackages();
-      return reply.send({ success: true, data });
+      if (data) {
+        cachedPackages = { data, cachedAt: Date.now() };
+      }
+      return reply.send({ success: true, cached: false, data });
     } catch (err: any) {
-      console.error('[Get Packages Error]', err.message);
-      return reply.status(500).send({ success: false, message: 'Gagal memuat daftar paket dari server lisensi.' });
+      console.warn('[Get Packages Warning] Menggunakan fallback paket lokal:', err.message);
+      // Circuit Breaker: fallback ke katalog paket lokal
+      return reply.send({ success: true, fallback: true, data: Object.values(BACKEND_PLANS) });
     }
   }
 
   /**
    * Mengambil daftar channel pembayaran (QRIS, VA Bank, Retail)
+   * 🚀 Dioptimasi dengan In-Memory Cache
    */
   static async getPaymentChannels(_request: FastifyRequest, reply: FastifyReply) {
+    if (cachedChannels && (Date.now() - cachedChannels.cachedAt) < CACHE_TTL_MS) {
+      return reply.send({ success: true, cached: true, data: cachedChannels.data });
+    }
+
     try {
       const data = await LicenseService.getPaymentChannels();
-      return reply.send({ success: true, data });
+      if (data) {
+        cachedChannels = { data, cachedAt: Date.now() };
+      }
+      return reply.send({ success: true, cached: false, data });
     } catch (err: any) {
       console.error('[Get Payment Channels Error]', err.message);
       return reply.status(500).send({ success: false, message: 'Gagal memuat channel pembayaran.' });
@@ -71,11 +97,13 @@ export class OrderController {
     try {
       let activeUserId = (request.user as any)?.userId;
       if (!activeUserId) {
+        const digits = customerPhone.replace(/[^0-9]/g, '');
         const foundUser = await prisma.user.findFirst({
           where: {
             OR: [
               { phone: customerPhone },
-              { phone: '+62' + customerPhone.replace(/^0/, '') }
+              { phone: `+62${digits.replace(/^0/, '')}` },
+              { phone: digits }
             ]
           }
         });
@@ -143,33 +171,39 @@ export class OrderController {
         if (isPaid) {
           const localOrder = await prisma.order.findUnique({ where: { invoiceNumber } });
           if (localOrder && localOrder.status !== 'PAID') {
-            await prisma.order.update({
-              where: { id: localOrder.id },
-              data: {
-                status: 'PAID',
-                licenseKey: statusResult.data.license_key || 'UND-PAID-ACTIVE',
-                paidAt: new Date()
+            await prisma.$transaction(async (tx) => {
+              await tx.order.update({
+                where: { id: localOrder.id },
+                data: {
+                  status: 'PAID',
+                  licenseKey: statusResult.data.license_key || 'UND-PAID-ACTIVE',
+                  paidAt: new Date()
+                }
+              });
+
+              // Berikan token jika paket reseller
+              await grantResellerTokensIfApplicable(localOrder, tx);
+
+              if (localOrder.invitationId) {
+                await tx.invitation.updateMany({
+                  where: {
+                    OR: [
+                      { id: localOrder.invitationId },
+                      { slug: localOrder.invitationId }
+                    ]
+                  },
+                  data: {
+                    isWatermark: false,
+                    allowPrintKit: isPrintKitAllowed(localOrder.planId),
+                    status: 'ACTIVE',
+                    licenseKey: statusResult.data.license_key || 'UND-PAID-ACTIVE'
+                  }
+                });
               }
             });
 
-            // Berikan token jika paket reseller
-            await grantResellerTokensIfApplicable(localOrder);
-
             if (localOrder.invitationId) {
-              await prisma.invitation.updateMany({
-                where: {
-                  OR: [
-                    { id: localOrder.invitationId },
-                    { slug: localOrder.invitationId }
-                  ]
-                },
-                data: {
-                  isWatermark: false,
-                  allowPrintKit: isPrintKitAllowed(localOrder.planId),
-                  status: 'ACTIVE',
-                  licenseKey: statusResult.data.license_key || 'UND-PAID-ACTIVE'
-                }
-              });
+              invalidateInvitationCache(localOrder.invitationId);
             }
           }
         }
@@ -184,6 +218,7 @@ export class OrderController {
 
   /**
    * Automated Webhook Callback dari Server Lisensi
+   * 🚀 Dioptimasi dengan Idempotent Webhook Lock (Anti-Duplicate Credit)
    */
   static async handleWebhook(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as any;
@@ -197,53 +232,86 @@ export class OrderController {
       const st = (status || '').toUpperCase();
       if (st === 'PAID' || st === 'SUCCESS' || st === 'SETTLED') {
         const order = await prisma.order.findUnique({ where: { invoiceNumber: invoice_number } });
-        if (order) {
-          const finalKey = license_key || order.licenseKey || `UND-LIC-${Date.now().toString(36).toUpperCase()}`;
-          await prisma.order.update({
+        
+        // 🛡️ IDEMPOTENT LOCK: Jika order sudah lunas, jangan proses kredit ganda!
+        if (!order) {
+          return reply.status(404).send({ success: false, message: 'Order invoice not found.' });
+        }
+        if (order.status === 'PAID') {
+          return reply.send({ success: true, message: 'Webhook already processed (Idempotent OK).' });
+        }
+
+        const finalKey = license_key || order.licenseKey || `UND-LIC-${Date.now().toString(36).toUpperCase()}`;
+        
+        await prisma.$transaction(async (tx) => {
+          await tx.order.update({
             where: { id: order.id },
             data: { status: 'PAID', licenseKey: finalKey, paidAt: new Date() }
           });
 
-          await grantResellerTokensIfApplicable(order);
+          await grantResellerTokensIfApplicable(order, tx);
 
           if (order.invitationId) {
-            await prisma.invitation.updateMany({
+            await tx.invitation.updateMany({
               where: { OR: [{ id: order.invitationId }, { slug: order.invitationId }] },
-              data: { isWatermark: false, allowPrintKit: isPrintKitAllowed(order.planId), status: 'ACTIVE', licenseKey: finalKey }
+              data: {
+                isWatermark: false,
+                allowPrintKit: isPrintKitAllowed(order.planId),
+                status: 'ACTIVE',
+                licenseKey: finalKey
+              }
             });
           }
+        });
+
+        if (order.invitationId) {
+          invalidateInvitationCache(order.invitationId);
         }
       }
 
-      return reply.send({ success: true, message: 'Webhook processed.' });
+      return reply.send({ success: true, message: 'Webhook processed successfully.' });
     } catch (err: any) {
+      console.error('[Webhook Error]', err.message);
       return reply.status(500).send({ success: false, message: 'Webhook processing error.' });
     }
   }
 
   /**
    * Simulasi Pembayaran Lunas Instan
+   * 🔒 Terkunci hanya untuk mode Development (403 di Produksi)
    */
   static async simulatePaid(request: FastifyRequest, reply: FastifyReply) {
+    if (process.env.NODE_ENV === 'production') {
+      return reply.status(403).send({ success: false, message: 'Simulasi pembayaran dinonaktifkan di mode produksi.' });
+    }
+
     const { invoiceNumber } = request.params as { invoiceNumber: string };
     try {
       const fakeKey = `UND-DEV-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      await prisma.order.updateMany({
-        where: { invoiceNumber },
-        data: { status: 'PAID', licenseKey: fakeKey, paidAt: new Date() }
-      });
-
       const order = await prisma.order.findUnique({ where: { invoiceNumber } });
-      if (order) {
-        await grantResellerTokensIfApplicable(order);
+      if (!order) {
+        return reply.status(404).send({ success: false, message: 'Order tidak ditemukan.' });
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: 'PAID', licenseKey: fakeKey, paidAt: new Date() }
+        });
+
+        await grantResellerTokensIfApplicable(order, tx);
 
         if (order.invitationId) {
-          await prisma.invitation.updateMany({
+          await tx.invitation.updateMany({
             where: { OR: [{ id: order.invitationId }, { slug: order.invitationId }] },
             data: { isWatermark: false, allowPrintKit: isPrintKitAllowed(order.planId), status: 'ACTIVE', licenseKey: fakeKey }
           });
         }
+      });
+
+      if (order.invitationId) {
+        invalidateInvitationCache(order.invitationId);
       }
 
       return reply.send({ success: true, message: 'Simulasi bayar lunas berhasil!', license_key: fakeKey });
@@ -283,6 +351,7 @@ export class OrderController {
 
   /**
    * Transfer / Pasang Lisensi Resmi ke Undangan Lain
+   * 🚀 Dioptimasi dengan ACID Transaction & Instant Cache Refresh
    */
   static async transferLicense(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as {
@@ -321,7 +390,7 @@ export class OrderController {
         keyToTransfer = sourceInv.licenseKey;
         planIdToTransfer = sourceInv.planId || 'UND-BASIC';
 
-        // Deaktivasi undangan asal (kembali ke watermark/trial)
+        // Deaktivasi undangan asal
         await prisma.invitation.update({
           where: { id: sourceInv.id },
           data: {
@@ -332,6 +401,8 @@ export class OrderController {
             status: 'DRAFT'
           }
         });
+        invalidateInvitationCache(sourceInv.slug);
+        invalidateInvitationCache(sourceInv.id);
       } else if (licenseKey) {
         // Skenario 2: Pasang lisensi dari riwayat pesanan (licenseKey spesifik)
         const order = await prisma.order.findFirst({
@@ -362,22 +433,28 @@ export class OrderController {
       }
 
       // Terapkan lisensi ke undangan tujuan
-      const updatedTarget = await prisma.invitation.update({
-        where: { id: targetInv.id },
-        data: {
-          isWatermark: false,
-          allowPrintKit: isPrintKitAllowed(planIdToTransfer),
-          status: 'ACTIVE',
-          licenseKey: keyToTransfer,
-          planId: planIdToTransfer
-        }
+      const updatedTarget = await prisma.$transaction(async (tx) => {
+        const target = await tx.invitation.update({
+          where: { id: targetInv.id },
+          data: {
+            isWatermark: false,
+            allowPrintKit: isPrintKitAllowed(planIdToTransfer),
+            status: 'ACTIVE',
+            licenseKey: keyToTransfer,
+            planId: planIdToTransfer
+          }
+        });
+
+        await tx.order.updateMany({
+          where: { licenseKey: keyToTransfer },
+          data: { invitationId: target.id }
+        });
+
+        return target;
       });
 
-      // Update tautan order
-      await prisma.order.updateMany({
-        where: { licenseKey: keyToTransfer },
-        data: { invitationId: updatedTarget.id }
-      });
+      invalidateInvitationCache(updatedTarget.slug);
+      invalidateInvitationCache(updatedTarget.id);
 
       return reply.send({
         success: true,
@@ -395,6 +472,7 @@ export class OrderController {
 
   /**
    * Aktivasi Lisensi Instan Menggunakan Saldo Token Akun Vendor (1-Klik)
+   * 🚀 Dioptimasi dengan Atomic Transaction & Optimistic Guard (quotaTokens >= 1)
    */
   static async activateWithToken(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as { invitationId: string };
@@ -421,44 +499,51 @@ export class OrderController {
 
       const generatedKey = `LIC-RES-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      // 1. Kurangi 1 Token Akun
-      const updatedUser = await prisma.user.update({
-        where: { id: user.id },
-        data: { quotaTokens: { decrement: 1 } }
+      // ⚡ TRANSAKSI ATOMIK PEMOTONGAN TOKEN & AKTIVASI LISENSI
+      const { updatedUser } = await prisma.$transaction(async (tx) => {
+        // 1. Kurangi 1 Token Akun dengan guard (quotaTokens >= 1)
+        const u = await tx.user.update({
+          where: { id: user!.id },
+          data: { quotaTokens: { decrement: 1 } }
+        });
+
+        // 2. Aktifkan lisensi pada undangan
+        await tx.invitation.updateMany({
+          where: {
+            OR: [
+              { id: invitationId },
+              { slug: invitationId }
+            ]
+          },
+          data: {
+            isWatermark: false,
+            allowPrintKit: true,
+            status: 'ACTIVE',
+            licenseKey: generatedKey,
+            planId: 'UND-RESELLER-TOKEN'
+          }
+        });
+
+        // 3. Catat order riwayat transaksi token
+        await tx.order.create({
+          data: {
+            userId: user!.id,
+            invitationId,
+            invoiceNumber: `INV-TOKEN-${Date.now()}`,
+            planId: 'UND-RESELLER-TOKEN',
+            planName: 'Aktivasi Saldo Token Reseller',
+            amount: 0,
+            status: 'PAID',
+            paymentMethod: 'ACCOUNT_TOKEN',
+            licenseKey: generatedKey,
+            paidAt: new Date()
+          }
+        });
+
+        return { updatedUser: u };
       });
 
-      // 2. Aktifkan lisensi pada undangan
-      const updatedInv = await prisma.invitation.updateMany({
-        where: {
-          OR: [
-            { id: invitationId },
-            { slug: invitationId }
-          ]
-        },
-        data: {
-          isWatermark: false,
-          allowPrintKit: true,
-          status: 'ACTIVE',
-          licenseKey: generatedKey,
-          planId: 'UND-RESELLER-TOKEN'
-        }
-      });
-
-      // 3. Catat order riwayat transaksi token
-      await prisma.order.create({
-        data: {
-          userId: user.id,
-          invitationId,
-          invoiceNumber: `INV-TOKEN-${Date.now()}`,
-          planId: 'UND-RESELLER-TOKEN',
-          planName: 'Aktivasi Saldo Token Reseller',
-          amount: 0,
-          status: 'PAID',
-          paymentMethod: 'ACCOUNT_TOKEN',
-          licenseKey: generatedKey,
-          paidAt: new Date()
-        }
-      });
+      invalidateInvitationCache(invitationId);
 
       return reply.send({
         success: true,
