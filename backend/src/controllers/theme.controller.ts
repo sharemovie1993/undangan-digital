@@ -30,6 +30,7 @@ export class ThemeController {
           category: t.category,
           mode: t.mode,
           archetype: t.archetype,
+          sortOrder: t.sortOrder,
           tags: t.tags ? t.tags.split(',').map((s) => s.trim()) : [],
           isPremium: t.isPremium,
           palette,
@@ -71,6 +72,7 @@ export class ThemeController {
         primaryColor: k.primaryColor,
         description: k.description,
         badge: k.badge,
+        sortOrder: k.sortOrder,
         tags: k.tags ? k.tags.split(',').map((s) => s.trim()) : [],
       }));
 

@@ -51,11 +51,11 @@ class ThemeRegistryEngine {
   }
 
   public getAllThemes(): ThemeDefinition[] {
-    return Array.from(this.themes.values());
+    return Array.from(this.themes.values()).sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
   }
 
   public getAllStyleKits(): MasterStyleKitDefinition[] {
-    return Array.from(this.styleKits.values());
+    return Array.from(this.styleKits.values()).sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
   }
 
   public getThemesByCategory(category: ThemeCategory | 'all'): ThemeDefinition[] {

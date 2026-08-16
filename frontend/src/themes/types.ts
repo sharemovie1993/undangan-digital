@@ -60,6 +60,7 @@ export interface ThemeDefinition {
   secondaryButton: string;
   headerBg: string;
   previewGradient: string;
+  sortOrder?: number;
 }
 
 export interface MasterStyleKitDefinition {
@@ -75,4 +76,5 @@ export interface MasterStyleKitDefinition {
   description: string;
   badge: string;
   tags?: string[];
+  sortOrder?: number;
 }
