@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from 'react';
 import {
   Camera,
   X,
@@ -24,13 +24,49 @@ interface ReceptionScannerModalProps {
   onGuestCheckedIn?: (guestId: string) => void;
 }
 
-export const ReceptionScannerModal: React.FC<ReceptionScannerModalProps> = ({
+// 📱 Web Audio API RAM Synth Beep (0 KB audio file download, instant 0ms latency)
+function playScannerBeep(isSuccess: boolean = true) {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    if (isSuccess) {
+      // Pleasant double harmonic high chime
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.12);
+    } else {
+      // Low double buzz
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    }
+  } catch {
+    // Non-blocking fallback
+  }
+}
+
+export const ReceptionScannerModal = memo(function ReceptionScannerModal({
   isOpen,
   onClose,
   invitationTitle,
   guests = [],
   onGuestCheckedIn,
-}) => {
+}: ReceptionScannerModalProps) {
   const [manualCode, setManualCode] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<{
@@ -85,18 +121,29 @@ export const ReceptionScannerModal: React.FC<ReceptionScannerModalProps> = ({
     return () => stopCamera();
   }, [isOpen]);
 
-  const handleCheckInSubmit = async (targetNameOrCode: string) => {
+  // 📱 Guest Fast-Lookup Map O(1) Cache
+  const guestMap = useMemo(() => {
+    const map = new Map<string, GuestRecipient>();
+    localGuests.forEach((g) => {
+      map.set(g.id.toLowerCase(), g);
+      map.set(g.name.toLowerCase(), g);
+      if ((g as any).qrCode) {
+        map.set((g as any).qrCode.toLowerCase(), g);
+      }
+    });
+    return map;
+  }, [localGuests]);
+
+  const handleCheckInSubmit = useCallback(async (targetNameOrCode: string) => {
     if (!targetNameOrCode.trim()) return;
 
     const query = targetNameOrCode.trim().toLowerCase();
-    const foundGuest = localGuests.find(
-      (g) =>
-        g.id.toLowerCase() === query ||
-        g.name.toLowerCase().includes(query) ||
-        (g as any).qrCode?.toLowerCase() === query
+    const foundGuest = guestMap.get(query) || localGuests.find(
+      (g) => g.name.toLowerCase().includes(query)
     );
 
     if (foundGuest) {
+      playScannerBeep(true);
       const already = (foundGuest as any).isCheckedIn || false;
       const updated = localGuests.map((g) =>
         g.id === foundGuest.id
@@ -104,7 +151,9 @@ export const ReceptionScannerModal: React.FC<ReceptionScannerModalProps> = ({
           : g
       );
       setLocalGuests(updated);
-      onGuestCheckedIn(foundGuest.id);
+      if (onGuestCheckedIn) {
+        onGuestCheckedIn(foundGuest.id);
+      }
 
       // Persist to SQLite Database via Fastify API
       try {
@@ -124,6 +173,7 @@ export const ReceptionScannerModal: React.FC<ReceptionScannerModalProps> = ({
         alreadyCheckedIn: already
       });
     } else {
+      playScannerBeep(false);
       setScanResult({
         success: false,
         name: targetNameOrCode,
@@ -136,7 +186,7 @@ export const ReceptionScannerModal: React.FC<ReceptionScannerModalProps> = ({
     setTimeout(() => {
       setScanResult(null);
     }, 4000);
-  };
+  }, [guestMap, localGuests, onGuestCheckedIn]);
 
   const safeGuests = Array.isArray(localGuests) ? localGuests : [];
   const totalRegistered = safeGuests.length;
@@ -321,4 +371,7 @@ export const ReceptionScannerModal: React.FC<ReceptionScannerModalProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ReceptionScannerModal.displayName = 'ReceptionScannerModal';
+

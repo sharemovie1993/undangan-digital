@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo, useCallback } from 'react';
 import { Plus, Upload, QrCode, Copy, Eye, Trash2, AlertTriangle, FileSpreadsheet, Search, MessageSquare, MapPin, Users, Check, Mail, MailOpen, UserCheck, UserX, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { GuestRecipient, InvitationData } from '../../types';
 import { exportGuestsToExcel } from '../../utils/excelGuests';
@@ -22,7 +22,140 @@ interface GuestListManagerProps {
   copiedLink: string | null;
 }
 
-export const GuestListManager: React.FC<GuestListManagerProps> = ({
+// ─────────────────────────────────────────────────────────────────────────────
+// 📱 GuestCardItem — Memoized Card Component untuk Menghemat CPU HP
+// ─────────────────────────────────────────────────────────────────────────────
+interface GuestCardItemProps {
+  guest: GuestRecipient;
+  isCopiedOnly: boolean;
+  onSendWhatsApp: (guest: GuestRecipient) => void;
+  onCopyLinkOnly: (guest: GuestRecipient) => void;
+  onViewGuestMode: (name: string) => void;
+  onDeleteGuest: (id: string) => void;
+}
+
+const GuestCardItem = memo(function GuestCardItem({
+  guest,
+  isCopiedOnly,
+  onSendWhatsApp,
+  onCopyLinkOnly,
+  onViewGuestMode,
+  onDeleteGuest,
+}: GuestCardItemProps) {
+  const cityText = guest.addressOrCity || guest.city;
+  const isAttending = guest.isAttending === true || (guest as any).attendance === 'HADIR' || (guest as any).status === 'hadir';
+  const isNotAttending = guest.isAttending === false || (guest as any).attendance === 'TIDAK_HADIR' || (guest as any).status === 'tidak_hadir';
+  const isOpened = Boolean(guest.hasOpened || guest.isCheckedIn || isAttending || isNotAttending);
+
+  return (
+    <div className="bg-[#111115] hover:bg-[#16161c] border border-white/5 rounded-2xl p-3 space-y-2 transition shadow-xs contain-content">
+      {/* Top Row: Name & Status Badge */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h4 className="font-bold text-xs sm:text-sm text-white truncate">
+            {guest.name}
+          </h4>
+          <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-neutral-400 flex-wrap">
+            <span className="px-1.5 py-0.2 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium">
+              {guest.group || 'Tamu Undangan'}
+            </span>
+            {cityText && (
+              <span className="flex items-center gap-0.5 text-neutral-400">
+                <MapPin className="w-2.5 h-2.5 text-[#c4a661]" />
+                <span>{cityText}</span>
+              </span>
+            )}
+            {guest.paxQuota && (
+              <span className="text-neutral-500">
+                • {guest.paxQuota} Pax
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Attendance & Open Status Badge */}
+        <div>
+          {isAttending ? (
+            <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+              ✓ Hadir
+            </span>
+          ) : isNotAttending ? (
+            <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0 flex items-center gap-1">
+              ✕ Tidak Hadir
+            </span>
+          ) : isOpened ? (
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium shrink-0 flex items-center gap-1">
+              <MailOpen className="w-2.5 h-2.5" />
+              <span>Sudah Dibuka</span>
+            </span>
+          ) : (
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium shrink-0 flex items-center gap-1">
+              <Mail className="w-2.5 h-2.5" />
+              <span>Belum Dibuka</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Action Row */}
+      <div className="flex items-center justify-between pt-1.5 border-t border-neutral-800/60 gap-1.5">
+        {/* WhatsApp Direct Share Button */}
+        <button
+          type="button"
+          onClick={() => onSendWhatsApp(guest)}
+          className="flex-1 py-1.5 px-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
+          title="Kirim Undangan Langsung ke WhatsApp"
+        >
+          <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+          <span>Kirim WA</span>
+        </button>
+
+        {/* Copy Link Button */}
+        <button
+          type="button"
+          onClick={() => onCopyLinkOnly(guest)}
+          className="py-1.5 px-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
+          title="Salin Link Undangan Khusus"
+        >
+          {isCopiedOnly ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-emerald-400 font-bold">Tersalin!</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-3.5 h-3.5" />
+              <span>Salin Link</span>
+            </>
+          )}
+        </button>
+
+        {/* Preview Button */}
+        <button
+          type="button"
+          onClick={() => onViewGuestMode(guest.name)}
+          className="p-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition cursor-pointer"
+          title="Lihat Pratinjau Undangan Tamu Ini"
+        >
+          <Eye className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Delete Button */}
+        <button
+          type="button"
+          onClick={() => onDeleteGuest(guest.id)}
+          className="p-1.5 rounded-xl hover:bg-rose-500/20 text-neutral-500 hover:text-rose-400 transition cursor-pointer"
+          title="Hapus Tamu"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+});
+GuestCardItem.displayName = 'GuestCardItem';
+
+export const GuestListManager = memo(function GuestListManager({
   data,
   guests,
   newGuestName,
@@ -38,43 +171,63 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
   onOpenBulkModal,
   onOpenScanner,
   copiedLink,
-}) => {
+}: GuestListManagerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'unopened' | 'opened' | 'attending' | 'not_attending'>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [showLimitBanner, setShowLimitBanner] = useState(false);
+  const [visibleGuestLimit, setVisibleGuestLimit] = useState(15);
 
   const isTrial = data.isWatermarked;
   const isLimitReached = isTrial && guests.length >= 5;
 
   // Helper checking for guest open and attendance status
-  const isGuestAttending = (g: GuestRecipient) =>
-    g.isAttending === true || (g as any).attendance === 'HADIR' || (g as any).status === 'hadir';
+  const isGuestAttending = useCallback((g: GuestRecipient) =>
+    g.isAttending === true || (g as any).attendance === 'HADIR' || (g as any).status === 'hadir', []);
 
-  const isGuestNotAttending = (g: GuestRecipient) =>
-    g.isAttending === false || (g as any).attendance === 'TIDAK_HADIR' || (g as any).status === 'tidak_hadir';
+  const isGuestNotAttending = useCallback((g: GuestRecipient) =>
+    g.isAttending === false || (g as any).attendance === 'TIDAK_HADIR' || (g as any).status === 'tidak_hadir', []);
 
-  const isGuestOpened = (g: GuestRecipient) =>
-    Boolean(g.hasOpened || g.isCheckedIn || isGuestAttending(g) || isGuestNotAttending(g));
+  const isGuestOpened = useCallback((g: GuestRecipient) =>
+    Boolean(g.hasOpened || g.isCheckedIn || isGuestAttending(g) || isGuestNotAttending(g)), [isGuestAttending, isGuestNotAttending]);
 
-  // Realtime Live Analytics Calculations
-  const totalCount = guests.length;
-  const openedCount = guests.filter((g) => isGuestOpened(g)).length;
-  const unopenedCount = totalCount - openedCount;
-  const attendingCount = guests.filter((g) => isGuestAttending(g)).length;
-  const notAttendingCount = guests.filter((g) => isGuestNotAttending(g)).length;
+  // Realtime Live Analytics Calculations (Memoized O(N) only on guests changes)
+  const { totalCount, openedCount, unopenedCount, attendingCount, notAttendingCount } = useMemo(() => {
+    const total = guests.length;
+    let opened = 0;
+    let attending = 0;
+    let notAttending = 0;
 
-  // Filter guests by search query and open/attendance status
-  const filteredGuests = guests.filter((guest) => {
-    const matchesSearch =
-      guest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (guest.addressOrCity && guest.addressOrCity.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (guest.city && guest.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (guest.group && guest.group.toLowerCase().includes(searchQuery.toLowerCase()));
+    guests.forEach((g) => {
+      if (isGuestAttending(g)) attending++;
+      if (isGuestNotAttending(g)) notAttending++;
+      if (isGuestOpened(g)) opened++;
+    });
 
-    const isOpened = isGuestOpened(guest);
-    const matchesStatus =
-      selectedStatusFilter === 'all'
+    return {
+      totalCount: total,
+      openedCount: opened,
+      unopenedCount: total - opened,
+      attendingCount: attending,
+      notAttendingCount: notAttending,
+    };
+  }, [guests, isGuestAttending, isGuestNotAttending, isGuestOpened]);
+
+  // Filter guests by search query and open/attendance status (Memoized)
+  const filteredGuests = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    return guests.filter((guest) => {
+      const matchesSearch = !q ||
+        guest.name.toLowerCase().includes(q) ||
+        (guest.addressOrCity && guest.addressOrCity.toLowerCase().includes(q)) ||
+        (guest.city && guest.city.toLowerCase().includes(q)) ||
+        (guest.group && guest.group.toLowerCase().includes(q));
+
+      if (!matchesSearch) return false;
+
+      const isOpened = isGuestOpened(guest);
+      return selectedStatusFilter === 'all'
         ? true
         : selectedStatusFilter === 'unopened'
         ? !isOpened
@@ -85,21 +238,26 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
         : selectedStatusFilter === 'not_attending'
         ? isGuestNotAttending(guest)
         : true;
+    });
+  }, [guests, searchQuery, selectedStatusFilter, isGuestOpened, isGuestAttending, isGuestNotAttending]);
 
-    return matchesSearch && matchesStatus;
-  });
+  const paginatedGuests = useMemo(() => {
+    return filteredGuests.slice(0, visibleGuestLimit);
+  }, [filteredGuests, visibleGuestLimit]);
 
-  const handleSendWhatsApp = (guest: GuestRecipient) => {
+  const remainingGuestsCount = filteredGuests.length - visibleGuestLimit;
+
+  const handleSendWhatsApp = useCallback((guest: GuestRecipient) => {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://luxury.absenta.id';
     const text = generateWhatsAppMessage(guest, data, baseUrl);
 
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank');
-  };
+  }, [data]);
 
   const [copiedGuestId, setCopiedGuestId] = useState<string | null>(null);
 
-  const handleCopyLinkOnly = (guest: GuestRecipient) => {
+  const handleCopyLinkOnly = useCallback((guest: GuestRecipient) => {
     const activeSlug = data.slug || data.id || 'undangan';
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://luxury.absenta.id';
     const shareUrl = `${baseUrl}/?slug=${encodeURIComponent(activeSlug)}&to=${encodeURIComponent(guest.name)}&mode=invitation`;
@@ -107,7 +265,7 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
     navigator.clipboard.writeText(shareUrl);
     setCopiedGuestId(guest.id);
     setTimeout(() => setCopiedGuestId(null), 2000);
-  };
+  }, [data.slug, data.id]);
 
   return (
     <div className="w-full space-y-3 max-w-full overflow-x-hidden pb-12">
@@ -356,122 +514,36 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredGuests.map((guest) => {
-            const cityText = guest.addressOrCity || guest.city;
-            const isCopied = copiedLink === guest.name;
-            const isOpened = isGuestOpened(guest);
+          {paginatedGuests.map((guest) => (
+            <GuestCardItem
+              key={guest.id}
+              guest={guest}
+              isCopiedOnly={copiedGuestId === guest.id}
+              onSendWhatsApp={handleSendWhatsApp}
+              onCopyLinkOnly={handleCopyLinkOnly}
+              onViewGuestMode={onViewGuestMode}
+              onDeleteGuest={onDeleteGuest}
+            />
+          ))}
 
-            return (
-              <div
-                key={guest.id}
-                className="bg-[#111115] hover:bg-[#16161c] border border-white/5 rounded-2xl p-3 space-y-2 transition shadow-xs"
+          {/* 📱 Load More Button for Mobile Guest Pagination */}
+          {remainingGuestsCount > 0 && (
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => setVisibleGuestLimit((prev) => prev + 20)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition shadow-md cursor-pointer border bg-[#111115] hover:bg-[#181820] text-[#c4a661] border-[#c4a661]/40"
               >
-                {/* Top Row: Name & Status Badge */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-xs sm:text-sm text-white truncate">
-                      {guest.name}
-                    </h4>
-                    <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-neutral-400 flex-wrap">
-                      <span className="px-1.5 py-0.2 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium">
-                        {guest.group || 'Tamu Undangan'}
-                      </span>
-                      {cityText && (
-                        <span className="flex items-center gap-0.5 text-neutral-400">
-                          <MapPin className="w-2.5 h-2.5 text-[#c4a661]" />
-                          <span>{cityText}</span>
-                        </span>
-                      )}
-                      {guest.paxQuota && (
-                        <span className="text-neutral-500">
-                          • {guest.paxQuota} Pax
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Attendance & Open Status Badge */}
-                  <div>
-                    {isGuestAttending(guest) ? (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
-                        ✓ Hadir
-                      </span>
-                    ) : isGuestNotAttending(guest) ? (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0 flex items-center gap-1">
-                        ✕ Tidak Hadir
-                      </span>
-                    ) : isOpened ? (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium shrink-0 flex items-center gap-1">
-                        <MailOpen className="w-2.5 h-2.5" />
-                        <span>Sudah Dibuka</span>
-                      </span>
-                    ) : (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium shrink-0 flex items-center gap-1">
-                        <Mail className="w-2.5 h-2.5" />
-                        <span>Belum Dibuka</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bottom Action Row */}
-                <div className="flex items-center justify-between pt-1.5 border-t border-neutral-800/60 gap-1.5">
-                  {/* WhatsApp Direct Share Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleSendWhatsApp(guest)}
-                    className="flex-1 py-1.5 px-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
-                    title="Kirim Undangan Langsung ke WhatsApp"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                    <span>Kirim WA</span>
-                  </button>
-
-                  {/* Copy Link Button (Only Copies URL without opening WhatsApp) */}
-                  <button
-                    type="button"
-                    onClick={() => handleCopyLinkOnly(guest)}
-                    className="py-1.5 px-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
-                    title="Salin Link Undangan Khusus"
-                  >
-                    {copiedGuestId === guest.id ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400 font-bold">Tersalin!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Salin Link</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Preview Button */}
-                  <button
-                    type="button"
-                    onClick={() => onViewGuestMode(guest.name)}
-                    className="p-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition cursor-pointer"
-                    title="Lihat Pratinjau Undangan Tamu Ini"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                  </button>
-
-                  {/* Delete Button */}
-                  <button
-                    type="button"
-                    onClick={() => onDeleteGuest(guest.id)}
-                    className="p-1.5 rounded-xl hover:bg-rose-500/20 text-neutral-500 hover:text-rose-400 transition cursor-pointer"
-                    title="Hapus Tamu"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                <ChevronDown className="w-3.5 h-3.5" />
+                <span>Muat {Math.min(remainingGuestsCount, 20)} Tamu Lainnya ({remainingGuestsCount} tersisa)</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
-};
+});
+
+GuestListManager.displayName = 'GuestListManager';
+
