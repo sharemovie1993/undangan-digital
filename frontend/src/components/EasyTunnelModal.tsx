@@ -51,7 +51,7 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
   // Setup Form
   const [setupKey, setSetupKey] = useState('');
   const [setupSlug, setSetupSlug] = useState('');
-  const [setupPort, setSetupPort] = useState(4001);
+  const [setupPort, setSetupPort] = useState(443);
   const [setupName, setSetupName] = useState('Studio Undangan Digital');
   const [setupLoading, setSetupLoading] = useState(false);
 
@@ -258,7 +258,7 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
         plan_id: selectedPkg,
         payment_method: selectedPayment,
         app_name: setupName || 'Studio Undangan Digital',
-        local_port: 4001
+        local_port: setupPort || 443
       });
       if (res.success && res.data) {
         setInvoiceData(res.data);
@@ -674,7 +674,7 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
                     onChange={(e) => setSetupPort(parseInt(e.target.value, 10))}
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-amber-500 focus:outline-none text-sm text-slate-200"
                   />
-                  <span className="text-[11px] text-slate-500">Port backend Fastify (Default: 4001)</span>
+                  <span className="text-[11px] text-slate-500">Port Caddy Web Server (Default: 443 / 80 - Melayani Frontend & Backend)</span>
                 </div>
               </div>
 
@@ -820,7 +820,7 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
                         const res = await api.setupEasyTunnel({
                           license_key: invoiceData.license_key,
                           subdomain_slug: targetSlug,
-                          local_port: setupPort || 4001,
+                          local_port: setupPort || 443,
                           app_name: setupName || 'Studio Undangan Digital'
                         });
                         showToast('success', res.message || 'Terowongan berhasil dikonfigurasi & diaktifkan!');
