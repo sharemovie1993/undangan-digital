@@ -292,7 +292,36 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
             address: 'Jl. Gatot Subroto No. 45, Bandung',
             googleMapsUrl: 'https://maps.google.com'
           }
-        ]
+        ],
+        bankAccounts: [
+          {
+            id: 'bank-bca',
+            bankName: 'BCA',
+            accountNumber: '1234567890',
+            accountHolder: newTitle.trim() || 'Romeo Aris Pratama'
+          }
+        ],
+        physicalGift: {
+          recipientName: newTitle.trim() || 'Keluarga Mempelai',
+          phoneNumber: '+62 812-3456-7890',
+          fullAddress: 'Jl. Kemang Raya No. 45, RT 04 / RW 02',
+          city: 'Bandung, Jawa Barat',
+          postalCode: '40115',
+          notes: 'Titip di Pos Satpam / Bel Rumah'
+        },
+        enabledBlocks: {
+          hero: true,
+          quote: true,
+          profile: true,
+          countdown: true,
+          schedule: true,
+          story: true,
+          gallery: true,
+          gift: true,
+          rsvp: true,
+          wishes: true,
+          closing: true
+        }
       }
     }, {
       onSuccess: (res) => {

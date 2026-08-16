@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Copy, Check, QrCode, Gift, Building2, MapPin, Sparkles, X } from 'lucide-react';
-import { InvitationData, BankAccount } from '../types';
-import { FONT_PRESETS } from '../data/presets';
+import { Copy, Check, QrCode, Gift, Building2, MapPin, Sparkles, X, Phone, ExternalLink } from 'lucide-react';
+import { InvitationData, BankAccount, PhysicalGiftAddress } from '../types';
+import { FONT_PRESETS, THEMES } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
 
 interface DigitalGiftSectionProps {
   data: InvitationData;
+  theme?: any;
 }
 
-export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) => {
-  const theme = themeRegistry.getTheme(data.theme);
+export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data, theme: themeProp }) => {
+  const defaultTheme = themeRegistry.getTheme(data.theme) || THEMES[data.theme] || THEMES.champagne_gold;
+  const theme = themeProp || defaultTheme;
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || theme.bg || '#0a0a0b';
   const cardBg = data.themeConfig?.cardBgColor || theme.cardBg || '#121216';
@@ -28,10 +30,26 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
     setTimeout(() => setCopiedId(null), 2500);
   };
 
+  const physicalGift: PhysicalGiftAddress | undefined = data.physicalGift || (
+    data.physicalGiftAddress ? {
+      recipientName: data.eventTitle || 'Penerima Kado',
+      phoneNumber: '',
+      fullAddress: typeof data.physicalGiftAddress === 'string' ? data.physicalGiftAddress : '',
+      city: '',
+      postalCode: '',
+    } : undefined
+  );
+
   const copyFullAddress = () => {
-    if (!data.physicalGift) return;
-    const fullText = `${data.physicalGift.recipientName}\n${data.physicalGift.phoneNumber}\n${data.physicalGift.fullAddress}, ${data.physicalGift.city} ${data.physicalGift.postalCode}`;
-    navigator.clipboard.writeText(fullText);
+    if (!physicalGift) return;
+    const parts = [
+      physicalGift.recipientName,
+      physicalGift.phoneNumber,
+      `${physicalGift.fullAddress}${physicalGift.city ? `, ${physicalGift.city}` : ''}${physicalGift.postalCode ? ` ${physicalGift.postalCode}` : ''}`,
+      physicalGift.notes ? `Catatan Kurir: ${physicalGift.notes}` : ''
+    ].filter(Boolean);
+
+    navigator.clipboard.writeText(parts.join('\n'));
     setCopiedAddress(true);
     setTimeout(() => setCopiedAddress(false), 2500);
   };
@@ -67,7 +85,7 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
         />
       </div>
 
-      {/* Bank Account Cards */}
+      {/* Bank Account & Gift Cards Container */}
       <div className="space-y-4 max-w-md mx-auto">
         {data.bankAccounts?.map((account, index) => {
           const isCopied = copiedId === account.id;
@@ -75,7 +93,7 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
 
           return (
             <motion.div
-              key={account.id}
+              key={account.id || index}
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -83,7 +101,7 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
               className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-xl border"
               style={{
                 background: isDarkCard
-                  ? `linear-gradient(135deg, ${cardBg} 0%, ${theme.accentBg} 100%)`
+                  ? `linear-gradient(135deg, ${cardBg} 0%, ${theme.accentBg || cardBg} 100%)`
                   : `linear-gradient(135deg, ${activePrimary}20 0%, ${cardBg} 100%)`,
                 borderColor: `${activePrimary}40`,
               }}
@@ -106,7 +124,7 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
                   {account.qrisImageUrl && (
                     <button
                       onClick={() => setSelectedQris(account)}
-                      className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition border"
+                      className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition border cursor-pointer"
                       style={{
                         backgroundColor: `${activePrimary}20`,
                         borderColor: `${activePrimary}40`,
@@ -137,8 +155,8 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
                   {isCopied ? 'Tersalin ke clipboard!' : 'Klik tombol untuk menyalin'}
                 </span>
                 <button
-                  id={`copy-bank-${account.id}`}
-                  onClick={() => copyToClipboard(account.accountNumber, account.id)}
+                  id={`copy-bank-${account.id || index}`}
+                  onClick={() => copyToClipboard(account.accountNumber, account.id || `acc-${index}`)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
                   style={{
                     backgroundColor: isCopied ? '#10b981' : activePrimary,
@@ -162,47 +180,92 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
           );
         })}
 
-        {/* Physical Gift Delivery Address (100% Theme-Aware) */}
-        {data.physicalGift && (data.physicalGift.fullAddress || data.physicalGift.recipientName) && (
+        {/* Physical Gift Delivery Address (100% Theme-Aware & Fully Integrated) */}
+        {physicalGift && (physicalGift.fullAddress || physicalGift.recipientName) && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="rounded-2xl border p-5 shadow-lg backdrop-blur-md"
+            className="rounded-2xl border p-5 sm:p-6 shadow-xl backdrop-blur-md relative overflow-hidden"
             style={{
               backgroundColor: `${cardBg}f5`,
-              borderColor: `${activePrimary}35`,
+              borderColor: `${activePrimary}40`,
             }}
           >
-            <div className="flex items-center gap-2 font-bold text-base mb-2">
-              <Gift className="w-4 h-4" style={{ color: activePrimary }} />
-              <span className="text-white" style={{ fontFamily: headingFont }}>
-                Kirim Kado Fisik
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 font-bold text-base">
+                <Gift className="w-5 h-5" style={{ color: activePrimary }} />
+                <span className="text-white" style={{ fontFamily: headingFont }}>
+                  Kirim Kado Fisik
+                </span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase"
+                style={{
+                  backgroundColor: `${activePrimary}15`,
+                  borderColor: `${activePrimary}40`,
+                  color: activePrimary,
+                }}>
+                Alamat Kirim
               </span>
             </div>
-            <div className="text-xs text-neutral-300 space-y-1">
-              <p className="font-semibold text-white">{data.physicalGift.recipientName}</p>
-              {data.physicalGift.phoneNumber && (
-                <p className="text-neutral-400">{data.physicalGift.phoneNumber}</p>
-              )}
-              <p className="text-neutral-400 leading-relaxed">
-                {data.physicalGift.fullAddress}
-                {data.physicalGift.city ? `, ${data.physicalGift.city}` : ''}
-                {data.physicalGift.postalCode ? ` ${data.physicalGift.postalCode}` : ''}
+
+            <div className="text-xs text-neutral-300 space-y-1.5 bg-black/40 p-3.5 rounded-xl border border-white/10">
+              <div className="flex items-center justify-between">
+                <p className="font-bold text-white text-sm">{physicalGift.recipientName || 'Penerima Kado'}</p>
+                {physicalGift.phoneNumber && (
+                  <a
+                    href={`https://wa.me/${physicalGift.phoneNumber.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-semibold flex items-center gap-1 text-emerald-400 hover:underline"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>{physicalGift.phoneNumber}</span>
+                  </a>
+                )}
+              </div>
+
+              <p className="text-neutral-300 leading-relaxed pt-1">
+                {physicalGift.fullAddress}
+                {physicalGift.city ? `, ${physicalGift.city}` : ''}
+                {physicalGift.postalCode ? ` ${physicalGift.postalCode}` : ''}
               </p>
+
+              {physicalGift.notes && (
+                <p className="text-amber-300/90 text-[11px] italic pt-1 border-t border-white/5">
+                  📍 Catatan: {physicalGift.notes}
+                </p>
+              )}
             </div>
-            <button
-              onClick={copyFullAddress}
-              className="mt-3.5 flex w-full items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition shadow-xs cursor-pointer"
-              style={{
-                backgroundColor: `${activePrimary}20`,
-                borderColor: `${activePrimary}50`,
-                color: activePrimary,
-              }}
-            >
-              {copiedAddress ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedAddress ? 'Alamat Berhasil Disalin!' : 'Salin Alamat Lengkap'}</span>
-            </button>
+
+            {/* Action Buttons: Copy Address & Google Maps */}
+            <div className="mt-3.5 flex items-center gap-2">
+              <button
+                onClick={copyFullAddress}
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer"
+                style={{
+                  backgroundColor: copiedAddress ? '#10b981' : `${activePrimary}25`,
+                  borderColor: copiedAddress ? '#10b981' : `${activePrimary}50`,
+                  color: copiedAddress ? '#ffffff' : activePrimary,
+                }}
+              >
+                {copiedAddress ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
+                <span>{copiedAddress ? 'Alamat Berhasil Disalin!' : 'Salin Alamat Lengkap'}</span>
+              </button>
+
+              {physicalGift.mapsUrl && (
+                <a
+                  href={physicalGift.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-xs font-semibold bg-neutral-900/90 hover:bg-neutral-800 text-neutral-200 border-neutral-700 transition cursor-pointer"
+                  title="Buka Alamat di Google Maps"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                  <span className="hidden xs:inline">Maps</span>
+                </a>
+              )}
+            </div>
           </motion.div>
         )}
       </div>
@@ -214,7 +277,7 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
             onClick={() => setSelectedQris(null)}
           >
             <div

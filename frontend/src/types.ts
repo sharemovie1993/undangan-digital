@@ -126,6 +126,8 @@ export interface PhysicalGiftAddress {
   fullAddress: string;
   city: string;
   postalCode: string;
+  mapsUrl?: string;
+  notes?: string;
 }
 
 export interface WishMessage {
