@@ -164,6 +164,9 @@ export class WireguardManager {
     if (/\[Peer\]/i.test(hardenedConfig) && !/PersistentKeepalive/i.test(hardenedConfig)) {
       hardenedConfig = hardenedConfig.replace(/(\[Peer\][\s\S]*?)(?=\n\[|\s*$)/gi, '$1\nPersistentKeepalive = 25\n');
     }
+    if (/AllowedIPs\s*=\s*10\.0\.0\.1\/32/i.test(hardenedConfig) && !/10\.0\.2\.1/i.test(hardenedConfig)) {
+      hardenedConfig = hardenedConfig.replace(/AllowedIPs\s*=\s*10\.0\.0\.1\/32/gi, 'AllowedIPs = 10.0.0.1/32, 10.0.2.1/32');
+    }
 
     fs.writeFileSync(confPath, hardenedConfig, { encoding: 'utf8', mode: 0o600 });
     if (!this.isWindows()) {
