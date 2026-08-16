@@ -2,7 +2,8 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Instagram, Heart, Sparkles, Moon, Cake, Star } from 'lucide-react';
 import { InvitationData, ProfilePerson } from '../types';
-import { THEMES, FONT_PRESETS, FRAME_SHAPES } from '../data/presets';
+import { FONT_PRESETS, FRAME_SHAPES } from '../data/presets';
+import { themeRegistry } from '../themes/registry';
 
 interface ProfileSectionProps {
   data: InvitationData;
@@ -10,7 +11,7 @@ interface ProfileSectionProps {
 }
 
 export const ProfileSection: React.FC<ProfileSectionProps> = ({ data }) => {
-  const theme = THEMES[data.theme] || THEMES.champagne_gold;
+  const theme = themeRegistry.getTheme(data.theme);
   const isWedding = data.eventType === 'wedding';
   const isKhitan = data.eventType === 'khitanan' || data.eventType === 'aqiqah';
   const isBirthday = data.eventType === 'birthday';

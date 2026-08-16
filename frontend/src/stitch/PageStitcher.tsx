@@ -1,6 +1,6 @@
 import React from 'react';
 import { InvitationData, ThemeToken, WishMessage } from '../types';
-import { THEMES } from '../data/presets';
+import { themeRegistry } from '../themes/registry';
 import { StitchBlockInstance } from '../contracts/stitch.contract';
 import { DEFAULT_STITCH_INSTANCES } from './BlockRegistry';
 import { HeroEnvelope } from '../components/HeroEnvelope';
@@ -31,7 +31,7 @@ export const PageStitcher: React.FC<PageStitcherProps> = ({
   onAddWish,
   stitchBlocks = DEFAULT_STITCH_INSTANCES
 }) => {
-  const currentTheme = THEMES[theme] || THEMES.champagne_gold;
+  const currentTheme = themeRegistry.getTheme(theme);
   const activeBg = data.themeConfig?.bgColor || currentTheme.bg;
   const activeTextMain = currentTheme.textMain;
 

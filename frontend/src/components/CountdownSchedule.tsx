@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Calendar as CalendarIcon, Clock, MapPin, ExternalLink } from 'lucide-react';
 import { InvitationData } from '../types';
-import { THEMES, FONT_PRESETS } from '../data/presets';
+import { FONT_PRESETS } from '../data/presets';
+import { themeRegistry } from '../themes/registry';
 
 interface CountdownScheduleProps {
   data: InvitationData;
@@ -45,7 +46,9 @@ const formatIndonesianDate = (dateString?: string) => {
         year: 'numeric',
       }).format(d);
     }
-  } catch {}
+  } catch (e) {
+    return dateString;
+  }
   return dateString;
 };
 
@@ -60,7 +63,7 @@ const formatStandardTime = (timeStr?: string) => {
 };
 
 export const CountdownSchedule: React.FC<CountdownScheduleProps> = ({ data }) => {
-  const theme = THEMES[data.theme] || THEMES.champagne_gold;
+  const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || theme.bg || '#0a0a0b';
   const cardBg = data.themeConfig?.cardBgColor || theme.cardBg || '#121216';

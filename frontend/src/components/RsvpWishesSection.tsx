@@ -4,7 +4,8 @@ import confetti from 'canvas-confetti';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Send, CheckCircle2, XCircle, HelpCircle, Heart, User, Users, MessageSquareQuote, Loader2 } from 'lucide-react';
 import { InvitationData, WishMessage } from '../types';
-import { THEMES, DEFAULT_WISHES, FONT_PRESETS } from '../data/presets';
+import { DEFAULT_WISHES, FONT_PRESETS } from '../data/presets';
+import { themeRegistry } from '../themes/registry';
 import { api } from '../api/client';
 import { queryClient } from '../query/queryClient';
 
@@ -21,7 +22,7 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
   onAddWish,
   defaultGuestName = '',
 }) => {
-  const theme = THEMES[data.theme] || THEMES.champagne_gold;
+  const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || theme.bg || '#0a0a0b';
   const cardBg = data.themeConfig?.cardBgColor || theme.cardBg || '#121216';

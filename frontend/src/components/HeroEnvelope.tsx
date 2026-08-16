@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Sparkles, ChevronDown, Calendar, MapPin, Heart } from 'lucide-react';
 import { InvitationData, ThemeToken } from '../types';
-import { THEMES } from '../data/presets';
+import { themeRegistry } from '../themes/registry';
 
 interface HeroEnvelopeProps {
   data: InvitationData;
@@ -20,7 +20,7 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
   isOpen,
   onOpen,
 }) => {
-  const theme = THEMES[data.theme] || THEMES.champagne_gold;
+  const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary;
   const effectiveGuest = guestName || recipientName || 'Tamu Undangan';
 

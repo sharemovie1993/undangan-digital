@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Maximize2, X, ChevronLeft, ChevronRight, Sparkles, Image as ImageIcon, Grid, Eye } from 'lucide-react';
 import { InvitationData } from '../types';
-import { THEMES, FONT_PRESETS } from '../data/presets';
+import { FONT_PRESETS } from '../data/presets';
+import { themeRegistry } from '../themes/registry';
 
 interface GallerySectionProps {
   data: InvitationData;
@@ -40,23 +41,16 @@ const GalleryImageItem: React.FC<{
 
       <img
         src={src}
-        alt={alt || caption || 'Foto Galeri'}
+        alt={alt || 'Foto Galeri'}
         loading="lazy"
-        decoding="async"
         onLoad={() => setIsLoaded(true)}
-        className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${
+        className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
-        referrerPolicy="no-referrer"
       />
-
-      {/* Hover Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3 text-white text-xs">
-        <span className="truncate max-w-[80%] text-[11px] font-medium">{caption}</span>
-        <div
-          className="p-1.5 rounded-full backdrop-blur-md shrink-0"
-          style={{ backgroundColor: `${activePrimary}30`, color: activePrimary }}
-        >
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+        {caption && <span className="text-[11px] text-white/90 line-clamp-1">{caption}</span>}
+        <div className="ml-auto bg-white/20 backdrop-blur-md p-1.5 rounded-lg text-white">
           <Maximize2 className="w-3.5 h-3.5" />
         </div>
       </div>
@@ -65,7 +59,7 @@ const GalleryImageItem: React.FC<{
 };
 
 export const GallerySection: React.FC<GallerySectionProps> = ({ data }) => {
-  const theme = THEMES[data.theme] || THEMES.champagne_gold;
+  const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || theme.bg || '#0a0a0b';
   const cardBg = data.themeConfig?.cardBgColor || theme.cardBg || '#121216';

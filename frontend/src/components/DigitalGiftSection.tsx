@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Copy, Check, QrCode, Gift, Building2, MapPin, Sparkles, X } from 'lucide-react';
 import { InvitationData, BankAccount } from '../types';
-import { THEMES, FONT_PRESETS } from '../data/presets';
+import { FONT_PRESETS } from '../data/presets';
+import { themeRegistry } from '../themes/registry';
 
 interface DigitalGiftSectionProps {
   data: InvitationData;
 }
 
 export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) => {
-  const theme = THEMES[data.theme] || THEMES.champagne_gold;
+  const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || theme.bg || '#0a0a0b';
   const cardBg = data.themeConfig?.cardBgColor || theme.cardBg || '#121216';
