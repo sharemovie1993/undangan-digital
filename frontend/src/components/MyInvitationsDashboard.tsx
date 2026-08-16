@@ -80,6 +80,9 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   onLogout
 }) => {
   const { user: currentUser, role, isReseller, quotaTokens, logout: authLogout } = useAuth();
+  const isAdmin = (role || currentUser?.role || '').toUpperCase() === 'ADMIN' ||
+    (role || currentUser?.role || '').toUpperCase() === 'OWNER' ||
+    currentUser?.email === 'admin@absenta.id';
   const {
     invitations: list,
     unassignedOrders,
@@ -374,15 +377,17 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
 
           {currentUser && (
             <>
-              <button
-                onClick={() => setIsEasyTunnelModalOpen(true)}
-                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                title="Akses Publik Instan & Terowongan WireGuard"
-              >
-                <Globe className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
-                <span className="hidden md:inline">Easy Tunnel</span>
-                <span className="md:hidden text-[11px]">Tunnel</span>
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => setIsEasyTunnelModalOpen(true)}
+                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
+                  title="Akses Publik Instan & Terowongan WireGuard (Owner / Admin Only)"
+                >
+                  <Globe className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <span className="hidden md:inline">Easy Tunnel</span>
+                  <span className="md:hidden text-[11px]">Tunnel</span>
+                </button>
+              )}
 
               <button
                 onClick={() => handleOpenPricingForInvitation()}

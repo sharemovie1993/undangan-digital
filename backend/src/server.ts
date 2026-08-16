@@ -7,6 +7,8 @@ import { registerApiRoutes } from './routes/api.routes';
 import { config } from './config/app.config';
 import { WireguardManager } from './services/wireguardManager';
 import { EasyTunnelService } from './modules/easy-tunnel/services/easy-tunnel.service';
+import { prisma } from './db';
+import bcrypt from 'bcryptjs';
 import fs from 'fs';
 
 const fastify = Fastify({
@@ -16,6 +18,49 @@ const fastify = Fastify({
   bodyLimit: 30 * 1024 * 1024 // 30 MB body limit
 });
 
+async function seedAdminUser() {
+  try {
+    const adminEmail = 'admin@absenta.id';
+    const ownerPhone = '+6281912526367';
+    
+    // Cari user admin / owner
+    let admin = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: adminEmail },
+          { phone: ownerPhone },
+          { phone: '081912526367' },
+          { phone: '6281912526367' }
+        ]
+      }
+    });
+
+    const passwordHash = await bcrypt.hash('admin123', 10);
+
+    if (!admin) {
+      admin = await prisma.user.create({
+        data: {
+          name: 'Master Administrator (Owner)',
+          email: adminEmail,
+          phone: ownerPhone,
+          password: passwordHash,
+          role: 'ADMIN',
+          quotaTokens: 999
+        }
+      });
+      console.log('[Auth] Akun Admin default dibuat: admin@absenta.id / 081912526367 (Password: admin123)');
+    } else if (admin.role !== 'ADMIN') {
+      await prisma.user.update({
+        where: { id: admin.id },
+        data: { role: 'ADMIN', quotaTokens: 999 }
+      });
+      console.log(`[Auth] User ${admin.name} (${admin.email || admin.phone}) di-upgrade ke role ADMIN.`);
+    }
+  } catch (err: any) {
+    console.warn('[Auth] Gagal sinkronisasi akun admin:', err.message);
+  }
+}
+
 const start = async () => {
   try {
     // Ensure upload directory and tunnels directory exist
@@ -23,6 +68,9 @@ const start = async () => {
       fs.mkdirSync(config.uploadDir, { recursive: true });
     }
     WireguardManager.ensureTunnelsDir();
+
+    // Auto-seed admin user
+    await seedAdminUser();
 
     // CORS configuration
     await fastify.register(cors, {

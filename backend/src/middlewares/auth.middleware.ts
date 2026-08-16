@@ -62,3 +62,17 @@ export const requireRole = (allowedRoles: string[]) => {
     }
   };
 };
+
+export const verifyAdmin = async (request: FastifyRequest, reply: FastifyReply) => {
+  await verifyAuth(request, reply);
+  if (reply.sent) return;
+
+  const role = (request.user?.role || '').toUpperCase();
+  if (role !== 'ADMIN' && role !== 'OWNER') {
+    return reply.status(403).send({
+      success: false,
+      message: 'Akses ditolak. Fitur Easy-Tunnel hanya dapat diakses oleh Owner / Administrator.'
+    });
+  }
+};
+
