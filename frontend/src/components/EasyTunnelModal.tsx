@@ -55,6 +55,8 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
   const [customerName, setCustomerName] = useState('');
   const [buyLoading, setBuyLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [isInvoicePaid, setIsInvoicePaid] = useState(false);
+  const [checkingInvoice, setCheckingInvoice] = useState(false);
 
   // Custom Domain Form
   const [selectedTunnelId, setSelectedTunnelId] = useState('');
@@ -64,6 +66,39 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
   // Diagnostic
   const [diagnostics, setDiagnostics] = useState<Record<string, any>>({});
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+
+  const handleCheckInvoice = async (invoiceNum?: string, silent = false) => {
+    const inv = invoiceNum || invoiceData?.invoice_number;
+    if (!inv) return;
+    if (!silent) setCheckingInvoice(true);
+    try {
+      const res = await api.checkEasyTunnelInvoice(inv);
+      const isPaid = res?.data?.status === 'paid' || res?.status === 'paid' || res?.paid === true;
+      if (isPaid) {
+        setIsInvoicePaid(true);
+        if (!silent) showToast('success', 'Pembayaran berhasil terverifikasi!');
+      } else {
+        if (!silent) showToast('info', 'Pembayaran belum terdeteksi. Silakan selesaikan pembayaran.');
+      }
+    } catch (err: any) {
+      if (!silent) showToast('error', 'Gagal memeriksa status invoice: ' + err.message);
+    } finally {
+      if (!silent) setCheckingInvoice(false);
+    }
+  };
+
+  useEffect(() => {
+    let timer: any;
+    if (invoiceData?.invoice_number && !isInvoicePaid) {
+      handleCheckInvoice(invoiceData.invoice_number, true);
+      timer = setInterval(() => {
+        handleCheckInvoice(invoiceData.invoice_number, true);
+      }, 3500);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [invoiceData?.invoice_number, isInvoicePaid]);
 
   const loadData = async () => {
     try {
@@ -703,14 +738,109 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
                     Terbitkan Invoice & Bayar Sekarang
                   </button>
                 </form>
+              ) : isInvoicePaid ? (
+                /* Invoice Paid Success Card */
+                <div className="max-w-md mx-auto p-6 rounded-2xl bg-slate-950 border border-emerald-500/40 text-center space-y-5 animate-in zoom-in-95 duration-300">
+                  <div className="inline-flex p-3.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/10">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xl text-emerald-400">Pembayaran Berhasil!</h4>
+                    <p className="text-xs text-slate-300 mt-1">
+                      Invoice <span className="font-mono text-white font-bold">{invoiceData.invoice_number}</span> telah terverifikasi lunas.
+                    </p>
+                  </div>
+
+                  {invoiceData.license_key && (
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-2">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        Kunci Lisensi Anda (License Key):
+                      </div>
+                      <div className="flex items-center justify-between gap-2 bg-slate-950 px-3 py-2 rounded-lg border border-slate-800">
+                        <code className="font-mono font-bold text-sm text-amber-300 select-all truncate">
+                          {invoiceData.license_key}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(invoiceData.license_key);
+                            showToast('success', 'License key berhasil disalin!');
+                          }}
+                          className="px-2.5 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer"
+                        >
+                          Salin
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={async () => {
+                      if (!invoiceData.license_key) {
+                        setInvoiceData(null);
+                        setIsInvoicePaid(false);
+                        setActiveTab('setup');
+                        return;
+                      }
+                      setSetupLoading(true);
+                      try {
+                        const targetSlug = setupSlug || invoiceData.subdomain_slug || 'undangan';
+                        const res = await api.setupEasyTunnel({
+                          license_key: invoiceData.license_key,
+                          subdomain_slug: targetSlug,
+                          local_port: setupPort || 4001,
+                          app_name: setupName || 'Studio Undangan Digital'
+                        });
+                        showToast('success', res.message || 'Terowongan berhasil dikonfigurasi & diaktifkan!');
+                        setInvoiceData(null);
+                        setIsInvoicePaid(false);
+                        setActiveTab('list');
+                        loadData();
+                      } catch (err: any) {
+                        showToast('error', err.message || 'Gagal konfigurasi otomatis. Silakan pasang manual.');
+                        setSetupKey(invoiceData.license_key);
+                        setActiveTab('setup');
+                      } finally {
+                        setSetupLoading(false);
+                      }
+                    }}
+                    disabled={setupLoading}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {setupLoading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Memasang Terowongan...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        <span>⚡ Pasang & Hubungkan Terowongan Sekarang</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (invoiceData.license_key) setSetupKey(invoiceData.license_key);
+                      setInvoiceData(null);
+                      setIsInvoicePaid(false);
+                      setActiveTab('list');
+                      loadData();
+                    }}
+                    className="text-xs text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    Tutup & Pasang Nanti
+                  </button>
+                </div>
               ) : (
-                /* Invoice Display */
+                /* Invoice Waiting Payment Display */
                 <div className="max-w-md mx-auto p-5 rounded-2xl bg-slate-950 border border-amber-500/30 text-center space-y-4">
                   <div className="inline-flex p-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">
                     <CreditCard className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-lg text-slate-100">Invoice Pembayaran</h4>
+                    <h4 className="font-bold text-lg text-slate-100">Menunggu Pembayaran</h4>
                     <p className="text-xs font-mono text-amber-300">{invoiceData.invoice_number}</p>
                   </div>
 
@@ -728,20 +858,32 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
                     Total Tagihan: <span className="text-amber-400 text-base font-bold">Rp {Number(invoiceData.amount || 0).toLocaleString('id-ID')}</span>
                   </div>
 
-                  <p className="text-xs text-slate-400">
-                    Setelah pembayaran berhasil terverifikasi, token lisensi akan otomatis aktif.
-                  </p>
+                  <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                    <span>Mengecek status pembayaran secara realtime...</span>
+                  </div>
 
-                  <button
-                    onClick={() => {
-                      setInvoiceData(null);
-                      setActiveTab('list');
-                      loadData();
-                    }}
-                    className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all"
-                  >
-                    Selesai / Kembali ke Terowongan
-                  </button>
+                  <div className="space-y-2 pt-1">
+                    <button
+                      onClick={() => handleCheckInvoice(invoiceData.invoice_number, false)}
+                      disabled={checkingInvoice}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${checkingInvoice ? 'animate-spin' : ''}`} />
+                      <span>{checkingInvoice ? 'Memeriksa Pembayaran...' : 'Cek Status Pembayaran Sekarang'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setInvoiceData(null);
+                        setActiveTab('list');
+                        loadData();
+                      }}
+                      className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      Batal / Bayar Nanti
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
