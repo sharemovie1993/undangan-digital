@@ -44,7 +44,7 @@ export class LicenseService {
    * MODE STRICT: Mengambil daftar metode/channel pembayaran aktif dari Server Lisensi
    */
   static async getPaymentChannels(): Promise<any[]> {
-    const targetUrl = `${LICENSE_SERVER_URL}/api/license/payment-channels`;
+    const targetUrl = `${LICENSE_SERVER_URL}/api/license/payment-channels?productId=undangan-digital`;
     try {
       const res = await fetch(targetUrl, {
         method: 'GET',

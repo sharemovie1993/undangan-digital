@@ -33,7 +33,7 @@ export interface LicenseInfo {
 
 /** Ambil daftar metode pembayaran dari server lisensi */
 export async function fetchPaymentChannels(): Promise<any[]> {
-  const res = await fetch(`${LICENSE_SERVER_URL}/api/license/payment-channels`, {
+  const res = await fetch(`${LICENSE_SERVER_URL}/api/license/payment-channels?productId=undangan-digital`, {
     signal: AbortSignal.timeout(8000)
   });
   const data = await res.json() as any;
