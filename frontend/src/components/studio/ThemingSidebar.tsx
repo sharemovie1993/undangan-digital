@@ -697,56 +697,60 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-2 max-w-md mx-auto">
-                <div className="flex items-center gap-1.5 flex-1 bg-black/70 rounded-2xl p-1 border border-neutral-800">
-                  <button
-                    type="button"
-                    onClick={onPrevStyleKit}
-                    className="w-8 h-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white flex items-center justify-center font-bold text-xs cursor-pointer shrink-0"
-                    title="Preset Sebelumnya"
-                  >
-                    ◀
-                  </button>
+              <div className="flex items-center justify-between gap-1.5 max-w-md mx-auto w-full">
+                {/* 1. Tombol Prev (Lebar Tetap - Diam) */}
+                <button
+                  type="button"
+                  onClick={onPrevStyleKit}
+                  className="w-9 h-9 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white flex items-center justify-center font-bold text-xs cursor-pointer shrink-0 border border-neutral-800 active:scale-95 transition"
+                  title="Preset Sebelumnya"
+                >
+                  ◀
+                </button>
 
-                  <div
-                    onClick={onOpenStyleGallery}
-                    className="flex-1 text-center cursor-pointer px-1 truncate"
-                    title="Buka Galeri Master Style Kit"
-                  >
-                    <div className="text-xs font-bold text-white truncate flex items-center justify-center gap-1.5">
-                      <span
-                        className="w-2 h-2 rounded-full inline-block shrink-0 shadow-xs"
-                        style={{ backgroundColor: activePrimary }}
-                      />
-                      <span className="truncate">{activeTheme.name}</span>
-                    </div>
-                    <div className="text-[9px] text-neutral-400 truncate">
-                      {activeFont?.name?.split(' ')[0]} • {activeFrame?.name}
-                    </div>
+                {/* 2. Kotak Info Tema Tengah (Fleksibel & Terpotong Rapi - Tanpa Menggeser Tombol) */}
+                <div
+                  onClick={onOpenStyleGallery}
+                  className="flex-1 min-w-0 h-9 bg-black/70 border border-neutral-800 rounded-xl px-2 flex flex-col justify-center items-center cursor-pointer hover:border-[#c4a661]/60 transition overflow-hidden"
+                  title="Buka Galeri Master Style Kit"
+                >
+                  <div className="w-full text-xs font-bold text-white truncate text-center flex items-center justify-center gap-1.5">
+                    <span
+                      className="w-2 h-2 rounded-full inline-block shrink-0 shadow-xs"
+                      style={{ backgroundColor: activePrimary }}
+                    />
+                    <span className="truncate">{activeTheme.name}</span>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={onNextStyleKit}
-                    className="w-8 h-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white flex items-center justify-center font-bold text-xs cursor-pointer shrink-0"
-                    title="Preset Selanjutnya"
-                  >
-                    ▶
-                  </button>
+                  <div className="w-full text-[9px] text-neutral-400 truncate text-center">
+                    {activeFont?.name?.split(' ')[0]} • {activeFrame?.name}
+                  </div>
                 </div>
 
+                {/* 3. Tombol Next (Lebar Tetap - Diam) */}
+                <button
+                  type="button"
+                  onClick={onNextStyleKit}
+                  className="w-9 h-9 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white flex items-center justify-center font-bold text-xs cursor-pointer shrink-0 border border-neutral-800 active:scale-95 transition"
+                  title="Preset Selanjutnya"
+                >
+                  ▶
+                </button>
+
+                {/* 4. Tombol Rinci (Lebar Tetap - Diam) */}
                 <button
                   type="button"
                   onClick={() => setIsAdvancedModeMobile(true)}
-                  className="px-3 py-2 rounded-2xl bg-neutral-900 border border-neutral-800 text-[#c4a661] text-[11px] font-bold hover:bg-neutral-800 flex items-center gap-1 shrink-0 cursor-pointer shadow-xs"
+                  className="px-2.5 h-9 rounded-xl bg-neutral-900 border border-neutral-800 text-[#c4a661] text-[11px] font-bold hover:bg-neutral-800 flex items-center justify-center gap-1 shrink-0 cursor-pointer shadow-xs active:scale-95 transition"
+                  title="Buka Pengaturan Rinci"
                 >
                   <span>⚙️ Rinci</span>
                 </button>
 
+                {/* 5. Tombol Tutup (Lebar Tetap - Diam) */}
                 <button
                   type="button"
                   onClick={onCloseMobileView}
-                  className="w-8 h-8 rounded-2xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-xs shrink-0 cursor-pointer"
+                  className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-xs shrink-0 cursor-pointer active:scale-95 transition"
                   title="Tutup Panel"
                 >
                   ✕
