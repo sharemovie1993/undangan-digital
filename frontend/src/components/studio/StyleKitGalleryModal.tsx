@@ -82,34 +82,49 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
             )}
           </div>
 
-          {/* Category Tabs */}
+          {/* Category Tabs with Dynamic Item Count */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {[
-              { id: 'all', label: 'Semua Koleksi' },
-              { id: 'royal', label: '👑 Royal Palace' },
+              { id: 'all', label: '✨ Semua Koleksi' },
               { id: 'traditional', label: '🏛️ Adat Nusantara' },
+              { id: 'royal', label: '👑 Royal Palace' },
               { id: 'islamic', label: '🌿 Nuansa Islami' },
               { id: 'romantic', label: '🌸 Romantis' },
               { id: 'modern', label: '🌑 Modern Clean' },
               { id: 'festive', label: '🎉 Ceria / Party' },
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
-                  selectedCategory === cat.id
-                    ? 'bg-[#c4a661] text-neutral-950 shadow-md font-bold'
-                    : 'bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+            ].map((cat) => {
+              const count = cat.id === 'all'
+                ? themeRegistry.getAllStyleKits().length
+                : themeRegistry.getStyleKitsByCategory(cat.id).length;
+
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                    selectedCategory === cat.id
+                      ? 'bg-[#c4a661] text-neutral-950 shadow-md font-bold'
+                      : 'bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                  }`}
+                >
+                  <span>{cat.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      selectedCategory === cat.id
+                        ? 'bg-neutral-950/30 text-neutral-950 font-bold'
+                        : 'bg-neutral-800 text-neutral-400'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Grid of Master Style Kits */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[50vh] overflow-y-auto pr-1 scrollbar-thin">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[52vh] overflow-y-auto pr-1 scrollbar-thin">
           {filteredKits.length === 0 ? (
             <div className="col-span-full py-12 text-center text-neutral-400 text-xs">
               Tidak ada tema yang cocok dengan pencarian "{searchQuery}".
@@ -124,6 +139,10 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
                 currentThemeId === kit.themeId &&
                 (currentFontId === kit.fontPairingId || (!currentFontId && kit.fontPairingId === 'royal_serif')) &&
                 (currentFrameId === kit.frameShape || (!currentFrameId && kit.frameShape === 'royal_arch'));
+
+              // Smart visual tags
+              const textureLabel = kit.category === 'traditional' ? '📜 Linen' : kit.category === 'romantic' ? '📜 Katun' : kit.category === 'royal' ? '📜 Linen' : '📜 Grain';
+              const particleLabel = kit.category === 'traditional' ? '🌸 Melati' : kit.category === 'royal' ? '✨ Emas' : kit.category === 'romantic' ? '🌹 Mawar' : '💡 Bokeh';
 
               return (
                 <motion.div
@@ -141,11 +160,11 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 border border-white/5">
                         {kit.badge}
                       </span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <span
-                          className={`w-4 h-4 rounded-full bg-gradient-to-br ${kit.previewGradient} border border-white/30 shadow-xs`}
+                          className={`w-3.5 h-3.5 rounded-full bg-gradient-to-br ${kit.previewGradient} border border-white/30 shadow-xs`}
                         />
-                        <span className="text-[10px] font-mono text-neutral-400">
+                        <span className="text-[10px] font-medium text-neutral-400">
                           {themeInfo?.name?.split(' ')[0]}
                         </span>
                       </div>
@@ -168,7 +187,7 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
                     </div>
 
                     {/* Composition Specs */}
-                    <div className="space-y-1.5 mb-4 text-[11px]">
+                    <div className="space-y-1.5 mb-3 text-[11px]">
                       <div className="flex items-center justify-between text-neutral-400">
                         <span className="flex items-center gap-1.5">
                           <Type className="w-3 h-3 text-[#c4a661]" />
@@ -192,15 +211,15 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
                       <div className="flex items-center justify-between text-neutral-400">
                         <span className="flex items-center gap-1.5">
                           <Palette className="w-3 h-3 text-[#c4a661]" />
-                          <span>Palet Warna</span>
+                          <span>Efek & Tekstur</span>
                         </span>
-                        <span className="text-white font-medium truncate max-w-[120px]">
-                          {themeInfo?.name}
+                        <span className="text-amber-300/90 font-medium truncate max-w-[120px] text-[10px]">
+                          {textureLabel} • {particleLabel}
                         </span>
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-neutral-400 line-clamp-2 mb-4 leading-relaxed">
+                    <p className="text-[10.5px] text-neutral-400 line-clamp-2 mb-4 leading-relaxed">
                       {kit.description}
                     </p>
                   </div>
