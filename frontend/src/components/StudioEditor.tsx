@@ -215,27 +215,10 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
     }
   };
 
-  const handleBulkImport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bulkText.trim()) return;
+  const handleBulkImportGuests = async (importedGuests: GuestRecipient[]) => {
+    if (!importedGuests || importedGuests.length === 0) return;
 
-    const lines = bulkText.split('\n').filter((l) => l.trim().length > 0);
-    const parsedGuests: GuestRecipient[] = lines.map((line, idx) => {
-      const parts = line.split(',');
-      const name = parts[0].trim();
-      const city = parts[1]?.trim() || undefined;
-      return {
-        id: `g-${Date.now()}-${idx}`,
-        name,
-        city,
-        group: 'Umum',
-        slug: generateSlug(name),
-        isAttending: null,
-        paxCount: 1,
-      };
-    });
-
-    const nextGuests = [...parsedGuests, ...guests];
+    const nextGuests = [...importedGuests, ...guests];
     onUpdateGuests(nextGuests);
     setBulkText('');
     setIsBulkModalOpen(false);
@@ -767,9 +750,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
       <BulkGuestImportModal
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
-        bulkText={bulkText}
-        setBulkText={setBulkText}
-        onProcessImport={handleBulkImport}
+        onImportGuests={handleBulkImportGuests}
       />
 
       <PricingModal

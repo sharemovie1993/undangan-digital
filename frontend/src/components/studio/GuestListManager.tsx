@@ -1,6 +1,7 @@
 import React from 'react';
-import { Plus, Upload, Download, QrCode, Copy, Send, Eye, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Upload, Download, QrCode, Copy, Send, Eye, Trash2, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { GuestRecipient, InvitationData } from '../../types';
+import { exportGuestsToExcel } from '../../utils/excelGuests';
 import { api } from '../../api/client';
 
 interface GuestListManagerProps {
@@ -72,15 +73,13 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
 
           <button
             type="button"
-            onClick={async () => {
-              if (!data.id) return;
-              window.open(api.getGuestExportCsvUrl(data.id), '_blank');
-            }}
-            className="px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border border-white/10"
-            title="Download Format Excel / CSV Tamu"
+            onClick={() => exportGuestsToExcel(guests, data.eventTitle || data.title || 'Undangan')}
+            disabled={guests.length === 0}
+            className="px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border border-white/10 disabled:opacity-50"
+            title="Download Daftar Tamu Format Microsoft Excel (.xlsx)"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Export CSV</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Export Excel (.xlsx)</span>
           </button>
 
           <button
