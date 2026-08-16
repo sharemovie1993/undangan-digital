@@ -34,7 +34,15 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
   const [tunnels, setTunnels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'list' | 'setup' | 'buy' | 'custom_domain'>('list');
-  const [wgStatus, setWgStatus] = useState<{ installed: boolean; is_windows: boolean; is_admin: boolean }>({
+  const [wgStatus, setWgStatus] = useState<{
+    installed: boolean;
+    is_windows: boolean;
+    is_admin: boolean;
+    platform?: string;
+    hostname?: string;
+    os_name?: string;
+    os_type?: string;
+  }>({
     installed: true,
     is_windows: false,
     is_admin: true
@@ -333,6 +341,30 @@ export const EasyTunnelModal: React.FC<EasyTunnelModalProps> = ({ isOpen, onClos
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* System & OS Info Bar */}
+        <div className="px-6 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/90 border border-slate-700/80 font-medium text-slate-200 shadow-sm">
+              {wgStatus.is_windows ? '🪟 Windows On-Premise' : '🐧 Linux Server (Ubuntu)'}
+            </span>
+            {wgStatus.hostname && (
+              <span className="hidden sm:inline-flex items-center gap-1 text-slate-400">
+                Host: <strong className="text-slate-200">{wgStatus.hostname}</strong>
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
+              wgStatus.installed
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${wgStatus.installed ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
+              {wgStatus.installed ? 'WireGuard Engine Terpasang' : 'WireGuard Belum Terpasang'}
+            </span>
+          </div>
         </div>
 
         {/* WireGuard Status Alert (if not installed) */}

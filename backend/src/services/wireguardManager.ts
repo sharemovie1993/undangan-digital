@@ -16,6 +16,26 @@ export interface TunnelStatus {
 }
 
 export class WireguardManager {
+  static getTunnelsDir(): string {
+    const candidates = [
+      process.env.TUNNELS_DIR,
+      path.resolve(process.cwd(), 'tunnels'),
+      path.resolve(process.cwd(), 'backend/tunnels'),
+      path.resolve(__dirname, '../../tunnels'),
+      path.resolve(__dirname, '../tunnels'),
+      '/var/www/undangan-digital/backend/tunnels'
+    ].filter(Boolean) as string[];
+
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+    const defaultDir = path.resolve(process.cwd(), 'tunnels');
+    if (!fs.existsSync(defaultDir)) {
+      try { fs.mkdirSync(defaultDir, { recursive: true }); } catch {}
+    }
+    return defaultDir;
+  }
+
   static isWindows(): boolean {
     return os.platform() === 'win32';
   }
@@ -30,8 +50,9 @@ export class WireguardManager {
   }
 
   static ensureTunnelsDir(): void {
-    if (!fs.existsSync(TUNNELS_DIR)) {
-      fs.mkdirSync(TUNNELS_DIR, { recursive: true });
+    const dir = this.getTunnelsDir();
+    if (!fs.existsSync(dir)) {
+      try { fs.mkdirSync(dir, { recursive: true }); } catch {}
     }
   }
 
@@ -111,7 +132,7 @@ export class WireguardManager {
   /** Dapatkan path .conf dari slug */
   static confPath(slug: string): string {
     this.ensureTunnelsDir();
-    return path.join(TUNNELS_DIR, `et-${slug}.conf`);
+    return path.join(this.getTunnelsDir(), `et-${slug}.conf`);
   }
 
   /** Path symlink di /etc/wireguard/ (Linux) */

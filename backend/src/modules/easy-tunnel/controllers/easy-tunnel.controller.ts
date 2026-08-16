@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import os from 'os';
 import { EasyTunnelService } from '../services/easy-tunnel.service';
 import { WireguardManager } from '../../../services/wireguardManager';
 import {
@@ -153,11 +154,21 @@ export const EasyTunnelController = {
   async checkWgInstalled(_req: FastifyRequest, reply: FastifyReply) {
     try {
       const installed = WireguardManager.isWireGuardInstalled();
+      const platform = os.platform();
+      const hostname = os.hostname();
+      const osType = os.type();
+      const osRelease = os.release();
+      const osName = platform === 'win32' ? 'Windows' : (platform === 'linux' ? 'Linux' : platform);
       return reply.send({
         success: true,
         installed,
         is_windows: WireguardManager.isWindows(),
-        is_admin: WireguardManager.isWindows() ? WireguardManager.isAdmin() : true
+        is_admin: WireguardManager.isWindows() ? WireguardManager.isAdmin() : true,
+        platform,
+        hostname,
+        os_type: osType,
+        os_release: osRelease,
+        os_name: osName
       });
     } catch (err: any) {
       return reply.status(500).send({ success: false, message: err.message });
