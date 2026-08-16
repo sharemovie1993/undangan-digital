@@ -52,12 +52,12 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
           DIGITAL GIFT & AMPLOP
         </span>
         <h2
-          className="text-2xl sm:text-3xl font-bold mt-1 text-white"
-          style={{ fontFamily: headingFont }}
+          className="text-2xl sm:text-3xl font-bold mt-1"
+          style={{ fontFamily: headingFont, color: theme.textMain }}
         >
           Tanda Kasih & Amplop Digital
         </h2>
-        <p className="mt-2 text-xs text-neutral-400 max-w-xs mx-auto leading-relaxed">
+        <p className="mt-2 text-xs max-w-xs mx-auto leading-relaxed" style={{ color: theme.textMuted }}>
           Doa restu Anda merupakan karunia terindah bagi kami. Namun jika Anda ingin memberikan tanda kasih, dapat melalui transfer atau kado berikut:
         </p>
         <div
@@ -82,8 +82,8 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
               className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-xl border"
               style={{
                 background: isDarkCard
-                  ? `linear-gradient(135deg, ${cardBg} 0%, #0d0d12 100%)`
-                  : `linear-gradient(135deg, ${activePrimary}25 0%, ${cardBg} 100%)`,
+                  ? `linear-gradient(135deg, ${cardBg} 0%, ${theme.accentBg} 100%)`
+                  : `linear-gradient(135deg, ${activePrimary}20 0%, ${cardBg} 100%)`,
                 borderColor: `${activePrimary}40`,
               }}
             >
@@ -105,26 +105,27 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data }) 
                   {account.qrisImageUrl && (
                     <button
                       onClick={() => setSelectedQris(account)}
-                      className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition text-white border"
+                      className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition border"
                       style={{
                         backgroundColor: `${activePrimary}20`,
                         borderColor: `${activePrimary}40`,
+                        color: theme.textMain,
                       }}
                     >
                       <QrCode className="w-3.5 h-3.5" />
                       <span>QRIS</span>
                     </button>
                   )}
-                  <Building2 className="w-5 h-5 text-white/70" />
+                  <Building2 className="w-5 h-5 opacity-70" style={{ color: theme.textMain }} />
                 </div>
               </div>
 
               {/* Account Number */}
               <div className="mt-4 mb-3">
-                <p className="text-xl sm:text-2xl font-bold tracking-wider text-white font-mono">
+                <p className="text-xl sm:text-2xl font-bold tracking-wider font-mono" style={{ color: theme.textMain }}>
                   {account.accountNumber}
                 </p>
-                <p className="text-[10px] tracking-widest text-neutral-400 uppercase mt-0.5">
+                <p className="text-[10px] tracking-widest uppercase mt-0.5" style={{ color: theme.textMuted }}>
                   A.N {account.accountHolder}
                 </p>
               </div>

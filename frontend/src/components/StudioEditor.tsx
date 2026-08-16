@@ -283,14 +283,19 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   const currentKitIndex = styleKits.findIndex((k) => k.id === currentKit?.id);
 
   const handleApplyMasterStyleKit = (kit: MasterStyleKit) => {
+    const selectedTheme = THEMES[kit.themeId];
     onUpdateData({
       ...data,
       theme: kit.themeId,
       themeConfig: {
         ...data.themeConfig,
-        primaryColor: kit.primaryColor,
+        primaryColor: kit.primaryColor || selectedTheme?.primary,
+        secondaryColor: selectedTheme?.secondary,
+        bgColor: selectedTheme?.bg,
+        cardBgColor: selectedTheme?.cardBg,
         fontPairingId: kit.fontPairingId,
         frameShape: kit.frameShape,
+        archetypeStyle: selectedTheme?.archetype as any,
       },
     });
   };
@@ -309,12 +314,18 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   };
 
   const handleThemeChange = (themeId: ThemeToken) => {
+    const selectedTheme = THEMES[themeId];
     onUpdateData({
       ...data,
       theme: themeId,
       themeConfig: {
         ...data.themeConfig,
-        archetypeStyle: undefined,
+        primaryColor: selectedTheme?.primary,
+        secondaryColor: selectedTheme?.secondary,
+        bgColor: selectedTheme?.bg,
+        cardBgColor: selectedTheme?.cardBg,
+        archetypeStyle: selectedTheme?.archetype as any,
+        frameShape: (selectedTheme?.archetype as any) || 'royal_arch',
       },
     });
   };

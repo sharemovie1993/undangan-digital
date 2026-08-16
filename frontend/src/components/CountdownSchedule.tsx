@@ -139,8 +139,8 @@ export const CountdownSchedule: React.FC<CountdownScheduleProps> = ({ data }) =>
           EVENT SCHEDULE
         </span>
         <h2
-          className="text-2xl sm:text-3xl font-bold mt-1 text-white"
-          style={{ fontFamily: headingFont }}
+          className="text-2xl sm:text-3xl font-bold mt-1"
+          style={{ fontFamily: headingFont, color: theme.textMain }}
         >
           {data.eventType === 'wedding'
             ? 'Waktu & Tempat Acara'
@@ -179,12 +179,12 @@ export const CountdownSchedule: React.FC<CountdownScheduleProps> = ({ data }) =>
             }}
           >
             <span
-              className="text-2xl sm:text-3xl font-bold text-white font-mono"
+              className="text-2xl sm:text-3xl font-bold font-mono"
               style={{ color: activePrimary }}
             >
               {String(item.value).padStart(2, '0')}
             </span>
-            <span className="text-[9px] uppercase tracking-wider text-neutral-400 font-medium mt-0.5">
+            <span className="text-[9px] uppercase tracking-wider font-medium mt-0.5" style={{ color: theme.textMuted }}>
               {item.label}
             </span>
           </div>
@@ -249,8 +249,8 @@ export const CountdownSchedule: React.FC<CountdownScheduleProps> = ({ data }) =>
                     {badgeText}
                   </span>
                   <h3
-                    className="text-xl font-bold text-white mt-0.5"
-                    style={{ fontFamily: headingFont }}
+                    className="text-xl font-bold mt-0.5"
+                    style={{ fontFamily: headingFont, color: theme.textMain }}
                   >
                     {resolvedTitle}
                   </h3>
@@ -268,13 +268,13 @@ export const CountdownSchedule: React.FC<CountdownScheduleProps> = ({ data }) =>
               </div>
 
               {/* Event Details */}
-              <div className="mt-4 space-y-2.5 text-xs text-neutral-300">
+              <div className="mt-4 space-y-2.5 text-xs" style={{ color: theme.textMuted }}>
                 <div className="flex items-center gap-2.5">
                   <CalendarIcon
                     className="w-4 h-4 shrink-0"
                     style={{ color: activePrimary }}
                   />
-                  <span className="font-semibold text-white">{formattedDate}</span>
+                  <span className="font-semibold" style={{ color: theme.textMain }}>{formattedDate}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Clock
@@ -289,9 +289,9 @@ export const CountdownSchedule: React.FC<CountdownScheduleProps> = ({ data }) =>
                     style={{ color: activePrimary }}
                   />
                   <div>
-                    <p className="font-semibold text-white">{venue}</p>
+                    <p className="font-semibold" style={{ color: theme.textMain }}>{venue}</p>
                     {address && (
-                      <p className="text-neutral-400 text-[11px] leading-relaxed mt-0.5">
+                      <p className="text-[11px] leading-relaxed mt-0.5 opacity-80" style={{ color: theme.textMuted }}>
                         {address}
                       </p>
                     )}
@@ -305,7 +305,7 @@ export const CountdownSchedule: React.FC<CountdownScheduleProps> = ({ data }) =>
                   style={{
                     backgroundColor: `${activePrimary}10`,
                     borderColor: `${activePrimary}25`,
-                    color: '#e2e2e7',
+                    color: theme.textMain,
                   }}
                 >
                   {notes}

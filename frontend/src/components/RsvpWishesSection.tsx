@@ -183,8 +183,8 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="text-2xl sm:text-3xl font-bold text-white tracking-wide"
-          style={{ fontFamily: headingFont }}
+          className="text-2xl sm:text-3xl font-bold tracking-wide"
+          style={{ fontFamily: headingFont, color: theme.textMain }}
         >
           Konfirmasi Kehadiran
         </motion.h2>
@@ -193,7 +193,7 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
           className="mx-auto mt-2 h-0.5 w-16 rounded-full"
           style={{ backgroundColor: activePrimary }}
         />
-        <p className="mt-2 text-xs text-neutral-400 max-w-sm mx-auto">
+        <p className="mt-2 text-xs max-w-sm mx-auto" style={{ color: theme.textMuted }}>
           Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan
           hadir dan memberikan doa restu.
         </p>
@@ -228,10 +228,10 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
               >
                 <CheckCircle2 className="h-8 w-8" />
               </div>
-              <h3 className="font-bold text-lg text-white" style={{ fontFamily: headingFont }}>
+              <h3 className="font-bold text-lg" style={{ fontFamily: headingFont, color: theme.textMain }}>
                 Terima Kasih!
               </h3>
-              <p className="text-xs text-neutral-300 max-w-xs mx-auto">
+              <p className="text-xs max-w-xs mx-auto" style={{ color: theme.textMuted }}>
                 Konfirmasi kehadiran & ucapan doa restu Anda telah berhasil tersimpan di sistem kami.
               </p>
             </motion.div>
@@ -239,18 +239,20 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               {/* Nama Tamu */}
               <div>
-                <label className="block text-neutral-300 font-semibold mb-1">Nama Lengkap</label>
+                <label className="block font-semibold mb-1" style={{ color: theme.textMain }}>Nama Lengkap</label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 opacity-60" style={{ color: theme.textMuted }} />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Contoh: Bpk. Ahmad Suherman & Kel"
-                    className="w-full rounded-xl border bg-neutral-950/80 pl-10 pr-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:ring-1"
+                    className="w-full rounded-xl border pl-10 pr-4 py-2.5 placeholder-neutral-500 focus:outline-none focus:ring-1"
                     style={{
                       borderColor: `${activePrimary}40`,
+                      backgroundColor: theme.accentBg,
+                      color: theme.textMain,
                     }}
                   />
                 </div>
@@ -387,11 +389,11 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
           <div className="flex items-center justify-between mb-4 px-1">
             <div className="flex items-center gap-2">
               <MessageSquareQuote className="w-4 h-4" style={{ color: activePrimary }} />
-              <h3 className="font-bold text-base text-white" style={{ fontFamily: headingFont }}>
+              <h3 className="font-bold text-base" style={{ fontFamily: headingFont, color: theme.textMain }}>
                 Buku Tamu & Ucapan ({displayWishes.length})
               </h3>
             </div>
-            <span className="text-[10px] text-neutral-400 font-mono">Live SQLite</span>
+            <span className="text-[10px] font-mono" style={{ color: theme.textMuted }}>Live SQLite</span>
           </div>
 
           {/* Wishes List */}
@@ -405,8 +407,8 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
                 }}
               >
                 <MessageSquareQuote className="w-6 h-6 mx-auto mb-2 opacity-60" style={{ color: activePrimary }} />
-                <p className="text-xs font-semibold text-white">Belum Ada Ucapan Doa Restu</p>
-                <p className="text-[11px] text-neutral-400 mt-1">Jadilah yang pertama mengirimkan ucapan doa restu dan konfirmasi kehadiran di atas!</p>
+                <p className="text-xs font-semibold" style={{ color: theme.textMain }}>Belum Ada Ucapan Doa Restu</p>
+                <p className="text-[11px] mt-1" style={{ color: theme.textMuted }}>Jadilah yang pertama mengirimkan ucapan doa restu dan konfirmasi kehadiran di atas!</p>
               </div>
             ) : (
               displayWishes.map((item) => {
@@ -441,7 +443,7 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
 
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-xs text-white">
+                            <span className="font-bold text-xs" style={{ color: theme.textMain }}>
                               {item.senderName || 'Tamu'}
                             </span>
 
@@ -462,7 +464,7 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
                                 : 'Ragu'}
                             </span>
                           </div>
-                          <span className="text-[10px] text-neutral-400 font-light">
+                          <span className="text-[10px] font-light" style={{ color: theme.textMuted }}>
                             {item.relationship || 'Tamu Undangan'} • {item.createdAt || 'Baru saja'}
                           </span>
                         </div>
@@ -472,8 +474,9 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
                       <button
                         onClick={() => toggleLike(item.id)}
                         className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] transition cursor-pointer ${
-                          hasLiked ? 'text-rose-400 font-semibold' : 'text-neutral-400 hover:text-white'
+                          hasLiked ? 'text-rose-400 font-semibold' : 'hover:opacity-100'
                         }`}
+                        style={{ color: hasLiked ? '#fb7185' : theme.textMuted }}
                       >
                         <Heart
                           className={`w-3.5 h-3.5 ${hasLiked ? 'fill-rose-500 text-rose-500' : ''}`}
@@ -482,7 +485,7 @@ export const RsvpWishesSection: React.FC<RsvpWishesSectionProps> = ({
                       </button>
                     </div>
 
-                    <p className="mt-2.5 text-xs text-neutral-300 leading-relaxed pl-11">
+                    <p className="mt-2.5 text-xs leading-relaxed pl-11" style={{ color: theme.textMain }}>
                       {item.message}
                     </p>
                   </motion.div>

@@ -117,8 +117,8 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data }) => {
           OUR MEMORIES & GALLERY
         </span>
         <h2
-          className="text-2xl sm:text-3xl font-bold mt-1 text-white"
-          style={{ fontFamily: headingFont }}
+          className="text-2xl sm:text-3xl font-bold mt-1"
+          style={{ fontFamily: headingFont, color: theme.textMain }}
         >
           {data.eventType === 'khitanan'
             ? 'Galeri & Dokumentasi'
