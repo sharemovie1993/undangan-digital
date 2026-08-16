@@ -4,6 +4,7 @@ import { Calendar as CalendarIcon, Clock, MapPin, ExternalLink } from 'lucide-re
 import { InvitationData } from '../types';
 import { FONT_PRESETS } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
+import { CornerOrnaments, SectionDivider } from './effects/CornerOrnaments';
 
 interface CountdownScheduleProps {
   data: InvitationData;
@@ -237,6 +238,9 @@ export const CountdownSchedule: React.FC<CountdownScheduleProps> = ({ data }) =>
                 borderColor: `${activePrimary}35`,
               }}
             >
+              {/* Corner Ornaments */}
+              <CornerOrnaments type={data.themeConfig?.cornerOrnament || 'none'} primaryColor={activePrimary} />
+
               {/* Top decorative ambient glow */}
               <div
                 className="absolute top-0 right-0 -mt-8 -mr-8 h-24 w-24 rounded-full blur-2xl pointer-events-none opacity-20"

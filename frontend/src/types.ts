@@ -44,7 +44,17 @@ export type FrameShapeId =
   | 'jawa_joglo'
   | 'sunda_parahyangan'
   | 'minang_suntiang'
-  | 'bali_aesthetic';
+  | 'bali_aesthetic'
+  | 'batik_parang_arch'
+  | 'batik_kawung_border'
+  | 'batik_megamendung'
+  | 'batik_truntum_corner';
+
+export type TexturePatternId = 'none' | 'linen' | 'cotton' | 'marble' | 'grain';
+export type ParticleEffectId = 'none' | 'gold_dust' | 'jasmine_petals' | 'rose_petals' | 'bokeh_glow';
+export type WaxSealColorId = 'maroon' | 'gold' | 'sage' | 'navy' | 'rose';
+export type CornerOrnamentId = 'none' | 'royal_crown' | 'batik_prada' | 'art_deco' | 'javanese_flourish';
+export type SectionDividerId = 'none' | 'gold_line' | 'batik_parang' | 'olive_branch' | 'flourish';
 
 export interface MasterStyleKit {
   id: string;
@@ -69,6 +79,11 @@ export interface CustomThemeConfig {
   fontPairingId?: FontPairingId;
   frameShape?: FrameShapeId;
   archetypeStyle?: ArchetypeStyle;
+  textureId?: TexturePatternId;
+  particleEffect?: ParticleEffectId;
+  waxSealColor?: WaxSealColorId;
+  cornerOrnament?: CornerOrnamentId;
+  sectionDivider?: SectionDividerId;
 }
 
 export interface ProfilePerson {

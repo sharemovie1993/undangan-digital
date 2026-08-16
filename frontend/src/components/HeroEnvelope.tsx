@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Sparkles, ChevronDown, Calendar, MapPin, Heart } from 'lucide-react';
 import { InvitationData, ThemeToken } from '../types';
 import { themeRegistry } from '../themes/registry';
+import { WaxSealStamp } from './effects/WaxSealStamp';
+import { AmbientParticleCanvas } from './effects/AmbientParticleCanvas';
 
 interface HeroEnvelopeProps {
   data: InvitationData;
@@ -23,6 +25,12 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
   const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary;
   const effectiveGuest = guestName || recipientName || 'Tamu Undangan';
+  const particleEffect = data.themeConfig?.particleEffect || (theme.mode === 'dark' ? 'gold_dust' : 'none');
+  const waxColor = data.themeConfig?.waxSealColor || (theme.category === 'royal' ? 'gold' : theme.category === 'traditional' ? 'maroon' : 'sage');
+
+  const monogram = data.eventType === 'wedding'
+    ? (data.eventTitle?.split('&')[0]?.trim()?.[0] || 'R') + ' & ' + (data.eventTitle?.split('&')[1]?.trim()?.[0] || 'J')
+    : 'L';
 
   return (
     <AnimatePresence>
@@ -39,6 +47,9 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
             backgroundPosition: 'center',
           }}
         >
+          {/* Ambient Particle System */}
+          <AmbientParticleCanvas effect={particleEffect} primaryColor={activePrimary} isDark={theme.mode !== 'light'} />
+
           {/* Subtle Ambient Vignette Overlay */}
           <div className="absolute inset-0 bg-black/65 backdrop-blur-[6px]" />
 
@@ -54,24 +65,9 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
               boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 30px ${activePrimary}20`
             }}
           >
-            {/* Top Monogram Seal */}
-            <div
-              className="mx-auto -mt-14 mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 shadow-xl"
-              style={{
-                borderColor: activePrimary,
-                background: `linear-gradient(135deg, ${activePrimary}, #fff2c6 50%, ${activePrimary})`
-              }}
-            >
-              <div
-                className="flex h-16 w-16 items-center justify-center rounded-full shadow-inner"
-                style={{ backgroundColor: theme.cardBg, color: activePrimary }}
-              >
-                <span className="font-serif text-xl font-bold tracking-widest">
-                  {data.eventType === 'wedding'
-                    ? (data.eventTitle?.split('&')[0]?.trim()?.[0] || 'R') + '&' + (data.eventTitle?.split('&')[1]?.trim()?.[0] || 'J')
-                    : 'L'}
-                </span>
-              </div>
+            {/* Top 3D Monogram Wax Seal */}
+            <div className="mx-auto -mt-16 mb-4 flex items-center justify-center">
+              <WaxSealStamp monogram={monogram} colorId={waxColor} onClick={onOpen} />
             </div>
 
             {/* Tagline */}

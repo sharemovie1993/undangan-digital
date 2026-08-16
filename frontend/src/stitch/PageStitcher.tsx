@@ -1,6 +1,8 @@
 import React from 'react';
 import { InvitationData, ThemeToken, WishMessage } from '../types';
 import { themeRegistry } from '../themes/registry';
+import { TEXTURE_PRESETS } from '../themes/textures';
+import { AmbientParticleCanvas } from '../components/effects/AmbientParticleCanvas';
 import { StitchBlockInstance } from '../contracts/stitch.contract';
 import { DEFAULT_STITCH_INSTANCES } from './BlockRegistry';
 import { HeroEnvelope } from '../components/HeroEnvelope';
@@ -32,8 +34,14 @@ export const PageStitcher: React.FC<PageStitcherProps> = ({
   stitchBlocks = DEFAULT_STITCH_INSTANCES
 }) => {
   const currentTheme = themeRegistry.getTheme(theme);
+  const isDark = currentTheme.mode === 'dark';
   const activeBg = data.themeConfig?.bgColor || currentTheme.bg;
+  const activePrimary = data.themeConfig?.primaryColor || currentTheme.primary;
   const activeTextMain = currentTheme.textMain;
+
+  const textureId = data.themeConfig?.textureId || 'none';
+  const textureStyle = TEXTURE_PRESETS[textureId]?.getStyle(isDark) || {};
+  const particleEffect = data.themeConfig?.particleEffect || 'none';
 
   // Safely normalize stitchBlocks into a valid array
   let safeBlocks: StitchBlockInstance[] = DEFAULT_STITCH_INSTANCES;
@@ -134,9 +142,16 @@ export const PageStitcher: React.FC<PageStitcherProps> = ({
 
   return (
     <div
-      className="w-full space-y-0 relative min-h-screen transition-colors duration-300 font-sans"
-      style={{ backgroundColor: activeBg, color: activeTextMain }}
+      className="w-full space-y-0 relative min-h-screen transition-colors duration-300 font-sans overflow-hidden"
+      style={{
+        backgroundColor: activeBg,
+        color: activeTextMain,
+        ...textureStyle,
+      }}
     >
+      {/* Ambient Particle Canvas Overlay */}
+      <AmbientParticleCanvas effect={particleEffect} primaryColor={activePrimary} isDark={isDark} />
+
       {sortedBlocks.map(block => renderBlock(block))}
     </div>
   );

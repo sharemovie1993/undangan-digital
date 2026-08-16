@@ -104,6 +104,30 @@ export const FRAME_SHAPES = {
     name: 'Double Gold Box',
     className: 'rounded-2xl border-4',
     badge: 'Kotak Garis Ganda'
+  },
+  batik_parang_arch: {
+    id: 'batik_parang_arch' as const,
+    name: 'Batik Parang Arch',
+    className: 'rounded-t-[140px] rounded-b-2xl',
+    badge: '🏛️ Parang Prada'
+  },
+  batik_kawung_border: {
+    id: 'batik_kawung_border' as const,
+    name: 'Batik Kawung Border',
+    className: 'rounded-2xl',
+    badge: '⚜️ Kawung 4-Sudut'
+  },
+  batik_megamendung: {
+    id: 'batik_megamendung' as const,
+    name: 'Batik Megamendung',
+    className: 'rounded-t-[130px] rounded-b-2xl',
+    badge: '☁️ Megamendung'
+  },
+  batik_truntum_corner: {
+    id: 'batik_truntum_corner' as const,
+    name: 'Batik Truntum Star',
+    className: 'rounded-2xl',
+    badge: '🌸 Truntum Melati'
   }
 };
 

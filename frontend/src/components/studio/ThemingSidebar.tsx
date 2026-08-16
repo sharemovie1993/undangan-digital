@@ -10,10 +10,14 @@ import {
   QrCode,
   Search,
   RotateCw,
+  Layers,
+  Sparkle,
+  Stamp,
 } from 'lucide-react';
-import { InvitationData, EventType, ThemeToken } from '../../types';
+import { InvitationData, EventType, ThemeToken, TexturePatternId, ParticleEffectId, WaxSealColorId, CornerOrnamentId } from '../../types';
 import { THEMES, FONT_PRESETS, FRAME_SHAPES } from '../../data/presets';
 import { themeRegistry } from '../../themes/registry';
+import { TEXTURE_PRESETS } from '../../themes/textures';
 import { useRealtimeThemes } from '../../hooks/useRealtimeThemes';
 
 interface ThemingSidebarProps {
@@ -310,6 +314,122 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
               })}
             </div>
 
+            {/* Background Texture Engine */}
+            <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] text-neutral-400">
+                <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
+                  <Layers className="w-3 h-3 text-[#c4a661]" />
+                  <span>Tekstur Kertas Fisik</span>
+                </span>
+                <span className="text-[9px] text-[#c4a661]">Ultra-light SVG</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-[10px]">
+                {Object.values(TEXTURE_PRESETS).map((tex) => {
+                  const isSelected = (data.themeConfig?.textureId || 'none') === tex.id;
+                  return (
+                    <button
+                      key={tex.id}
+                      type="button"
+                      onClick={() =>
+                        onUpdateData({
+                          ...data,
+                          themeConfig: { ...data.themeConfig, textureId: tex.id },
+                        })
+                      }
+                      className={`p-1.5 rounded-lg border text-center transition cursor-pointer flex flex-col items-center justify-center ${
+                        isSelected
+                          ? 'border-[#c4a661] bg-[#c4a661]/15 text-[#c4a661]'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <span className="font-medium truncate max-w-full">{tex.name.split(' ')[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Ambient Particle System */}
+            <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] text-neutral-400">
+                <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
+                  <Sparkle className="w-3 h-3 text-[#c4a661]" />
+                  <span>Efek Partikel Hidup</span>
+                </span>
+                <span className="text-[9px] text-emerald-400">60 FPS Canvas</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-[10px]">
+                {[
+                  { id: 'none', label: 'Mati' },
+                  { id: 'gold_dust', label: '✨ Debu Emas' },
+                  { id: 'jasmine_petals', label: '🌸 Melati' },
+                  { id: 'rose_petals', label: '🌹 Mawar' },
+                  { id: 'bokeh_glow', label: '💡 Bokeh' },
+                ].map((p) => {
+                  const isSelected = (data.themeConfig?.particleEffect || (activeTheme.mode === 'dark' ? 'gold_dust' : 'none')) === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        onUpdateData({
+                          ...data,
+                          themeConfig: { ...data.themeConfig, particleEffect: p.id as ParticleEffectId },
+                        })
+                      }
+                      className={`p-1.5 rounded-lg border text-center transition cursor-pointer ${
+                        isSelected
+                          ? 'border-[#c4a661] bg-[#c4a661]/15 text-[#c4a661] font-bold'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <span className="truncate max-w-full">{p.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Wax Seal Stamp Colors */}
+            <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] text-neutral-400">
+                <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
+                  <Stamp className="w-3 h-3 text-[#c4a661]" />
+                  <span>Segel Lilin (Wax Seal)</span>
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-1">
+                {[
+                  { id: 'gold', color: '#b45309', label: 'Gold' },
+                  { id: 'maroon', color: '#7f1d1d', label: 'Maroon' },
+                  { id: 'sage', color: '#1e3a2f', label: 'Sage' },
+                  { id: 'navy', color: '#1e293b', label: 'Navy' },
+                  { id: 'rose', color: '#831843', label: 'Rose' },
+                ].map((w) => {
+                  const isSelected = (data.themeConfig?.waxSealColor || 'gold') === w.id;
+                  return (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() =>
+                        onUpdateData({
+                          ...data,
+                          themeConfig: { ...data.themeConfig, waxSealColor: w.id as WaxSealColorId },
+                        })
+                      }
+                      title={`Segel Lilin ${w.label}`}
+                      className={`p-1 rounded-lg border flex flex-col items-center gap-1 transition cursor-pointer ${
+                        isSelected ? 'border-[#c4a661] bg-[#c4a661]/20' : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
+                      }`}
+                    >
+                      <span className="w-4 h-4 rounded-full shadow-inner border border-white/20" style={{ backgroundColor: w.color }} />
+                      <span className="text-[8px] text-neutral-400">{w.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Custom Color Picker */}
             <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 space-y-2">
               <div className="flex items-center justify-between text-[10px] text-neutral-400">
@@ -396,47 +516,88 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
 
         {/* TAB: FRAME SHAPES */}
         {activeInspectorTab === 'frame' && (
-          <div className="grid grid-cols-2 gap-2">
-            {Object.values(FRAME_SHAPES).map((frame) => {
-              const isSelected = activeFrameId === frame.id;
-              return (
-                <button
-                  key={frame.id}
-                  onClick={() =>
-                    onUpdateData({
-                      ...data,
-                      themeConfig: {
-                        ...data.themeConfig,
-                        frameShape: frame.id,
-                      },
-                    })
-                  }
-                  className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
-                    isSelected
-                      ? 'border-[#c4a661] bg-[#c4a661]/15 text-[#c4a661] ring-1 ring-[#c4a661]'
-                      : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-white'
-                  }`}
-                >
-                  <div
-                    className={`w-9 h-11 border-2 mb-2 bg-neutral-800/80 ${
-                      isSelected ? 'border-[#c4a661]' : 'border-neutral-600'
-                    } ${
-                      frame.id === 'royal_arch'
-                        ? 'rounded-t-full rounded-b-md'
-                        : frame.id === 'islamic_dome'
-                        ? 'rounded-t-[30px] rounded-b-md'
-                        : frame.id === 'soft_oval'
-                        ? 'rounded-full'
-                        : 'rounded-lg border-double border-4'
-                    }`}
-                  />
-                  <div className="text-xs font-bold text-white truncate max-w-full">{frame.name}</div>
-                  <div className="text-[9px] text-neutral-500 truncate max-w-full mt-0.5">
-                    {frame.badge}
-                  </div>
-                </button>
-              );
-            })}
+          <div className="space-y-4">
+            <div>
+              <div className="text-[11px] font-semibold text-neutral-300 mb-2">Bentuk Bingkai Foto & Motif Batik</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.values(FRAME_SHAPES).map((frame) => {
+                  const isSelected = activeFrameId === frame.id;
+                  return (
+                    <button
+                      key={frame.id}
+                      onClick={() =>
+                        onUpdateData({
+                          ...data,
+                          themeConfig: {
+                            ...data.themeConfig,
+                            frameShape: frame.id,
+                          },
+                        })
+                      }
+                      className={`p-2.5 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
+                        isSelected
+                          ? 'border-[#c4a661] bg-[#c4a661]/15 text-[#c4a661] ring-1 ring-[#c4a661]'
+                          : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-white'
+                      }`}
+                    >
+                      <div
+                        className={`w-9 h-11 border-2 mb-1.5 bg-neutral-800/80 ${
+                          isSelected ? 'border-[#c4a661]' : 'border-neutral-600'
+                        } ${
+                          frame.id === 'royal_arch' || frame.id === 'batik_parang_arch' || frame.id === 'batik_megamendung'
+                            ? 'rounded-t-full rounded-b-md'
+                            : frame.id === 'islamic_dome'
+                            ? 'rounded-t-[30px] rounded-b-md'
+                            : frame.id === 'soft_oval'
+                            ? 'rounded-full'
+                            : 'rounded-lg border-double border-4'
+                        }`}
+                      />
+                      <div className="text-[11px] font-bold text-white truncate max-w-full">{frame.name}</div>
+                      <div className="text-[9px] text-neutral-500 truncate max-w-full mt-0.5">
+                        {frame.badge}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Corner Filigree Ornaments */}
+            <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] text-neutral-400">
+                <span className="font-semibold text-neutral-300">Ornamen 4 Sudut Kartu (Filigree)</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                {[
+                  { id: 'none', label: 'Polos (Tanpa Sudut)' },
+                  { id: 'batik_prada', label: '🏛️ Sudut Batik Prada' },
+                  { id: 'royal_crown', label: '👑 Sudut Mahkota Royal' },
+                  { id: 'art_deco', label: '📐 Sudut Art Deco' },
+                ].map((c) => {
+                  const isSelected = (data.themeConfig?.cornerOrnament || 'none') === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() =>
+                        onUpdateData({
+                          ...data,
+                          themeConfig: { ...data.themeConfig, cornerOrnament: c.id as CornerOrnamentId },
+                        })
+                      }
+                      className={`p-1.5 rounded-lg border text-center transition cursor-pointer ${
+                        isSelected
+                          ? 'border-[#c4a661] bg-[#c4a661]/15 text-[#c4a661] font-bold'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <span className="truncate max-w-full">{c.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 

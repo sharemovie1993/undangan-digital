@@ -4,6 +4,8 @@ import { Instagram, Heart, Sparkles, Moon, Cake, Star } from 'lucide-react';
 import { InvitationData, ProfilePerson } from '../types';
 import { FONT_PRESETS, FRAME_SHAPES } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
+import { BatikFrameWrapper } from './effects/BatikFrames';
+import { SectionDivider } from './effects/CornerOrnaments';
 
 interface ProfileSectionProps {
   data: InvitationData;
@@ -25,6 +27,8 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ data }) => {
   const frameClass = frameShapeKey
     ? FRAME_SHAPES[frameShapeKey]?.className || 'arch-frame'
     : (isBirthday ? 'rounded-full' : isKhitan ? 'rounded-t-[100px] rounded-b-2xl' : 'arch-frame');
+
+  const isBatikFrame = frameShapeKey && frameShapeKey.startsWith('batik_');
 
   return (
     <section id="profile-section" className="relative px-6 py-12 text-center overflow-hidden">
@@ -111,29 +115,41 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ data }) => {
               className="flex flex-col items-center max-w-xs"
             >
               {/* Dynamic Frame Shape */}
-              <div className="relative group">
-                <div
-                  className={`absolute -inset-1.5 ${frameClass} opacity-60 blur-xs group-hover:opacity-90 transition-opacity`}
-                  style={{
-                    background: `linear-gradient(135deg, ${activePrimary}, #ffffff 50%, ${activePrimary})`
-                  }}
-                />
-
-                <div
-                  className={`relative ${
-                    frameClass.includes('rounded-full') ? 'w-48 h-48' : 'w-52 h-72'
-                  } ${frameClass} border-2 shadow-xl overflow-hidden`}
-                  style={{ backgroundColor: theme.cardBg, borderColor: `${activePrimary}90` }}
-                >
+              {isBatikFrame ? (
+                <BatikFrameWrapper shapeId={frameShapeKey} primaryColor={activePrimary} className="w-56 h-76">
                   <img
                     src={person.photoUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=500&auto=format&fit=crop&q=80'}
                     alt={person.fullName || person.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                </BatikFrameWrapper>
+              ) : (
+                <div className="relative group">
+                  <div
+                    className={`absolute -inset-1.5 ${frameClass} opacity-60 blur-xs group-hover:opacity-90 transition-opacity`}
+                    style={{
+                      background: `linear-gradient(135deg, ${activePrimary}, #ffffff 50%, ${activePrimary})`
+                    }}
+                  />
+
+                  <div
+                    className={`relative ${
+                      frameClass.includes('rounded-full') ? 'w-48 h-48' : 'w-52 h-72'
+                    } ${frameClass} border-2 shadow-xl overflow-hidden`}
+                    style={{ backgroundColor: theme.cardBg, borderColor: `${activePrimary}90` }}
+                  >
+                    <img
+                      src={person.photoUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=500&auto=format&fit=crop&q=80'}
+                      alt={person.fullName || person.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Names and Details with Custom Typography */}
               <div className="mt-5 space-y-1.5">
