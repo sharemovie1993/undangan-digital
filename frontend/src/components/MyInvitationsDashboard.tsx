@@ -21,7 +21,8 @@ import {
   Zap,
   RefreshCw,
   Key,
-  Globe
+  Globe,
+  LogOut
 } from 'lucide-react';
 import { EventType, ThemeToken } from '../types';
 import { VendorAuthModal } from './auth/VendorAuthModal';
@@ -114,6 +115,18 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   const [activeLicenseTarget, setActiveLicenseTarget] = useState<any>(null);
   const [pricingTargetInvitation, setPricingTargetInvitation] = useState<any>(null);
   const [transferTargetInvitation, setTransferTargetInvitation] = useState<any>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const filteredList = list.filter((item: any) => {
     const matchesType = filterType === 'all' || item.eventType?.toLowerCase() === filterType.toLowerCase();
@@ -304,9 +317,9 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-[#e2e2e7] flex flex-col font-sans">
-      {/* Top Navbar - Responsive for 3 Devices (Mobile, Tablet, Desktop) */}
-      <header className="min-h-16 shrink-0 border-b border-[#1f1f27] bg-[#111115] px-3.5 sm:px-6 lg:px-12 py-2.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 z-20">
-        <div className="flex items-center gap-2.5 sm:gap-3">
+      {/* Top Navbar - Responsive for Mobile, Tablet, Desktop */}
+      <header className="h-16 shrink-0 border-b border-[#1f1f27] bg-[#111115] px-3.5 sm:px-6 lg:px-12 flex items-center justify-between z-30">
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#c4a661] to-[#8a7238] flex items-center justify-center text-neutral-950 font-serif font-bold text-base sm:text-lg shadow-lg shrink-0">
             L
           </div>
@@ -321,93 +334,136 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2.5 ml-auto">
+        {/* Right Actions */}
+        <div className="flex items-center gap-2 shrink-0">
           {currentUser ? (
-            <div className="flex items-center gap-1.5 sm:gap-2 bg-neutral-900 border border-neutral-800 rounded-xl sm:rounded-2xl px-2 sm:px-3 py-1 sm:py-1.5 text-xs shadow-md">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#c4a661] to-[#8a7238] flex items-center justify-center text-neutral-950 font-bold text-xs shadow shrink-0">
-                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'V'}
-              </div>
-              <div className="text-left max-w-[130px] sm:max-w-[220px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-white leading-none truncate text-[11px] sm:text-xs">{currentUser.name || 'Vendor'}</span>
-                  <span className={`text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${
-                    (currentUser?.role || 'USER').toUpperCase() === 'RESELLER'
-                      ? 'bg-[#c4a661]/25 text-[#c4a661] border border-[#c4a661]/40'
-                      : (currentUser?.role || 'USER').toUpperCase() === 'PERCETAKAN'
-                      ? 'bg-cyan-500/25 text-cyan-400 border border-cyan-500/40'
-                      : (currentUser?.role || 'USER').toUpperCase() === 'ADMIN'
-                      ? 'bg-purple-500/25 text-purple-400 border border-purple-500/40'
-                      : 'bg-neutral-800 text-neutral-400 border border-neutral-700'
-                  }`}>
-                    {(currentUser?.role || 'USER').toUpperCase() === 'RESELLER'
-                      ? '👑 RESELLER'
-                      : (currentUser?.role || 'USER').toUpperCase() === 'PERCETAKAN'
-                      ? '🖨️ MITRA CETAK'
-                      : (currentUser?.role || 'USER').toUpperCase() === 'ADMIN'
-                      ? '🛡️ ADMIN'
-                      : '👤 PERSONAL'}
-                  </span>
-                </div>
-                <div className="text-[9px] sm:text-[10px] text-neutral-400 font-mono mt-0.5 flex items-center gap-1.5 truncate">
-                  <span className="text-emerald-400">{currentUser.phone ? currentUser.phone.slice(-4).padStart(currentUser.phone.length, '*') : 'Aktif'}</span>
-                  {Boolean(currentUser?.quotaTokens) && (
-                    <span className="text-[#c4a661] font-bold font-sans">
-                      • 💎 {currentUser.quotaTokens} Token
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="text-[10px] text-neutral-400 hover:text-rose-400 font-medium pl-1.5 ml-1 border-l border-neutral-800 transition cursor-pointer"
-                title="Keluar Akun"
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[#c4a661] font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-            >
-              <Phone className="w-3.5 h-3.5 text-[#c4a661]" />
-              <span>Masuk</span>
-            </button>
-          )}
-
-          {currentUser && (
             <>
-              {isAdmin && (
+              {/* Desktop Only Extra Action Buttons */}
+              <div className="hidden lg:flex items-center gap-2">
+                {isAdmin && (
+                  <button
+                    onClick={() => setIsEasyTunnelModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
+                    title="Akses Publik Instan & Terowongan WireGuard"
+                  >
+                    <Globe className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                    <span>Easy Tunnel</span>
+                  </button>
+                )}
+
                 <button
-                  onClick={() => setIsEasyTunnelModalOpen(true)}
-                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                  title="Akses Publik Instan & Terowongan WireGuard (Owner / Admin Only)"
+                  onClick={() => handleOpenPricingForInvitation()}
+                  className="px-3 py-1.5 rounded-xl bg-[#c4a661]/15 hover:bg-[#c4a661]/25 border border-[#c4a661]/40 text-[#c4a661] font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
+                  title="Beli Paket atau Top-Up Saldo Token"
                 >
-                  <Globe className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
-                  <span className="hidden md:inline">Easy Tunnel</span>
-                  <span className="md:hidden text-[11px]">Tunnel</span>
+                  <CreditCard className="w-3.5 h-3.5 shrink-0" />
+                  <span>Beli Paket / Top-Up</span>
                 </button>
-              )}
+              </div>
 
-              <button
-                onClick={() => handleOpenPricingForInvitation()}
-                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#c4a661]/15 hover:bg-[#c4a661]/25 border border-[#c4a661]/40 text-[#c4a661] font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                title="Beli Paket atau Top-Up Saldo Token"
-              >
-                <CreditCard className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden md:inline">Beli Paket / Top-Up</span>
-                <span className="md:hidden text-[11px]">Top-Up</span>
-              </button>
-
+              {/* Create New Invitation CTA */}
               <button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-neutral-950 font-bold text-xs hover:opacity-95 shadow-lg flex items-center gap-1.5 transition cursor-pointer shrink-0"
               >
                 <Plus className="w-4 h-4 shrink-0" />
                 <span className="hidden sm:inline">Buat Undangan Baru</span>
-                <span className="sm:hidden">Buat</span>
+                <span className="sm:hidden font-bold">Buat Baru</span>
               </button>
+
+              {/* User Account Popover Dropdown (Mobile & Desktop) */}
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl px-2 py-1.5 text-xs transition cursor-pointer shadow"
+                >
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#c4a661] to-[#8a7238] flex items-center justify-center text-neutral-950 font-bold text-xs shadow shrink-0">
+                    {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'V'}
+                  </div>
+                  <span className="font-semibold text-white max-w-[90px] sm:max-w-[140px] truncate hidden xs:inline text-[11px] sm:text-xs">
+                    {currentUser.name || 'Vendor'}
+                  </span>
+                  <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider hidden sm:inline ${
+                    (currentUser?.role || 'USER').toUpperCase() === 'RESELLER'
+                      ? 'bg-[#c4a661]/25 text-[#c4a661] border border-[#c4a661]/40'
+                      : (currentUser?.role || 'USER').toUpperCase() === 'ADMIN'
+                      ? 'bg-purple-500/25 text-purple-400 border border-purple-500/40'
+                      : 'bg-neutral-800 text-neutral-400 border border-neutral-700'
+                  }`}>
+                    {(currentUser?.role || 'USER').toUpperCase()}
+                  </span>
+                </button>
+
+                {/* Floating Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-[#111115] border border-neutral-800 rounded-2xl shadow-2xl p-2 z-50 text-xs text-neutral-200 animate-in fade-in zoom-in-95 duration-150 space-y-1">
+                    <div className="p-2.5 bg-neutral-950 rounded-xl border border-neutral-800/80 mb-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-white text-xs truncate">{currentUser.name || 'Vendor'}</span>
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/40 uppercase">
+                          {currentUser.role || 'USER'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-neutral-400 font-mono mt-1">
+                        {currentUser.phone || currentUser.email || 'Akun Aktif'}
+                      </div>
+                      {Boolean(currentUser?.quotaTokens) && (
+                        <div className="text-[10px] text-[#c4a661] font-bold mt-1">
+                          💎 Saldo: {currentUser.quotaTokens} Token
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mobile Quick Action Links */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        handleOpenPricingForInvitation();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-neutral-300 hover:text-white transition cursor-pointer"
+                    >
+                      <CreditCard className="w-3.5 h-3.5 text-[#c4a661]" />
+                      <span>Beli Paket / Top-Up Token</span>
+                    </button>
+
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          setIsEasyTunnelModalOpen(true);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-neutral-300 hover:text-white transition cursor-pointer"
+                      >
+                        <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Easy Tunnel WireGuard</span>
+                      </button>
+                    )}
+
+                    <div className="h-px bg-neutral-800/80 my-1" />
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/15 text-rose-400 flex items-center gap-2 transition cursor-pointer font-semibold"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Keluar / Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#c4a661] text-neutral-950 font-bold text-xs hover:bg-[#d5b874] transition flex items-center gap-1.5 cursor-pointer shadow"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>Masuk Akun</span>
+            </button>
           )}
         </div>
       </header>
