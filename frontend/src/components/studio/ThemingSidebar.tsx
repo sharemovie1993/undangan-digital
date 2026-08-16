@@ -13,6 +13,7 @@ import {
 import { InvitationData, EventType, ThemeToken } from '../../types';
 import { THEMES, FONT_PRESETS, FRAME_SHAPES } from '../../data/presets';
 import { themeRegistry } from '../../themes/registry';
+import { useRealtimeThemes } from '../../hooks/useRealtimeThemes';
 
 interface ThemingSidebarProps {
   data: InvitationData;
@@ -41,6 +42,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
   mobileNavView,
   onCloseMobileView,
 }) => {
+  const { themes } = useRealtimeThemes();
   const [activeInspectorTab, setActiveInspectorTab] = useState<'event' | 'theme' | 'font' | 'frame' | 'print'>('theme');
   const [themeToneFilter, setThemeToneFilter] = useState<'all' | 'light' | 'dark' | 'traditional'>('all');
   const [themeSearchQuery, setThemeSearchQuery] = useState('');

@@ -283,7 +283,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   const currentKitIndex = styleKits.findIndex((k) => k.id === currentKit?.id);
 
   const handleApplyMasterStyleKit = (kit: MasterStyleKit) => {
-    const selectedTheme = THEMES[kit.themeId];
+    const selectedTheme = themeRegistry.getTheme(kit.themeId);
     onUpdateData({
       ...data,
       theme: kit.themeId,
@@ -314,7 +314,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   };
 
   const handleThemeChange = (themeId: ThemeToken) => {
-    const selectedTheme = THEMES[themeId];
+    const selectedTheme = themeRegistry.getTheme(themeId);
     onUpdateData({
       ...data,
       theme: themeId,
