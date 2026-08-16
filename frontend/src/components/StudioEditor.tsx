@@ -81,7 +81,6 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
       return null;
     }
   });
-  const [bulkText, setBulkText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveToast, setSaveToast] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -220,7 +219,6 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
 
     const nextGuests = [...importedGuests, ...guests];
     onUpdateGuests(nextGuests);
-    setBulkText('');
     setIsBulkModalOpen(false);
 
     // Auto-sync with SQLite backend
