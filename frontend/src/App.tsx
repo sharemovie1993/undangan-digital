@@ -40,6 +40,7 @@ import { BottomNavigation } from './components/BottomNavigation';
 import { api } from './api/client';
 import { ToastProvider } from './context/ToastContext';
 import { ConfirmProvider } from './context/ConfirmContext';
+import { romanticAudio } from './utils/audioPlayer';
 
 // Code-Splitting / Lazy Loading for Heavy Studio & Dashboard Engines
 const PrintStudio = React.lazy(() =>
@@ -226,6 +227,15 @@ export default function App() {
 
   const handleOpenEnvelope = () => {
     setIsEnvelopeOpen(true);
+
+    // 🎵 Auto-play luxury background music upon user gesture
+    try {
+      const musicUrl = invitationData.audioTrack?.url || invitationData.musicUrl || invitationData.customMusicUrl || 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3';
+      romanticAudio.setTrack(musicUrl);
+      romanticAudio.play();
+    } catch (err) {
+      console.warn('[AutoPlay Audio] Gesture playback warning:', err);
+    }
 
     // Track open status specifically for this guest
     const targetInvId = invitationData.id || invitationData.slug || localStorage.getItem('absenta_active_invitation_id') || 'undangan';
