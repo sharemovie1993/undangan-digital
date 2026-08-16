@@ -181,7 +181,7 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data, th
         })}
 
         {/* Physical Gift Delivery Address (100% Theme-Aware & Fully Integrated) */}
-        {physicalGift && (physicalGift.fullAddress || physicalGift.recipientName) && (
+        {physicalGift && physicalGift.isEnabled !== false && (physicalGift.fullAddress || physicalGift.recipientName) && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}

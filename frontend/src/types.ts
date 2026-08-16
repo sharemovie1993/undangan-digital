@@ -121,6 +121,7 @@ export interface BankAccount {
 }
 
 export interface PhysicalGiftAddress {
+  isEnabled?: boolean;
   recipientName: string;
   phoneNumber: string;
   fullAddress: string;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { InvitationData, PhysicalGiftAddress } from '../../types';
-import { CreditCard, Plus, Trash2, Gift, MapPin, ExternalLink, Copy, Check, MessageSquare, Phone } from 'lucide-react';
+import { CreditCard, Plus, Trash2, Gift, MapPin, ExternalLink, Copy, Check, MessageSquare, Phone, Power } from 'lucide-react';
 
 interface BankGiftFormProps {
   data: InvitationData;
@@ -10,6 +10,7 @@ interface BankGiftFormProps {
 export const BankGiftForm: React.FC<BankGiftFormProps> = ({ data, onChange }) => {
   const bankAccounts = data.bankAccounts || [];
   const physicalGift: PhysicalGiftAddress = data.physicalGift || {
+    isEnabled: true,
     recipientName: data.eventTitle || 'Penerima Kado',
     phoneNumber: '+62 812-3456-7890',
     fullAddress: '',
@@ -19,6 +20,7 @@ export const BankGiftForm: React.FC<BankGiftFormProps> = ({ data, onChange }) =>
     notes: '',
   };
 
+  const isGiftEnabled = physicalGift.isEnabled !== false;
   const [copiedTest, setCopiedTest] = useState(false);
 
   const updateAccount = (index: number, key: string, value: string) => {
@@ -42,7 +44,7 @@ export const BankGiftForm: React.FC<BankGiftFormProps> = ({ data, onChange }) =>
     onChange({ ...data, bankAccounts: updated });
   };
 
-  const updatePhysicalGift = (key: keyof PhysicalGiftAddress, value: string) => {
+  const updatePhysicalGift = (key: keyof PhysicalGiftAddress, value: any) => {
     const updatedGift: PhysicalGiftAddress = {
       ...physicalGift,
       [key]: value
@@ -52,6 +54,10 @@ export const BankGiftForm: React.FC<BankGiftFormProps> = ({ data, onChange }) =>
       physicalGift: updatedGift,
       physicalGiftAddress: updatedGift.fullAddress ? `${updatedGift.recipientName}, ${updatedGift.fullAddress}, ${updatedGift.city}` : undefined
     });
+  };
+
+  const toggleGiftEnabled = () => {
+    updatePhysicalGift('isEnabled', !isGiftEnabled);
   };
 
   const handleTestCopyAddress = () => {
@@ -141,131 +147,178 @@ export const BankGiftForm: React.FC<BankGiftFormProps> = ({ data, onChange }) =>
         ))}
       </div>
 
-      {/* 2. PHYSICAL GIFT DELIVERY SECTION */}
-      <div className="p-3.5 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-3.5">
+      {/* 2. PHYSICAL GIFT DELIVERY TOGGLE & FORM SECTION */}
+      <div className={`p-4 rounded-xl border transition-all space-y-3.5 ${
+        isGiftEnabled
+          ? 'bg-neutral-900/80 border-[#c4a661]/40 shadow-sm'
+          : 'bg-neutral-950/70 border-neutral-800/80'
+      }`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 font-semibold text-[#c4a661]">
-            <Gift className="w-4 h-4" />
-            <span>Alamat Pengiriman Kado Fisik</span>
+          <div className="flex items-center gap-2">
+            <div className={`p-1.5 rounded-lg ${isGiftEnabled ? 'bg-[#c4a661]/20 text-[#c4a661]' : 'bg-neutral-800 text-neutral-500'}`}>
+              <Gift className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-semibold text-white flex items-center gap-2">
+                <span>Kirim Kado Fisik (Alamat Rumah)</span>
+                <span className={`text-[10px] font-bold px-2 py-0.2 rounded-full border ${
+                  isGiftEnabled
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                }`}>
+                  {isGiftEnabled ? 'AKTIF' : 'NONAKTIF'}
+                </span>
+              </div>
+              <p className="text-[10px] text-neutral-400">
+                {isGiftEnabled
+                  ? 'Tamu dapat melihat & menyalin alamat untuk kirim paket kado.'
+                  : 'Bagian alamat kado disembunyikan dari halaman tamu.'}
+              </p>
+            </div>
           </div>
-          <span className="text-[10px] text-emerald-400 font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-            Terintegrasi
-          </span>
+
+          {/* Toggle Switch */}
+          <button
+            type="button"
+            onClick={toggleGiftEnabled}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              isGiftEnabled ? 'bg-emerald-500' : 'bg-neutral-700'
+            }`}
+            title={isGiftEnabled ? 'Klik untuk menonaktifkan alamat kado' : 'Klik untuk mengaktifkan alamat kado'}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                isGiftEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
         </div>
 
-        <p className="text-[11px] text-neutral-400 leading-relaxed">
-          Tamu undangan dapat melihat alamat ini dan menyalinnya dengan 1-klik untuk mengirim kado paket/kurir ke rumah Anda.
-        </p>
+        {/* Input Fields (Only displayed / expanded if isGiftEnabled is TRUE) */}
+        {isGiftEnabled ? (
+          <div className="space-y-3 pt-2 border-t border-neutral-800/80 animate-in fade-in duration-200">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-neutral-400 mb-1 font-medium">Nama Penerima Kado</label>
+                <input
+                  type="text"
+                  value={physicalGift.recipientName || ''}
+                  onChange={(e) => updatePhysicalGift('recipientName', e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
+                  placeholder="Contoh: Romeo & Juliet"
+                />
+              </div>
+              <div>
+                <label className="block text-neutral-400 mb-1 font-medium">No. HP / WhatsApp Penerima</label>
+                <input
+                  type="text"
+                  value={physicalGift.phoneNumber || ''}
+                  onChange={(e) => updatePhysicalGift('phoneNumber', e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
+                  placeholder="0812-3456-7890"
+                />
+              </div>
+            </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-neutral-400 mb-1 font-medium">Nama Penerima Kado</label>
-            <input
-              type="text"
-              value={physicalGift.recipientName || ''}
-              onChange={(e) => updatePhysicalGift('recipientName', e.target.value)}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
-              placeholder="Contoh: Romeo & Juliet"
-            />
-          </div>
-          <div>
-            <label className="block text-neutral-400 mb-1 font-medium">No. HP / WhatsApp Penerima</label>
-            <input
-              type="text"
-              value={physicalGift.phoneNumber || ''}
-              onChange={(e) => updatePhysicalGift('phoneNumber', e.target.value)}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
-              placeholder="0812-3456-7890"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-neutral-400 mb-1 font-medium">Alamat Lengkap (Jalan, RT/RW, No. Rumah, Patokan)</label>
-          <textarea
-            rows={2}
-            value={physicalGift.fullAddress || ''}
-            onChange={(e) => updatePhysicalGift('fullAddress', e.target.value)}
-            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#c4a661]"
-            placeholder="Jl. Merdeka No. 123, RT 01 / RW 05, Kelurahan Babakan, Dekat Masjid Raya"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-neutral-400 mb-1 font-medium">Kota / Kabupaten & Provinsi</label>
-            <input
-              type="text"
-              value={physicalGift.city || ''}
-              onChange={(e) => updatePhysicalGift('city', e.target.value)}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
-              placeholder="Bandung, Jawa Barat"
-            />
-          </div>
-          <div>
-            <label className="block text-neutral-400 mb-1 font-medium">Kode Pos</label>
-            <input
-              type="text"
-              value={physicalGift.postalCode || ''}
-              onChange={(e) => updatePhysicalGift('postalCode', e.target.value)}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
-              placeholder="40115"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div>
-            <label className="block text-neutral-400 mb-1 font-medium">Link Google Maps (Opsional)</label>
-            <div className="relative">
-              <MapPin className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-              <input
-                type="url"
-                value={physicalGift.mapsUrl || ''}
-                onChange={(e) => updatePhysicalGift('mapsUrl', e.target.value)}
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg pl-8 pr-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
-                placeholder="https://maps.app.goo.gl/..."
+            <div>
+              <label className="block text-neutral-400 mb-1 font-medium">Alamat Lengkap (Jalan, RT/RW, No. Rumah, Patokan)</label>
+              <textarea
+                rows={2}
+                value={physicalGift.fullAddress || ''}
+                onChange={(e) => updatePhysicalGift('fullAddress', e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#c4a661]"
+                placeholder="Jl. Merdeka No. 123, RT 01 / RW 05, Kelurahan Babakan, Dekat Masjid Raya"
               />
             </div>
-          </div>
-          <div>
-            <label className="block text-neutral-400 mb-1 font-medium">Instruksi Kurir / Catatan</label>
-            <input
-              type="text"
-              value={physicalGift.notes || ''}
-              onChange={(e) => updatePhysicalGift('notes', e.target.value)}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
-              placeholder="Titip ke Pos Satpam / Bel Rumah Hitam"
-            />
-          </div>
-        </div>
 
-        {/* Live Preview Box */}
-        {(physicalGift.fullAddress || physicalGift.recipientName) && (
-          <div className="p-3 bg-neutral-950/80 rounded-xl border border-neutral-800/80 space-y-1.5">
-            <div className="flex items-center justify-between text-[10px] text-neutral-400">
-              <span className="font-semibold text-neutral-300">Pratinjau Kartu Alamat Kado:</span>
-              <button
-                type="button"
-                onClick={handleTestCopyAddress}
-                className="flex items-center gap-1 text-[#c4a661] hover:underline cursor-pointer"
-              >
-                {copiedTest ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedTest ? 'Tersalin!' : 'Tes Salin'}</span>
-              </button>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-neutral-400 mb-1 font-medium">Kota / Kabupaten & Provinsi</label>
+                <input
+                  type="text"
+                  value={physicalGift.city || ''}
+                  onChange={(e) => updatePhysicalGift('city', e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
+                  placeholder="Bandung, Jawa Barat"
+                />
+              </div>
+              <div>
+                <label className="block text-neutral-400 mb-1 font-medium">Kode Pos</label>
+                <input
+                  type="text"
+                  value={physicalGift.postalCode || ''}
+                  onChange={(e) => updatePhysicalGift('postalCode', e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
+                  placeholder="40115"
+                />
+              </div>
             </div>
-            <div className="text-[11px] text-neutral-300 font-mono space-y-0.5">
-              <p className="font-bold text-white">{physicalGift.recipientName || 'Nama Penerima'}</p>
-              <p className="text-neutral-400">{physicalGift.phoneNumber || 'Nomor HP'}</p>
-              <p className="text-neutral-300">
-                {physicalGift.fullAddress || 'Alamat lengkap'}
-                {physicalGift.city ? `, ${physicalGift.city}` : ''}
-                {physicalGift.postalCode ? ` ${physicalGift.postalCode}` : ''}
-              </p>
-              {physicalGift.notes && (
-                <p className="text-amber-400/90 text-[10px] italic">Catatan: {physicalGift.notes}</p>
-              )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label className="block text-neutral-400 mb-1 font-medium">Link Google Maps (Opsional)</label>
+                <div className="relative">
+                  <MapPin className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
+                  <input
+                    type="url"
+                    value={physicalGift.mapsUrl || ''}
+                    onChange={(e) => updatePhysicalGift('mapsUrl', e.target.value)}
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg pl-8 pr-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
+                    placeholder="https://maps.app.goo.gl/..."
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-neutral-400 mb-1 font-medium">Instruksi Kurir / Catatan</label>
+                <input
+                  type="text"
+                  value={physicalGift.notes || ''}
+                  onChange={(e) => updatePhysicalGift('notes', e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-[#c4a661]"
+                  placeholder="Titip ke Pos Satpam / Bel Rumah Hitam"
+                />
+              </div>
             </div>
+
+            {/* Live Preview Box */}
+            {(physicalGift.fullAddress || physicalGift.recipientName) && (
+              <div className="p-3 bg-neutral-950/90 rounded-xl border border-neutral-800 space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] text-neutral-400">
+                  <span className="font-semibold text-neutral-300">Pratinjau Kartu Alamat Kado:</span>
+                  <button
+                    type="button"
+                    onClick={handleTestCopyAddress}
+                    className="flex items-center gap-1 text-[#c4a661] hover:underline cursor-pointer"
+                  >
+                    {copiedTest ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedTest ? 'Tersalin!' : 'Tes Salin'}</span>
+                  </button>
+                </div>
+                <div className="text-[11px] text-neutral-300 font-mono space-y-0.5">
+                  <p className="font-bold text-white">{physicalGift.recipientName || 'Nama Penerima'}</p>
+                  <p className="text-neutral-400">{physicalGift.phoneNumber || 'Nomor HP'}</p>
+                  <p className="text-neutral-300">
+                    {physicalGift.fullAddress || 'Alamat lengkap'}
+                    {physicalGift.city ? `, ${physicalGift.city}` : ''}
+                    {physicalGift.postalCode ? ` ${physicalGift.postalCode}` : ''}
+                  </p>
+                  {physicalGift.notes && (
+                    <p className="text-amber-400/90 text-[10px] italic">Catatan: {physicalGift.notes}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="p-3 rounded-lg bg-neutral-950/60 border border-neutral-800/80 text-neutral-400 text-[11px] flex items-center justify-between">
+            <span>Alamat kado fisik dinonaktifkan. Tamu hanya melihat rekening transfer / QRIS.</span>
+            <button
+              type="button"
+              onClick={toggleGiftEnabled}
+              className="text-[#c4a661] font-semibold hover:underline cursor-pointer ml-2 shrink-0"
+            >
+              Aktifkan
+            </button>
           </div>
         )}
       </div>
