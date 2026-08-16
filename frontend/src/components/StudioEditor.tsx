@@ -478,7 +478,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
               onOpenStyleGallery={() => setIsStyleGalleryOpen(true)}
             />
           ) : activeTab === 'guests' ? (
-            <div className="p-4 md:p-8 flex justify-center w-full">
+            <div className="w-full max-w-2xl px-2.5 py-3 sm:px-6 sm:py-6 mx-auto pb-24 overflow-x-hidden">
               <GuestListManager
                 data={data}
                 guests={guests}
