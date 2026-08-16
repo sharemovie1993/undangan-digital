@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit3, Sparkles, User, Calendar, Image as ImageIcon, CreditCard, MessageSquare, ExternalLink } from 'lucide-react';
+import { Edit3, Sparkles, User, Calendar, Image as ImageIcon, CreditCard, MessageSquare, ExternalLink, Gift } from 'lucide-react';
 import { InvitationData, WishMessage } from '../../types';
 
 interface BlockManagerPanelProps {
@@ -53,10 +53,10 @@ export const BlockManagerPanel: React.FC<BlockManagerPanelProps> = ({
     {
       key: 'gift',
       targetSection: 'gift' as const,
-      title: 'Amplop Digital & Rekening',
-      icon: CreditCard,
-      iconColor: 'text-yellow-400 bg-yellow-500/15',
-      stat: `${data.bankAccounts?.length || 0} Bank`,
+      title: 'Hadiah, Rekening & Kado',
+      icon: Gift,
+      iconColor: 'text-amber-400 bg-amber-500/15',
+      stat: `${data.bankAccounts?.length || 0} Bank + Kado`,
     },
     {
       key: 'rsvp',

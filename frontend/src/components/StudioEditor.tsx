@@ -572,7 +572,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
                     : 'bg-neutral-900 text-neutral-400'
                 }`}
               >
-                Rekening
+                🎁 Hadiah & Rekening
               </button>
               <button
                 onClick={() => setContentSection('gallery')}
@@ -724,7 +724,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
                       : 'bg-neutral-900 text-neutral-400'
                   }`}
                 >
-                  Rekening
+                  🎁 Hadiah & Rekening
                 </button>
                 <button
                   onClick={() => setContentSection('gallery')}
