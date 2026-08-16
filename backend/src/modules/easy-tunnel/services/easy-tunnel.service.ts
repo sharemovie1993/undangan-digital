@@ -9,6 +9,7 @@ import {
   removeLicenseCustomDomain
 } from '../../../services/licenseClient';
 import os from 'os';
+import fs from 'fs';
 import dns from 'dns/promises';
 
 const PLATFORM_DOMAIN = process.env.EASY_TUNNEL_BASE_DOMAIN || 'absenta.id';
@@ -136,9 +137,6 @@ export class EasyTunnelService {
     const existing = await prisma.easyTunnel.findFirst({
       where: { licenseKey: license_key.trim() }
     });
-    if (existing) {
-      throw new Error('License key ini sudah terdaftar di aplikasi.');
-    }
 
     try {
       await releaseLicense(license_key.trim());
@@ -161,6 +159,19 @@ export class EasyTunnelService {
       if (licInfo.expires_at) expiresAt = new Date(licInfo.expires_at);
     } catch {}
 
+    if (existing) {
+      return await prisma.easyTunnel.update({
+        where: { id: existing.id },
+        data: {
+          appName: app_name.trim(),
+          slug,
+          localPort: local_port,
+          status: 'inactive',
+          expiresAt: expiresAt
+        }
+      });
+    }
+
     return await prisma.easyTunnel.create({
       data: {
         appName: app_name.trim(),
@@ -176,6 +187,23 @@ export class EasyTunnelService {
   static async startTunnel(id: string): Promise<any> {
     const tunnel = await prisma.easyTunnel.findUnique({ where: { id } });
     if (!tunnel) throw new Error('Tunnel tidak ditemukan.');
+
+    // Auto-heal missing config file
+    if (!fs.existsSync(WireguardManager.confPath(tunnel.slug))) {
+      console.log(`[EasyTunnel] File konfigurasi hilang untuk ${tunnel.slug}, mengunduh ulang dari server lisensi...`);
+      try {
+        const tunnelData = await requestTunnelConfig({
+          license_key: tunnel.licenseKey,
+          subdomain_slug: tunnel.slug,
+          local_port: tunnel.localPort,
+          app_name: tunnel.appName,
+          hostname: os.hostname()
+        });
+        WireguardManager.writeConfig(tunnel.slug, tunnelData.config);
+      } catch (err: any) {
+        console.warn(`[EasyTunnel] Auto-fetch config gagal: ${err.message}`);
+      }
+    }
 
     let remoteInfo: any;
     try {
