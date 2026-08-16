@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Phone,
@@ -73,10 +73,14 @@ export const VendorAuthModal: React.FC<VendorAuthModalProps> = ({
   if (!isOpen) return null;
 
   const saveAndSuccess = (data: { token: string; user: any }) => {
+    // Simpan token dulu sebelum apapun
     localStorage.setItem('absenta_auth_token', data.token);
     localStorage.setItem('absenta_auth_user', JSON.stringify(data.user));
-    onSuccess(data.user, data.token);
-    onClose();
+    // Defer onSuccess+onClose agar finally block tidak jalan pada unmounted component
+    setTimeout(() => {
+      onSuccess(data.user, data.token);
+      onClose();
+    }, 0);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -87,7 +91,13 @@ export const VendorAuthModal: React.FC<VendorAuthModalProps> = ({
     setErrorDetail(null);
     try {
       const res = await api.login({ phone: phone.trim(), password: password.trim() } as any);
-      if (res.data?.token) saveAndSuccess(res.data);
+      // res sudah merupakan response body: { success, data: { token, user } }
+      const payload = res?.data ?? res;
+      if (payload?.token) {
+        saveAndSuccess(payload);
+        return; // pastikan tidak lanjut ke catch
+      }
+
     } catch (err: any) {
       const data = err.response?.data;
       if (data?.notFound) {
@@ -118,7 +128,11 @@ export const VendorAuthModal: React.FC<VendorAuthModalProps> = ({
         role: role,
         email: `${phone.replace(/[^0-9]/g, '')}@luxeinvite.id`
       });
-      if (res.data?.token) saveAndSuccess(res.data);
+      const payload = res?.data ?? res;
+      if (payload?.token) {
+        saveAndSuccess(payload);
+        return;
+      }
     } catch (err: any) {
       const data = err.response?.data;
       if (data?.alreadyRegistered) {
