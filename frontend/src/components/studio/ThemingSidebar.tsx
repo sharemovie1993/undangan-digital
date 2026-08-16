@@ -677,15 +677,17 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
       {/* 2. MOBILE FLOATING THEME BAR / BOTTOM SHEET (ONLY ON MOBILE lg:hidden) */}
       {mobileNavView === 'theme' && (
         <div className="lg:hidden">
-          {/* Backdrop Click to Close */}
-          <div
-            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-200"
-            onClick={onCloseMobileView}
-          />
+          {/* Backdrop Click to Close — Tanpa Blur agar Live Preview 100% Jernih */}
+          {isAdvancedModeMobile && (
+            <div
+              className="fixed inset-0 z-30 bg-black/30 animate-in fade-in duration-200"
+              onClick={onCloseMobileView}
+            />
+          )}
 
           {!isAdvancedModeMobile ? (
-            /* ULTRA COMPACT THEME SWITCHER BAR WITH SLIDE-UP PILL */
-            <aside className="fixed bottom-14 left-0 right-0 z-40 px-3 pt-2 pb-3 bg-[#111115]/98 backdrop-blur-2xl border-t-2 border-[#c4a661]/40 rounded-t-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.85)] animate-in slide-in-from-bottom duration-300">
+            /* ULTRA COMPACT THEME SWITCHER BAR WITH SLIDE-UP PILL (0 Blur pada Canvas Live Preview) */
+            <aside className="fixed bottom-14 left-0 right-0 z-40 px-3 pt-2 pb-3 bg-[#111115]/98 border-t-2 border-[#c4a661]/40 rounded-t-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.85)] animate-in slide-in-from-bottom duration-300">
               {/* Slide-Up Expand Pill */}
               <div
                 onClick={() => setIsAdvancedModeMobile(true)}
@@ -758,9 +760,9 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
               </div>
             </aside>
           ) : (
-            /* MOBILE ADVANCED THEME SHEET */
+            /* MOBILE ADVANCED THEME SHEET (0 Blur agar Live Preview Terlihat Jelas) */
             <aside
-              className={`flex fixed bottom-14 left-0 right-0 ${mobileHeightClass} z-40 w-full rounded-t-3xl border-t-2 border-[#c4a661]/40 shadow-[0_-15px_40px_rgba(0,0,0,0.85)] bg-[#111115]/98 backdrop-blur-2xl pb-2 shrink-0 flex-col select-none transition-all duration-300 animate-in slide-in-from-bottom duration-300`}
+              className={`flex fixed bottom-14 left-0 right-0 ${mobileHeightClass} z-40 w-full rounded-t-3xl border-t-2 border-[#c4a661]/40 shadow-[0_-15px_40px_rgba(0,0,0,0.85)] bg-[#111115]/98 pb-2 shrink-0 flex-col select-none transition-all duration-300 animate-in slide-in-from-bottom duration-300`}
             >
               <div className="flex flex-col items-center pt-2 pb-1.5 px-4 border-b border-neutral-800 shrink-0">
                 <div
