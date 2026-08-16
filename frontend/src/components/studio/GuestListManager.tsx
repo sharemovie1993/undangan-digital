@@ -97,12 +97,16 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
     window.open(waUrl, '_blank');
   };
 
+  const [copiedGuestId, setCopiedGuestId] = useState<string | null>(null);
+
   const handleCopyLinkOnly = (guest: GuestRecipient) => {
     const activeSlug = data.slug || data.id || 'undangan';
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://luxury.absenta.id';
     const shareUrl = `${baseUrl}/?slug=${encodeURIComponent(activeSlug)}&to=${encodeURIComponent(guest.name)}&mode=invitation`;
 
     navigator.clipboard.writeText(shareUrl);
+    setCopiedGuestId(guest.id);
+    setTimeout(() => setCopiedGuestId(null), 2000);
   };
 
   return (
@@ -423,18 +427,24 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
                     <span>Kirim WA</span>
                   </button>
 
-                  {/* Copy Link Button */}
+                  {/* Copy Link Button (Only Copies URL without opening WhatsApp) */}
                   <button
                     type="button"
-                    onClick={() => {
-                      handleCopyLinkOnly(guest);
-                      onCopyWhatsAppShare(guest);
-                    }}
+                    onClick={() => handleCopyLinkOnly(guest)}
                     className="py-1.5 px-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
                     title="Salin Link Undangan Khusus"
                   >
-                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{isCopied ? 'Tersalin' : 'Salin Link'}</span>
+                    {copiedGuestId === guest.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400 font-bold">Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Salin Link</span>
+                      </>
+                    )}
                   </button>
 
                   {/* Preview Button */}
