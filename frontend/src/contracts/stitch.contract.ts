@@ -2,9 +2,11 @@ export type StitchBlockCategory =
   | 'HERO'
   | 'PROFILE'
   | 'TIMELINE'
+  | 'STORY'
   | 'GALLERY'
   | 'BANK'
   | 'RSVP'
+  | 'CLOSING'
   | 'MAPS';
 
 export interface StitchBlockManifest {
