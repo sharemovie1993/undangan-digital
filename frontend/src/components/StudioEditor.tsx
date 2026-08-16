@@ -752,6 +752,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
         currentThemeId={data.theme}
         currentFontId={data.themeConfig?.fontPairingId}
         currentFrameId={data.themeConfig?.frameShape}
+        data={data}
         onApplyKit={handleApplyMasterStyleKit}
       />
 
