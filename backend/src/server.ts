@@ -1,5 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import formbody from '@fastify/formbody';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
@@ -72,16 +74,34 @@ const start = async () => {
     // Auto-seed admin user
     await seedAdminUser();
 
-    // CORS configuration
+    // 1. SECURITY HARDENING: Helmet HTTP Security Headers
+    await fastify.register(helmet, {
+      contentSecurityPolicy: false, // Disables strict CSP to allow rich audio/image CDNs
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' }
+    });
+
+    // 2. SECURITY HARDENING: Rate Limiting & DDoS Prevention (300 req/min per IP)
+    await fastify.register(rateLimit, {
+      max: 300,
+      timeWindow: '1 minute',
+      allowList: ['127.0.0.1', 'localhost'],
+      errorResponseBuilder: (_req, context) => ({
+        success: false,
+        message: `Terlalu banyak permintaan (Rate limit exceeded). Coba lagi dalam ${context.after}.`
+      })
+    });
+
+    // 3. CORS configuration
     await fastify.register(cors, {
       origin: true,
       credentials: true
     });
 
-    // Form body parser
+    // 4. Form body parser
     await fastify.register(formbody);
 
-    // Multipart file upload parser (up to 15MB)
+    // 5. Multipart file upload parser (up to 15MB)
     await fastify.register(multipart, {
       limits: {
         fileSize: 15 * 1024 * 1024,
@@ -89,7 +109,7 @@ const start = async () => {
       }
     });
 
-    // Serve static files from /uploads with HTTP Range & Cache-Control for ultra-smooth audio streaming
+    // 6. Serve static files from /uploads with HTTP Range & Cache-Control for ultra-smooth audio streaming
     await fastify.register(fastifyStatic, {
       root: config.uploadDir,
       prefix: '/uploads/',
@@ -99,10 +119,20 @@ const start = async () => {
       cacheControl: true
     });
 
+    // 7. Global Error Sanitization (Prevent stack trace leak to public)
+    fastify.setErrorHandler((error: any, _request, reply) => {
+      fastify.log.error(error);
+      const statusCode = error.statusCode || 500;
+      return reply.status(statusCode).send({
+        success: false,
+        message: statusCode === 500 ? 'Terjadi kendala pada server internal.' : error.message
+      });
+    });
+
     // Health check endpoint
     fastify.get('/health', async () => ({
       status: 'ok',
-      service: 'LuxeInvite Backend 360',
+      service: 'LuxeInvite Backend 360 (Hardened)',
       timestamp: new Date().toISOString()
     }));
 
