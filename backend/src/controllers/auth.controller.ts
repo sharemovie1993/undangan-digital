@@ -6,19 +6,45 @@ import { config } from '../config/app.config';
 import { LicenseService } from '../services/license.service';
 import { PersistentOtpStore } from '../utils/otpStore';
 
-function getStandardPhoneKey(phone: string): string {
-  let d = phone.trim().replace(/[^0-9]/g, '');
-  if (d.startsWith('0')) {
-    d = '62' + d.slice(1);
-  } else if (d.startsWith('8')) {
-    d = '62' + d;
+/**
+ * ⚡ Kanonikalisasi Nomor Telepon ke Format Standar E.164 (+62...)
+ * Mengubah 0812..., 62812..., 812... menjadi +62812...
+ */
+export function canonicalizePhone(phone: string): { canonical: string; digits: string; local: string } {
+  const digits = (phone || '').trim().replace(/[^0-9]/g, '');
+  if (!digits) {
+    return { canonical: '', digits: '', local: '' };
   }
-  return d || phone.trim();
+
+  let canonical = digits;
+  let local = digits;
+
+  if (digits.startsWith('0')) {
+    canonical = `+62${digits.slice(1)}`;
+    local = digits;
+  } else if (digits.startsWith('62')) {
+    canonical = `+${digits}`;
+    local = `0${digits.slice(2)}`;
+  } else if (digits.startsWith('8')) {
+    canonical = `+62${digits}`;
+    local = `0${digits}`;
+  } else {
+    canonical = `+${digits}`;
+    local = digits;
+  }
+
+  return { canonical, digits, local };
+}
+
+function getStandardPhoneKey(phone: string): string {
+  const { canonical } = canonicalizePhone(phone);
+  return canonical || phone.trim();
 }
 
 export class AuthController {
   /**
    * Registrasi Akun Baru (Standar Industri: Nomor HP + Password)
+   * 🚀 Dioptimasi dengan Canonical Phone E.164 Lookup
    */
   static async register(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as {
@@ -46,35 +72,30 @@ export class AuthController {
     }
 
     try {
-      // Normalisasi nomor telepon ke format +628...
-      const rawPhone = phone.trim();
-      const digits = rawPhone.replace(/[^0-9]/g, '');
-      const formattedPhone = digits.startsWith('0')
-        ? `+62${digits.slice(1)}`
-        : digits.startsWith('62')
-          ? `+${digits}`
-          : digits.startsWith('8')
-            ? `+62${digits}`
-            : `+${digits}`;
+      const { canonical, digits, local } = canonicalizePhone(phone);
+      if (!digits || digits.length < 9) {
+        return reply.status(400).send({ success: false, message: 'Nomor WhatsApp / HP tidak valid.' });
+      }
 
       // Auto-generate email jika tidak diisi
       const cleanEmail = email?.trim()
         ? email.toLowerCase().trim()
         : `${digits}@luxeinvite.id`;
 
-      // Cek duplikasi phone (semua format)
-      const phoneVariants = [formattedPhone, digits, rawPhone, `0${digits.replace(/^62/, '')}`];
+      // ⚡ Fast Indexed Lookup dengan Canonical Phone
       const existing = await prisma.user.findFirst({
         where: {
           OR: [
-            ...phoneVariants.map(p => ({ phone: p })),
+            { phone: canonical },
+            { phone: local },
+            { phone: digits },
             { email: cleanEmail }
           ]
         }
       });
 
       if (existing) {
-        const field = existing.phone === formattedPhone || phoneVariants.includes(existing.phone || '')
+        const field = (existing.phone === canonical || existing.phone === local || existing.phone === digits)
           ? 'Nomor WhatsApp / HP'
           : 'Email';
         return reply.status(400).send({
@@ -92,7 +113,7 @@ export class AuthController {
         data: {
           name: name.trim(),
           email: cleanEmail,
-          phone: formattedPhone,
+          phone: canonical,
           password: passwordHash,
           role: userRole,
           quotaTokens: initialTokens
@@ -128,6 +149,7 @@ export class AuthController {
 
   /**
    * Login User — Standar Industri: Nomor HP / Email + Password
+   * 🚀 Dioptimasi dengan Single Indexed Lookup & Safe Password Guard
    */
   static async login(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as { phone?: string; email?: string; password: string };
@@ -142,29 +164,18 @@ export class AuthController {
     }
 
     try {
-      const rawInput = identifier;
       const cleanIdentifier = identifier.toLowerCase();
-      const digits = rawInput.replace(/[^0-9]/g, '');
+      const { canonical, digits, local } = canonicalizePhone(identifier);
 
-      // Bangun variasi pencarian nomor HP & email
       const searchConditions: any[] = [
         { email: cleanIdentifier }
       ];
 
       if (digits) {
-        const std = digits.startsWith('0')
-          ? `+62${digits.slice(1)}`
-          : digits.startsWith('62')
-            ? `+${digits}`
-            : digits.startsWith('8')
-              ? `+62${digits}`
-              : `+${digits}`;
-
         searchConditions.push(
-          { phone: rawInput },
+          { phone: canonical },
+          { phone: local },
           { phone: digits },
-          { phone: std },
-          { phone: `0${digits.replace(/^62/, '')}` },
           { email: `${digits}@luxeinvite.id` },
           { email: `${digits}@absenta.id` }
         );
@@ -200,13 +211,16 @@ export class AuthController {
         });
       }
 
-      // Validasi password
+      // Validasi password aman
       let isMatch = false;
-      try { isMatch = await bcrypt.compare(password, user.password); } catch {}
+      try {
+        isMatch = await bcrypt.compare(password, user.password);
+      } catch {}
       if (!isMatch && user.password === password) isMatch = true;
 
-      // Admin universal password bypass
-      if (!isMatch && user.role === 'ADMIN' && ['admin', 'admin123', 'demo', 'g1g1g1ngsul*!2'].includes(password)) {
+      // 🔒 Dev mode only password bypass
+      const isDev = process.env.NODE_ENV !== 'production';
+      if (!isMatch && isDev && user.role === 'ADMIN' && ['admin', 'admin123', 'demo'].includes(password)) {
         isMatch = true;
       }
 
@@ -246,8 +260,7 @@ export class AuthController {
   }
 
   /**
-   * @deprecated — Login WA tanpa password. Digantikan oleh login() dengan phone+password.
-   * Tetap dipertahankan untuk kompatibilitas API lama.
+   * @deprecated — Login WA legacy
    */
   static async loginWithWhatsApp(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as {
@@ -264,48 +277,22 @@ export class AuthController {
     }
 
     try {
-      const rawInput = phone.trim();
-      let digits = rawInput.replace(/[^0-9]/g, '');
-      if (!digits) {
-        digits = rawInput;
-      }
-
+      const { canonical, digits, local } = canonicalizePhone(phone);
       const targetRole = role && ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes(role.toUpperCase()) ? role.toUpperCase() : 'USER';
       const initialTokens = targetRole === 'RESELLER' || targetRole === 'PERCETAKAN' ? 10 : 0;
 
-      // Bangun variasi nomor telepon untuk pencarian komprehensif
-      const phoneVariants = new Set<string>();
-      phoneVariants.add(rawInput);
-      phoneVariants.add(digits);
-      phoneVariants.add(`+${digits}`);
-
-      if (digits.startsWith('0')) {
-        const withoutZero = digits.slice(1);
-        phoneVariants.add(`62${withoutZero}`);
-        phoneVariants.add(`+62${withoutZero}`);
-        phoneVariants.add(`0${withoutZero}`);
-      } else if (digits.startsWith('62')) {
-        const without62 = digits.slice(2);
-        phoneVariants.add(`0${without62}`);
-        phoneVariants.add(`+62${without62}`);
-        phoneVariants.add(`62${without62}`);
-      } else if (digits.startsWith('8')) {
-        phoneVariants.add(`08${digits.slice(1)}`);
-        phoneVariants.add(`628${digits.slice(1)}`);
-        phoneVariants.add(`+628${digits.slice(1)}`);
-      }
-
-      const orConditions: any[] = Array.from(phoneVariants).map((p) => ({ phone: p }));
-      orConditions.push({ email: `${digits}@absenta.id` });
-      orConditions.push({ email: `${rawInput}@absenta.id` });
+      const orConditions: any[] = [
+        { phone: canonical },
+        { phone: local },
+        { phone: digits },
+        { email: `${digits}@absenta.id` }
+      ];
       if (email && email.trim()) {
         orConditions.push({ email: email.toLowerCase().trim() });
       }
 
       let user = await prisma.user.findFirst({
-        where: {
-          OR: orConditions
-        }
+        where: { OR: orConditions }
       });
 
       // 1. Kasus Mode Registrasi & Nomor Sudah Terdaftar
@@ -329,45 +316,21 @@ export class AuthController {
 
       // 3. Buat User Baru (Mode Register)
       if (!user) {
-        const formattedPhone = digits.startsWith('0') ? `+62${digits.slice(1)}` : (digits.startsWith('62') ? `+${digits}` : `+${digits}`);
         const dummyEmail = email && email.trim() ? email.toLowerCase().trim() : `${digits}@absenta.id`;
         const dummyPasswordHash = await bcrypt.hash(digits + 'secret', 10);
         
-        try {
-          user = await prisma.user.create({
-            data: {
-              name: name?.trim() || (targetRole === 'RESELLER' ? `Mitra Studio (${digits.slice(-4)})` : `User (${digits.slice(-4)})`),
-              email: dummyEmail,
-              phone: formattedPhone,
-              password: dummyPasswordHash,
-              role: targetRole,
-              quotaTokens: initialTokens
-            }
-          });
-        } catch (createErr: any) {
-          // Jika email/phone collision, cari user yang sudah ada
-          user = await prisma.user.findFirst({
-            where: {
-              OR: [{ email: dummyEmail }, { phone: formattedPhone }, { phone: digits }]
-            }
-          });
-
-          if (!user) {
-            // Fallback dengan email unik
-            user = await prisma.user.create({
-              data: {
-                name: name?.trim() || `User (${digits.slice(-4)})`,
-                email: `${digits}_${Date.now()}@absenta.id`,
-                phone: formattedPhone,
-                password: dummyPasswordHash,
-                role: targetRole,
-                quotaTokens: initialTokens
-              }
-            });
+        user = await prisma.user.create({
+          data: {
+            name: name?.trim() || (targetRole === 'RESELLER' ? `Mitra Studio (${digits.slice(-4)})` : `User (${digits.slice(-4)})`),
+            email: dummyEmail,
+            phone: canonical,
+            password: dummyPasswordHash,
+            role: targetRole,
+            quotaTokens: initialTokens
           }
-        }
+        });
       } else {
-        // User sudah ada (Mode Login), sinkronisasi nama/role jika ada
+        // User sudah ada (Mode Login)
         const updateData: any = {};
         if (name && name.trim() && (user.name.startsWith('User (') || user.name.startsWith('Mitra Studio ('))) {
           updateData.name = name.trim();
@@ -425,32 +388,17 @@ export class AuthController {
     }
 
     try {
-      const rawInput = phone.trim();
-      let digits = rawInput.replace(/[^0-9]/g, '');
-      if (!digits) {
-        digits = rawInput;
+      const { canonical, digits, local } = canonicalizePhone(phone);
+      if (!digits || digits.length < 9) {
+        return reply.status(400).send({ success: false, message: 'Nomor WhatsApp tidak valid.' });
       }
 
-      // Bangun variasi nomor telepon untuk pencarian
-      const phoneVariants = new Set<string>();
-      phoneVariants.add(rawInput);
-      phoneVariants.add(digits);
-      phoneVariants.add(`+${digits}`);
-      if (digits.startsWith('0')) {
-        const withoutZero = digits.slice(1);
-        phoneVariants.add(`62${withoutZero}`);
-        phoneVariants.add(`+62${withoutZero}`);
-      } else if (digits.startsWith('62')) {
-        const without62 = digits.slice(2);
-        phoneVariants.add(`0${without62}`);
-        phoneVariants.add(`+62${without62}`);
-      } else if (digits.startsWith('8')) {
-        phoneVariants.add(`08${digits.slice(1)}`);
-        phoneVariants.add(`628${digits.slice(1)}`);
-      }
-
-      const orConditions: any[] = Array.from(phoneVariants).map((p) => ({ phone: p }));
-      orConditions.push({ email: `${digits}@absenta.id` });
+      const orConditions: any[] = [
+        { phone: canonical },
+        { phone: local },
+        { phone: digits },
+        { email: `${digits}@absenta.id` }
+      ];
       if (email && email.trim()) {
         orConditions.push({ email: email.toLowerCase().trim() });
       }
@@ -478,7 +426,7 @@ export class AuthController {
         });
       }
 
-      const phoneKey = getStandardPhoneKey(rawInput);
+      const phoneKey = canonical;
 
       // 3. Rate Limit OTP (Maksimal 1 kali tiap 60 detik)
       const existingEntry = PersistentOtpStore.get(phoneKey) || PersistentOtpStore.get(digits);
@@ -510,11 +458,11 @@ export class AuthController {
       PersistentOtpStore.set(digits, entryData);
 
       // 5. Kirim via WhatsApp Gateway
-      await LicenseService.sendWhatsAppOtp(rawInput, otp);
+      await LicenseService.sendWhatsAppOtp(canonical, otp);
 
       return reply.send({
         success: true,
-        message: `Kode verifikasi OTP (6 digit) telah dikirimkan ke nomor WhatsApp ${rawInput}.`,
+        message: `Kode verifikasi OTP (6 digit) telah dikirimkan ke nomor WhatsApp ${canonical}.`,
         cooldownSeconds: 60
       });
     } catch (err: any) {
@@ -542,13 +490,14 @@ export class AuthController {
     }
 
     try {
-      const rawInput = phone.trim();
-      const digits = rawInput.replace(/[^0-9]/g, '') || rawInput;
-      const phoneKey = getStandardPhoneKey(rawInput);
+      const { canonical, digits, local } = canonicalizePhone(phone);
       const cleanOtp = otp.trim();
 
-      const found = PersistentOtpStore.find(rawInput) || PersistentOtpStore.find(digits) || PersistentOtpStore.find(phoneKey);
-      const isMasterDevOtp = cleanOtp === '123456' || cleanOtp === '000000';
+      const found = PersistentOtpStore.find(phone) || PersistentOtpStore.find(digits) || PersistentOtpStore.find(canonical);
+      
+      // 🔒 Dev mode only master OTP
+      const isDev = process.env.NODE_ENV !== 'production';
+      const isMasterDevOtp = isDev && (cleanOtp === '123456' || cleanOtp === '000000');
 
       if (!found && !isMasterDevOtp) {
         return reply.status(400).send({
@@ -591,26 +540,15 @@ export class AuthController {
         : 'USER';
       const initialTokens = targetRole === 'RESELLER' || targetRole === 'PERCETAKAN' ? 10 : 0;
 
-      // Cari user di database
-      const phoneVariants = new Set<string>();
-      phoneVariants.add(rawInput);
-      phoneVariants.add(digits);
-      phoneVariants.add(`+${digits}`);
-      if (digits.startsWith('0')) {
-        const withoutZero = digits.slice(1);
-        phoneVariants.add(`62${withoutZero}`);
-        phoneVariants.add(`+62${withoutZero}`);
-      } else if (digits.startsWith('62')) {
-        const without62 = digits.slice(2);
-        phoneVariants.add(`0${without62}`);
-        phoneVariants.add(`+62${without62}`);
-      }
-
       const effectiveEmail = entry?.email || body.email;
       const effectiveName = entry?.name || body.name;
 
-      const orConditions: any[] = Array.from(phoneVariants).map((p) => ({ phone: p }));
-      orConditions.push({ email: `${digits}@absenta.id` });
+      const orConditions: any[] = [
+        { phone: canonical },
+        { phone: local },
+        { phone: digits },
+        { email: `${digits}@absenta.id` }
+      ];
       if (effectiveEmail && effectiveEmail.trim()) {
         orConditions.push({ email: effectiveEmail.toLowerCase().trim() });
       }
@@ -621,7 +559,6 @@ export class AuthController {
 
       if (!user) {
         // Registrasi User Baru setelah verifikasi OTP
-        const formattedPhone = digits.startsWith('0') ? `+62${digits.slice(1)}` : (digits.startsWith('62') ? `+${digits}` : `+${digits}`);
         const dummyEmail = effectiveEmail && effectiveEmail.trim() ? effectiveEmail.toLowerCase().trim() : `${digits}@absenta.id`;
         const dummyPasswordHash = await bcrypt.hash(digits + 'secret', 10);
 
@@ -630,7 +567,7 @@ export class AuthController {
             data: {
               name: effectiveName?.trim() || (targetRole === 'RESELLER' ? `Mitra Studio (${digits.slice(-4)})` : `User (${digits.slice(-4)})`),
               email: dummyEmail,
-              phone: formattedPhone,
+              phone: canonical,
               password: dummyPasswordHash,
               role: targetRole,
               quotaTokens: initialTokens
@@ -639,7 +576,7 @@ export class AuthController {
         } catch (createErr: any) {
           user = await prisma.user.findFirst({
             where: {
-              OR: [{ email: dummyEmail }, { phone: formattedPhone }, { phone: digits }]
+              OR: [{ email: dummyEmail }, { phone: canonical }, { phone: digits }]
             }
           });
         }
@@ -675,7 +612,6 @@ export class AuthController {
       return reply.status(500).send({ success: false, message: 'Gagal memverifikasi OTP. ' + (err.message || '') });
     }
   }
-
 
   /**
    * Cek Profil & Token Aktif User Login

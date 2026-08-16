@@ -43,6 +43,35 @@ function saveAll(data: Record<string, OtpRecord>) {
   }
 }
 
+/**
+ * 🧹 Garbage Collector Otomatis: Menghapus seluruh record OTP yang sudah kadaluarsa
+ */
+function sweepExpired(): void {
+  try {
+    const all = loadAll();
+    const now = Date.now();
+    let cleaned = 0;
+    for (const [key, entry] of Object.entries(all)) {
+      if (entry.expiresAt < now) {
+        delete all[key];
+        cleaned++;
+      }
+    }
+    if (cleaned > 0) {
+      saveAll(all);
+      console.log(`[OtpStore GC] 🧹 Membersihkan ${cleaned} record OTP yang sudah kedaluwarsa.`);
+    }
+  } catch (err: any) {
+    console.warn('[OtpStore GC Error]', err.message);
+  }
+}
+
+// Jalankan auto-sweep setiap 10 menit
+const gcInterval = setInterval(sweepExpired, 10 * 60 * 1000);
+if (gcInterval.unref) {
+  gcInterval.unref();
+}
+
 export const PersistentOtpStore = {
   get(key: string): OtpRecord | null {
     const all = loadAll();
@@ -102,5 +131,9 @@ export const PersistentOtpStore = {
       all[key].attempts = attempts;
       saveAll(all);
     }
+  },
+
+  sweep(): void {
+    sweepExpired();
   }
 };
