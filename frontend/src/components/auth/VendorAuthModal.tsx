@@ -18,6 +18,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { api } from '../../api/client';
+import { useToast } from '../../context/ToastContext';
 
 interface VendorAuthModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const VendorAuthModal: React.FC<VendorAuthModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { showToast } = useToast();
   const [mode, setMode] = useState<AuthMode>('login');
   const [role, setRole] = useState<UserRoleChoice>('USER');
   const [phone, setPhone] = useState('');
@@ -72,10 +74,25 @@ export const VendorAuthModal: React.FC<VendorAuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const saveAndSuccess = (data: { token: string; user: any }) => {
+  const saveAndSuccess = (data: { token: string; user: any }, isNewRegistration: boolean = false) => {
     // Simpan token dulu sebelum apapun
     localStorage.setItem('absenta_auth_token', data.token);
     localStorage.setItem('absenta_auth_user', JSON.stringify(data.user));
+
+    if (isNewRegistration) {
+      showToast(
+        'success',
+        `Selamat datang di LuxeInvite Studio, ${data.user?.name || 'Vendor'}! Akun Anda telah aktif dan siap digunakan.`,
+        'Pendaftaran Berhasil 🎉'
+      );
+    } else {
+      showToast(
+        'success',
+        `Selamat datang kembali, ${data.user?.name || 'Vendor'}!`,
+        'Login Berhasil ✨'
+      );
+    }
+
     // Defer onSuccess+onClose agar finally block tidak jalan pada unmounted component
     setTimeout(() => {
       onSuccess(data.user, data.token);
@@ -94,7 +111,7 @@ export const VendorAuthModal: React.FC<VendorAuthModalProps> = ({
       // res sudah merupakan response body: { success, data: { token, user } }
       const payload = res?.data ?? res;
       if (payload?.token) {
-        saveAndSuccess(payload);
+        saveAndSuccess(payload, false);
         return; // pastikan tidak lanjut ke catch
       }
 
@@ -130,7 +147,7 @@ export const VendorAuthModal: React.FC<VendorAuthModalProps> = ({
       });
       const payload = res?.data ?? res;
       if (payload?.token) {
-        saveAndSuccess(payload);
+        saveAndSuccess(payload, true);
         return;
       }
     } catch (err: any) {
