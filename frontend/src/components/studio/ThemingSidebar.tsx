@@ -9,6 +9,7 @@ import {
   Check,
   QrCode,
   Search,
+  RotateCw,
 } from 'lucide-react';
 import { InvitationData, EventType, ThemeToken } from '../../types';
 import { THEMES, FONT_PRESETS, FRAME_SHAPES } from '../../data/presets';
@@ -42,7 +43,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
   mobileNavView,
   onCloseMobileView,
 }) => {
-  const { themes } = useRealtimeThemes();
+  const { themes, isRefetching, refetchThemes } = useRealtimeThemes();
   const [activeInspectorTab, setActiveInspectorTab] = useState<'event' | 'theme' | 'font' | 'frame' | 'print'>('theme');
   const [themeToneFilter, setThemeToneFilter] = useState<'all' | 'light' | 'dark' | 'traditional'>('all');
   const [themeSearchQuery, setThemeSearchQuery] = useState('');
@@ -196,24 +197,38 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
         {/* TAB: THEME & COLOR */}
         {activeInspectorTab === 'theme' && (
           <div className="space-y-2.5">
-            {/* Search Input for Themes */}
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={themeSearchQuery}
-                onChange={(e) => setThemeSearchQuery(e.target.value)}
-                placeholder="Cari tema / adat..."
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-8 pr-3 py-1.5 text-[11px] text-white placeholder-neutral-500 focus:outline-none focus:border-[#c4a661] transition"
-              />
-              {themeSearchQuery && (
-                <button
-                  onClick={() => setThemeSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-[10px]"
-                >
-                  ✕
-                </button>
-              )}
+            {/* Search Input & Database Sync for Themes */}
+            <div className="flex items-center gap-1.5">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={themeSearchQuery}
+                  onChange={(e) => setThemeSearchQuery(e.target.value)}
+                  placeholder="Cari tema / adat..."
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-8 pr-7 py-1.5 text-[11px] text-white placeholder-neutral-500 focus:outline-none focus:border-[#c4a661] transition"
+                />
+                {themeSearchQuery && (
+                  <button
+                    onClick={() => setThemeSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-[10px]"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Instant Database Sync Button */}
+              <button
+                type="button"
+                onClick={() => refetchThemes()}
+                title="Sinkronkan Tema Terbaru dari Database"
+                className={`p-2 rounded-xl bg-neutral-950 border border-neutral-800 hover:border-[#c4a661]/40 text-neutral-400 hover:text-[#c4a661] transition cursor-pointer shrink-0 ${
+                  isRefetching ? 'animate-spin text-[#c4a661]' : ''
+                }`}
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+              </button>
             </div>
 
             {/* Tone Filter Buttons */}
