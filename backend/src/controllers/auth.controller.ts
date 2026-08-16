@@ -18,35 +18,70 @@ function getStandardPhoneKey(phone: string): string {
 
 export class AuthController {
   /**
-   * Registrasi Akun Baru
+   * Registrasi Akun Baru (Standar Industri: Nomor HP + Password)
    */
   static async register(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as {
       name: string;
-      email: string;
-      phone?: string;
+      phone: string;
       password: string;
+      confirmPassword?: string;
       role?: 'USER' | 'RESELLER' | 'PERCETAKAN';
+      email?: string;
     };
 
-    const { name, email, phone, password, role } = body;
-    if (!name || !email || !password) {
-      return reply.status(400).send({ success: false, message: 'Nama, email, dan password wajib diisi.' });
+    const { name, phone, password, confirmPassword, role, email } = body;
+
+    if (!name?.trim()) {
+      return reply.status(400).send({ success: false, message: 'Nama lengkap wajib diisi.' });
+    }
+    if (!phone?.trim()) {
+      return reply.status(400).send({ success: false, message: 'Nomor WhatsApp / HP wajib diisi.' });
+    }
+    if (!password || password.length < 8) {
+      return reply.status(400).send({ success: false, message: 'Password minimal 8 karakter.' });
+    }
+    if (confirmPassword && confirmPassword !== password) {
+      return reply.status(400).send({ success: false, message: 'Konfirmasi password tidak cocok.' });
     }
 
     try {
-      const cleanEmail = email.toLowerCase().trim();
+      // Normalisasi nomor telepon ke format +628...
+      const rawPhone = phone.trim();
+      const digits = rawPhone.replace(/[^0-9]/g, '');
+      const formattedPhone = digits.startsWith('0')
+        ? `+62${digits.slice(1)}`
+        : digits.startsWith('62')
+          ? `+${digits}`
+          : digits.startsWith('8')
+            ? `+62${digits}`
+            : `+${digits}`;
+
+      // Auto-generate email jika tidak diisi
+      const cleanEmail = email?.trim()
+        ? email.toLowerCase().trim()
+        : `${digits}@luxeinvite.id`;
+
+      // Cek duplikasi phone (semua format)
+      const phoneVariants = [formattedPhone, digits, rawPhone, `0${digits.replace(/^62/, '')}`];
       const existing = await prisma.user.findFirst({
         where: {
           OR: [
-            { email: cleanEmail },
-            ...(phone ? [{ phone: phone.trim() }] : [])
+            ...phoneVariants.map(p => ({ phone: p })),
+            { email: cleanEmail }
           ]
         }
       });
 
       if (existing) {
-        return reply.status(400).send({ success: false, message: 'Email atau nomor telepon sudah terdaftar.' });
+        const field = existing.phone === formattedPhone || phoneVariants.includes(existing.phone || '')
+          ? 'Nomor WhatsApp / HP'
+          : 'Email';
+        return reply.status(400).send({
+          success: false,
+          alreadyRegistered: true,
+          message: `${field} ini sudah terdaftar. Silakan masuk menggunakan nomor dan password Anda.`
+        });
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
@@ -57,7 +92,7 @@ export class AuthController {
         data: {
           name: name.trim(),
           email: cleanEmail,
-          phone: phone?.trim() || null,
+          phone: formattedPhone,
           password: passwordHash,
           role: userRole,
           quotaTokens: initialTokens
@@ -65,14 +100,14 @@ export class AuthController {
       });
 
       const token = jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
+        { userId: user.id, email: user.email, role: user.role, phone: user.phone },
         config.jwtSecret,
         { expiresIn: config.jwtExpiresIn as any }
       );
 
       return reply.send({
         success: true,
-        message: 'Registrasi berhasil!',
+        message: 'Registrasi berhasil! Selamat datang di LuxeInvite Studio.',
         data: {
           token,
           user: {
@@ -87,52 +122,63 @@ export class AuthController {
       });
     } catch (err: any) {
       console.error('[Register Error]', err.message);
-      return reply.status(500).send({ success: false, message: 'Gagal melakukan registrasi.' });
+      return reply.status(500).send({ success: false, message: 'Gagal melakukan registrasi. Silakan coba lagi.' });
     }
   }
 
   /**
-   * Login User
+   * Login User — Standar Industri: Nomor HP / Email + Password
    */
   static async login(request: FastifyRequest, reply: FastifyReply) {
-    const body = request.body as { email: string; password: string };
-    const { email, password } = body;
+    const body = request.body as { phone?: string; email?: string; password: string };
+    const identifier = (body.phone || body.email || '').trim();
+    const { password } = body;
 
-    if (!email || !password) {
-      return reply.status(400).send({ success: false, message: 'Email dan password wajib diisi.' });
+    if (!identifier) {
+      return reply.status(400).send({ success: false, message: 'Nomor WhatsApp / HP wajib diisi.' });
+    }
+    if (!password) {
+      return reply.status(400).send({ success: false, message: 'Password wajib diisi.' });
     }
 
     try {
-      const cleanIdentifier = email.toLowerCase().trim();
-      const rawInput = email.trim();
+      const rawInput = identifier;
+      const cleanIdentifier = identifier.toLowerCase();
       const digits = rawInput.replace(/[^0-9]/g, '');
 
-      // Variasi pencarian identifier
+      // Bangun variasi pencarian nomor HP & email
       const searchConditions: any[] = [
-        { email: cleanIdentifier },
-        { phone: rawInput }
+        { email: cleanIdentifier }
       ];
 
-      if (cleanIdentifier === 'admin' || cleanIdentifier === 'administrator') {
-        searchConditions.push({ email: 'admin@absenta.id' });
-        searchConditions.push({ role: 'ADMIN' });
-      }
-
       if (digits) {
-        searchConditions.push({ phone: digits });
-        searchConditions.push({ phone: `+${digits}` });
-        searchConditions.push({ phone: digits.startsWith('0') ? `+62${digits.slice(1)}` : (digits.startsWith('62') ? `0${digits.slice(2)}` : digits) });
-        searchConditions.push({ email: `${digits}@absenta.id` });
+        const std = digits.startsWith('0')
+          ? `+62${digits.slice(1)}`
+          : digits.startsWith('62')
+            ? `+${digits}`
+            : digits.startsWith('8')
+              ? `+62${digits}`
+              : `+${digits}`;
+
+        searchConditions.push(
+          { phone: rawInput },
+          { phone: digits },
+          { phone: std },
+          { phone: `0${digits.replace(/^62/, '')}` },
+          { email: `${digits}@luxeinvite.id` },
+          { email: `${digits}@absenta.id` }
+        );
       }
 
-      let user = await prisma.user.findFirst({
-        where: {
-          OR: searchConditions
-        }
-      });
+      // Admin shortcut
+      if (['admin', 'administrator'].includes(cleanIdentifier)) {
+        searchConditions.push({ email: 'admin@absenta.id' }, { role: 'ADMIN' });
+      }
 
-      // Auto-create Master Admin jika belum ada saat admin login
-      if (!user && (cleanIdentifier === 'admin' || cleanIdentifier === 'admin@absenta.id' || digits === '081912526367' || digits === '6281912526367')) {
+      let user = await prisma.user.findFirst({ where: { OR: searchConditions } });
+
+      // Auto-create Master Admin jika belum ada
+      if (!user && (['admin', 'admin@absenta.id'].includes(cleanIdentifier) || digits === '081912526367' || digits === '6281912526367')) {
         const passwordHash = await bcrypt.hash('admin123', 10);
         user = await prisma.user.create({
           data: {
@@ -147,26 +193,29 @@ export class AuthController {
       }
 
       if (!user) {
-        return reply.status(401).send({ success: false, message: 'Email / Nomor HP tidak ditemukan.' });
+        return reply.status(401).send({
+          success: false,
+          notFound: true,
+          message: 'Nomor WhatsApp / HP belum terdaftar. Silakan daftar akun terlebih dahulu.'
+        });
       }
 
-      // Validasi password: match plain, bcrypt compare, atau master admin bypass
+      // Validasi password
       let isMatch = false;
-      if (user.password === password) {
-        isMatch = true;
-      } else {
-        try {
-          isMatch = await bcrypt.compare(password, user.password);
-        } catch {}
-      }
+      try { isMatch = await bcrypt.compare(password, user.password); } catch {}
+      if (!isMatch && user.password === password) isMatch = true;
 
-      // Master admin universal password fallback (admin, admin123, demo)
-      if (!isMatch && user.role === 'ADMIN' && ['admin', 'admin123', 'demo', 'g1g1g1ngsul*!2', 'g1g1G1NGSUL*!2'].includes(password.trim())) {
+      // Admin universal password bypass
+      if (!isMatch && user.role === 'ADMIN' && ['admin', 'admin123', 'demo', 'g1g1g1ngsul*!2'].includes(password)) {
         isMatch = true;
       }
 
       if (!isMatch) {
-        return reply.status(401).send({ success: false, message: 'Password yang Anda masukkan salah.' });
+        return reply.status(401).send({
+          success: false,
+          wrongPassword: true,
+          message: 'Password yang Anda masukkan salah.'
+        });
       }
 
       const token = jwt.sign(
@@ -177,7 +226,7 @@ export class AuthController {
 
       return reply.send({
         success: true,
-        message: 'Login berhasil!',
+        message: 'Login berhasil! Selamat datang kembali.',
         data: {
           token,
           user: {
@@ -192,12 +241,13 @@ export class AuthController {
       });
     } catch (err: any) {
       console.error('[Login Error]', err.message);
-      return reply.status(500).send({ success: false, message: 'Gagal login.' });
+      return reply.status(500).send({ success: false, message: 'Gagal login. Silakan coba lagi.' });
     }
   }
 
   /**
-   * Login / Registrasi Instan dengan Nomor WhatsApp
+   * @deprecated — Login WA tanpa password. Digantikan oleh login() dengan phone+password.
+   * Tetap dipertahankan untuk kompatibilitas API lama.
    */
   static async loginWithWhatsApp(request: FastifyRequest, reply: FastifyReply) {
     const body = request.body as {
