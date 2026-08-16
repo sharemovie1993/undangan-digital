@@ -131,8 +131,23 @@ export class WireguardManager {
 
   /** Dapatkan path .conf dari slug */
   static confPath(slug: string): string {
+    const filename = `et-${slug}.conf`;
+    const candidates = [
+      process.env.TUNNELS_DIR ? path.join(process.env.TUNNELS_DIR, filename) : null,
+      path.join('/var/www/undangan-digital/backend/tunnels', filename),
+      path.resolve(__dirname, '../../tunnels', filename),
+      path.resolve(__dirname, '../tunnels', filename),
+      path.resolve(process.cwd(), 'tunnels', filename),
+      path.resolve(process.cwd(), 'backend/tunnels', filename),
+      `/etc/wireguard/${filename}`
+    ].filter(Boolean) as string[];
+
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+
     this.ensureTunnelsDir();
-    return path.join(this.getTunnelsDir(), `et-${slug}.conf`);
+    return path.join(this.getTunnelsDir(), filename);
   }
 
   /** Path symlink di /etc/wireguard/ (Linux) */
