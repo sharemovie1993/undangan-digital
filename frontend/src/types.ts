@@ -6,7 +6,13 @@ export type ThemeToken =
   | 'velvet_navy'
   | 'rose_gold'
   | 'midnight_obsidian'
-  | 'crimson_ruby';
+  | 'crimson_ruby'
+  | 'ivory_gold'
+  | 'soft_blush_floral'
+  | 'botanical_sage'
+  | 'terracotta_cream'
+  | 'celestial_blue'
+  | 'javanese_heritage';
 
 export type FontPairingId =
   | 'royal_serif'

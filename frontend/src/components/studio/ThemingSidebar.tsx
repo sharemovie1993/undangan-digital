@@ -40,6 +40,7 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
   onCloseMobileView,
 }) => {
   const [activeInspectorTab, setActiveInspectorTab] = useState<'event' | 'theme' | 'font' | 'frame' | 'print'>('theme');
+  const [themeToneFilter, setThemeToneFilter] = useState<'all' | 'light' | 'dark'>('all');
   const [isAdvancedModeMobile, setIsAdvancedModeMobile] = useState(false);
   const [sheetHeight, setSheetHeight] = useState<'peek' | 'half' | 'full'>('half');
 
@@ -190,19 +191,67 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
         {/* TAB: THEME & COLOR */}
         {activeInspectorTab === 'theme' && (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-1.5">
-              {Object.values(THEMES).map((th) => {
+            {/* Tone Filter Buttons */}
+            <div className="flex bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-[11px] font-semibold">
+              <button
+                type="button"
+                onClick={() => setThemeToneFilter('all')}
+                className={`flex-1 py-1 rounded-lg transition cursor-pointer text-center ${
+                  themeToneFilter === 'all'
+                    ? 'bg-[#c4a661] text-neutral-950 font-bold shadow-xs'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                Semua ({Object.values(THEMES).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setThemeToneFilter('light')}
+                className={`flex-1 py-1 rounded-lg transition cursor-pointer text-center flex items-center justify-center gap-1 ${
+                  themeToneFilter === 'light'
+                    ? 'bg-[#c4a661] text-neutral-950 font-bold shadow-xs'
+                    : 'text-amber-200/80 hover:text-white'
+                }`}
+              >
+                <span>☀️ Cerah</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setThemeToneFilter('dark')}
+                className={`flex-1 py-1 rounded-lg transition cursor-pointer text-center flex items-center justify-center gap-1 ${
+                  themeToneFilter === 'dark'
+                    ? 'bg-[#c4a661] text-neutral-950 font-bold shadow-xs'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <span>🌙 Gelap</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 max-h-[380px] overflow-y-auto pr-0.5 scrollbar-thin">
+              {Object.values(THEMES)
+                .filter((th: any) => {
+                  if (themeToneFilter === 'light') return th.mode === 'light';
+                  if (themeToneFilter === 'dark') return th.mode !== 'light';
+                  return true;
+                })
+                .map((th) => {
                 const isSelected = data.theme === th.id;
                 return (
                   <button
                     key={th.id}
                     onClick={() => onThemeChange(th.id as ThemeToken)}
-                    className={`p-2 rounded-xl border flex flex-col items-center justify-center text-center transition cursor-pointer ${
+                    className={`p-2 rounded-xl border flex flex-col items-center justify-center text-center transition cursor-pointer relative ${
                       isSelected
                         ? 'border-[#c4a661] bg-[#c4a661]/20 text-[#c4a661] ring-1 ring-[#c4a661]'
                         : 'border-neutral-800 bg-neutral-900/70 text-neutral-400 hover:border-neutral-700 hover:text-white'
                     }`}
                   >
+                    {(th as any).mode === 'light' && (
+                      <span className="absolute top-1.5 right-1.5 text-[8px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 font-bold">
+                        Cerah
+                      </span>
+                    )}
                     <span
                       className={`w-5 h-5 rounded-full bg-gradient-to-br ${th.previewGradient} mb-1 border border-white/20 shadow-xs`}
                     />
