@@ -460,6 +460,8 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
           onViewGuestMode={onViewGuestMode}
           onOpenPricing={() => setIsPricingOpen(true)}
           onOpenLicenseModal={() => setIsActiveLicenseOpen(true)}
+          onOpenDashboard={onOpenDashboard}
+          onOpenPrintStudio={onOpenPrintStudio}
         />
 
         {/* Dynamic Center Canvas View */}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Smartphone, Tablet, Monitor, Crown, CreditCard, Save, Eye } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Smartphone, Tablet, Monitor, Crown, CreditCard, Save, Eye, ArrowLeft, LayoutDashboard, Printer, LogOut, User, ChevronDown } from 'lucide-react';
 import { InvitationData } from '../../types';
 
 interface StudioHeaderProps {
@@ -15,6 +15,8 @@ interface StudioHeaderProps {
   onViewGuestMode: (name: string) => void;
   onOpenPricing: () => void;
   onOpenLicenseModal: () => void;
+  onOpenDashboard?: () => void;
+  onOpenPrintStudio?: () => void;
 }
 
 export const StudioHeader: React.FC<StudioHeaderProps> = ({
@@ -30,19 +32,55 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   onViewGuestMode,
   onOpenPricing,
   onOpenLicenseModal,
+  onOpenDashboard,
+  onOpenPrintStudio,
 }) => {
   const isLicensed = !data.isWatermarked || Boolean(data.licenseKey);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('absenta_auth_token');
+    localStorage.removeItem('absenta_auth_user');
+    window.location.href = '/?mode=dashboard';
+  };
 
   return (
-    <header className="h-14 shrink-0 border-b border-[#1f1f27] flex items-center justify-between px-3 md:px-5 bg-[#0e0e12] z-20 gap-2">
-      {/* 1. Left: Mobile Brand vs Desktop Tab Navigation */}
-      <div className="sm:hidden flex items-center gap-1.5 shrink-0">
-        <span className="text-[#c4a661] font-bold text-xs uppercase tracking-wider">
-          ✨ LuxeInvite
-        </span>
+    <header className="h-14 shrink-0 border-b border-[#1f1f27] flex items-center justify-between px-3 md:px-5 bg-[#0e0e12] z-20 gap-2 relative">
+      {/* 1. Left: Back to Dashboard & Mobile Brand */}
+      <div className="flex items-center gap-2 shrink-0">
+        {onOpenDashboard && (
+          <button
+            type="button"
+            onClick={onOpenDashboard}
+            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            title="Kembali ke Dashboard Semua Undangan"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </button>
+        )}
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[#c4a661] font-bold text-xs uppercase tracking-wider font-serif">
+            ✨ LuxeInvite
+          </span>
+        </div>
       </div>
 
-      <div className="hidden sm:flex h-full items-center space-x-2 sm:space-x-4 shrink-0">
+      {/* Desktop Tabs Navigation */}
+      <div className="hidden md:flex h-full items-center space-x-2 sm:space-x-4 shrink-0">
         <button
           onClick={() => setActiveTab('blocks')}
           className={`h-full text-xs font-semibold px-1.5 border-b-2 flex items-center transition cursor-pointer whitespace-nowrap ${
@@ -75,9 +113,9 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
         </button>
       </div>
 
-      {/* 2. Center: Pure Icon-Only Viewport Switcher (Ultra Compact) */}
+      {/* 2. Center: Viewport Switcher */}
       {activeTab === 'blocks' && (
-        <div className="hidden sm:flex items-center rounded-xl bg-neutral-950 p-1 border border-neutral-800 shrink-0 gap-1 shadow-inner">
+        <div className="hidden lg:flex items-center rounded-xl bg-neutral-950 p-1 border border-neutral-800 shrink-0 gap-1 shadow-inner">
           <button
             type="button"
             onClick={() => setDeviceFrame('mobile')}
@@ -117,7 +155,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
         </div>
       )}
 
-      {/* 3. Right: Action Buttons */}
+      {/* 3. Right: Action Buttons + User Profile Menu */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
         {isLicensed ? (
           <button
@@ -136,6 +174,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
             <span>Beli Paket</span>
           </button>
         )}
+
         <button
           onClick={onSave}
           disabled={isSaving}
@@ -144,13 +183,75 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           <Save className="w-3 h-3 text-[#c4a661] shrink-0" />
           <span className="hidden xs:inline">{isSaving ? '...' : 'Save'}</span>
         </button>
+
         <button
-          onClick={() => onViewGuestMode('Bpk. Ahmad Suherman & Kel', data.slug)}
+          onClick={() => onViewGuestMode('Bpk. Ahmad Suherman & Kel')}
           className="px-3 py-1.5 text-[10px] sm:text-[11px] bg-white text-black font-bold rounded-full hover:bg-amber-100 transition shadow-md flex items-center gap-1 cursor-pointer whitespace-nowrap"
         >
           <Eye className="w-3 h-3 shrink-0" />
           <span>Publish</span>
         </button>
+
+        {/* User Account / Navigation Dropdown */}
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className="p-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 transition cursor-pointer flex items-center justify-center"
+            title="Menu Akun & Navigasi"
+          >
+            <User className="w-3.5 h-3.5 text-[#c4a661]" />
+          </button>
+
+          {/* Floating Dropdown Menu */}
+          {isUserMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-52 bg-[#111115] border border-neutral-800 rounded-2xl shadow-2xl p-1.5 z-50 text-xs text-neutral-200 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-3 py-2 border-b border-neutral-800/80 mb-1">
+                <p className="text-[10px] text-neutral-400">Sedang Mengedit:</p>
+                <p className="font-bold text-white truncate">{data.eventTitle || 'Undangan Digital'}</p>
+              </div>
+
+              {onOpenDashboard && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    onOpenDashboard();
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-neutral-300 hover:text-white transition cursor-pointer"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-[#c4a661]" />
+                  <span>Dashboard Proyek</span>
+                </button>
+              )}
+
+              {onOpenPrintStudio && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    onOpenPrintStudio();
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-neutral-300 hover:text-white transition cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Print Studio (PDF)</span>
+                </button>
+              )}
+
+              <div className="h-px bg-neutral-800/80 my-1" />
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/15 text-rose-400 flex items-center gap-2 transition cursor-pointer font-semibold"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Keluar / Logout</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
