@@ -19,6 +19,12 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({ data, 
   const [volume, setVolume] = useState(0.6);
   const [showDrawer, setShowDrawer] = useState(false);
 
+  const trackUrl = data.audioTrack?.url || data.musicUrl || '';
+
+  useEffect(() => {
+    romanticAudio.setTrack(trackUrl || null);
+  }, [trackUrl]);
+
   useEffect(() => {
     const unsub = romanticAudio.subscribe((playing) => {
       setIsPlaying(playing);

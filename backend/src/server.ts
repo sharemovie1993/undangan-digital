@@ -89,10 +89,14 @@ const start = async () => {
       }
     });
 
-    // Serve static files from /uploads
+    // Serve static files from /uploads with HTTP Range & Cache-Control for ultra-smooth audio streaming
     await fastify.register(fastifyStatic, {
       root: config.uploadDir,
-      prefix: '/uploads/'
+      prefix: '/uploads/',
+      maxAge: '30d',
+      immutable: true,
+      acceptRanges: true,
+      cacheControl: true
     });
 
     // Health check endpoint
