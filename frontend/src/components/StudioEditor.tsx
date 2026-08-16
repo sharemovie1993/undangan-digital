@@ -32,6 +32,7 @@ import { StyleKitGalleryModal } from './studio/StyleKitGalleryModal';
 import { MasterStyleKit, THEMES } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
 import { generateSlug } from '../utils/slug';
+import { generateWhatsAppMessage } from '../utils/whatsappTemplate';
 import { useRealtimeThemes } from '../hooks/useRealtimeThemes';
 
 interface StudioEditorProps {
@@ -271,12 +272,11 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   };
 
   const handleCopyWhatsAppShare = (guest: GuestRecipient) => {
-    const activeSlug = data.slug ? generateSlug(data.slug) : generateSlug(data.eventTitle || data.title);
-    const shareUrl = `${window.location.origin}/?slug=${encodeURIComponent(activeSlug)}&to=${encodeURIComponent(guest.name)}&mode=invitation`;
-    const text = `Halo ${guest.name},\n\nKami mengundang Anda untuk hadir di momen bahagia kami.\nBuka tautan undangan digital Anda di sini:\n${shareUrl}\n\nTerima kasih!`;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://luxury.absenta.id';
+    const text = generateWhatsAppMessage(guest, data, baseUrl);
 
     navigator.clipboard.writeText(text);
-    setCopiedLink(guest.slug);
+    setCopiedLink(guest.name);
     setTimeout(() => setCopiedLink(null), 2500);
 
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Upload, QrCode, Copy, Send, Eye, Trash2, AlertTriangle, FileSpreadsheet, Search, MessageSquare, MapPin, Users, Check, Mail, MailOpen, UserCheck, UserX } from 'lucide-react';
 import { GuestRecipient, InvitationData } from '../../types';
 import { exportGuestsToExcel } from '../../utils/excelGuests';
+import { generateWhatsAppMessage } from '../../utils/whatsappTemplate';
 
 interface GuestListManagerProps {
   data: InvitationData;
@@ -85,12 +86,8 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
   const allGroups = Array.from(new Set(guests.map((g) => g.group || 'Umum')));
 
   const handleSendWhatsApp = (guest: GuestRecipient) => {
-    const activeSlug = data.slug || data.id || 'undangan';
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://luxury.absenta.id';
-    const shareUrl = `${baseUrl}/?slug=${encodeURIComponent(activeSlug)}&to=${encodeURIComponent(guest.name)}&mode=invitation`;
-    const eventName = data.eventTitle || data.title || 'Momen Bahagia Kami';
-
-    const text = `Kepada Yth. *${guest.name}*,\n\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk hadir di acara *${eventName}*.\n\nBuka tautan undangan digital Anda di sini:\n👉 ${shareUrl}\n\nMerupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.\n\nTerima kasih.`;
+    const text = generateWhatsAppMessage(guest, data, baseUrl);
 
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank');
