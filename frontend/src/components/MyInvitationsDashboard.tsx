@@ -80,7 +80,7 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   onViewGuestMode,
   onLogout
 }) => {
-  const { user: currentUser, role, isReseller, quotaTokens, logout: authLogout } = useAuth();
+  const { user: currentUser, role, isReseller, quotaTokens, logout: authLogout, login } = useAuth();
   const isAdmin = (role || currentUser?.role || '').toUpperCase() === 'ADMIN' ||
     (role || currentUser?.role || '').toUpperCase() === 'OWNER' ||
     currentUser?.email === 'admin@absenta.id';
@@ -933,9 +933,11 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
       <VendorAuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={(user) => {
-          setCurrentUser(user);
-          queryClient.invalidateQueries({ queryKey: ['invitations-list'] });
+        onSuccess={(user, token) => {
+          if (token && user) {
+            login(token, user);
+          }
+          setIsAuthModalOpen(false);
         }}
       />
 
