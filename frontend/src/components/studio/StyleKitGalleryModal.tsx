@@ -118,7 +118,7 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
             filteredKits.map((kit) => {
               const fontInfo = FONT_PRESETS[kit.fontPairingId as keyof typeof FONT_PRESETS];
               const frameInfo = FRAME_SHAPES[kit.frameShape as keyof typeof FRAME_SHAPES];
-              const themeInfo = THEMES[kit.themeId as keyof typeof THEMES];
+              const themeInfo = themeRegistry.getTheme(kit.themeId);
 
               const isCurrentlyActive =
                 currentThemeId === kit.themeId &&

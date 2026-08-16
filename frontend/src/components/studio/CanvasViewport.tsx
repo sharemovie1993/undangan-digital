@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { InvitationData, WishMessage } from '../../types';
-import { THEMES } from '../../data/presets';
+import { themeRegistry } from '../../themes/registry';
 import { PageStitcher } from '../../stitch/PageStitcher';
 import { FloatingMusicPlayer } from '../FloatingMusicPlayer';
 
@@ -30,8 +30,9 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   onNextStyleKit,
   onOpenStyleGallery,
 }) => {
-  const activePrimary = data.themeConfig?.primaryColor || THEMES[data.theme]?.primary || '#c4a661';
-  const activeBg = data.themeConfig?.bgColor || THEMES[data.theme]?.bg || '#0a0a0b';
+  const activeTheme = themeRegistry.getTheme(data.theme);
+  const activePrimary = data.themeConfig?.primaryColor || activeTheme?.primary || '#c4a661';
+  const activeBg = data.themeConfig?.bgColor || activeTheme?.bg || '#0a0a0b';
 
   return (
     <div className="flex-1 flex justify-center p-0 sm:p-4 md:p-8 bg-[radial-gradient(circle_at_center,_#1a1a24_0%,_#0a0a0b_100%)] overflow-y-auto">
