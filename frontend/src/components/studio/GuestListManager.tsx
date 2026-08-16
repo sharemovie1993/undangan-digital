@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Upload, QrCode, Copy, Send, Eye, Trash2, AlertTriangle, FileSpreadsheet, Search, MessageSquare, MapPin, Users, Check } from 'lucide-react';
+import { Plus, Upload, QrCode, Copy, Send, Eye, Trash2, AlertTriangle, FileSpreadsheet, Search, MessageSquare, MapPin, Users, Check, Mail, MailOpen, UserCheck, UserX } from 'lucide-react';
 import { GuestRecipient, InvitationData } from '../../types';
 import { exportGuestsToExcel } from '../../utils/excelGuests';
 
@@ -39,13 +39,22 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
   copiedLink,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'unopened' | 'opened' | 'attending' | 'not_attending'>('all');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState('all');
   const [showLimitBanner, setShowLimitBanner] = useState(false);
 
   const isTrial = data.isWatermarked;
   const isLimitReached = isTrial && guests.length >= 5;
 
-  // Filter guests by search query and category
+  // Realtime Live Analytics Calculations
+  const totalCount = guests.length;
+  const openedCount = guests.filter((g) => g.hasOpened || g.isAttending !== null || g.isCheckedIn).length;
+  const unopenedCount = totalCount - openedCount;
+  const attendingCount = guests.filter((g) => g.isAttending === true).length;
+  const notAttendingCount = guests.filter((g) => g.isAttending === false).length;
+  const checkedInCount = guests.filter((g) => g.isCheckedIn).length;
+
+  // Filter guests by search, category, and open/attendance status
   const filteredGuests = guests.filter((guest) => {
     const matchesSearch =
       guest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -55,10 +64,24 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
     const matchesGroup =
       selectedGroupFilter === 'all' || (guest.group && guest.group.toLowerCase() === selectedGroupFilter.toLowerCase());
 
-    return matchesSearch && matchesGroup;
+    const isOpened = guest.hasOpened || guest.isAttending !== null || guest.isCheckedIn;
+    const matchesStatus =
+      selectedStatusFilter === 'all'
+        ? true
+        : selectedStatusFilter === 'unopened'
+        ? !isOpened
+        : selectedStatusFilter === 'opened'
+        ? isOpened
+        : selectedStatusFilter === 'attending'
+        ? guest.isAttending === true
+        : selectedStatusFilter === 'not_attending'
+        ? guest.isAttending === false
+        : true;
+
+    return matchesSearch && matchesGroup && matchesStatus;
   });
 
-  // Extract unique groups for filter chips
+  // Extract unique groups for category filter
   const allGroups = Array.from(new Set(guests.map((g) => g.group || 'Umum')));
 
   const handleSendWhatsApp = (guest: GuestRecipient) => {
@@ -92,11 +115,11 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
                 Daftar Tamu Undangan
               </h2>
               <span className="text-[10px] sm:text-xs bg-[#c4a661]/15 text-[#c4a661] px-2.5 py-0.5 rounded-full font-sans font-semibold border border-[#c4a661]/30 shrink-0">
-                {guests.length} Tamu
+                {totalCount} Tamu
               </span>
             </div>
             <p className="text-[11px] text-neutral-400 mt-0.5">
-              Kelola nama tamu khusus, kirim WhatsApp, & scan QR resepsi.
+              Pantau siapa yang belum membuka, kirim WhatsApp, & scan QR resepsi.
             </p>
           </div>
         </div>
@@ -139,6 +162,95 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
         </div>
       </div>
 
+      {/* 2. REALTIME LIVE STATUS COUNTER CARDS (RINGKASAN STATUS TAMU) */}
+      {guests.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {/* Card Belum Dibuka */}
+          <div
+            onClick={() => setSelectedStatusFilter(selectedStatusFilter === 'unopened' ? 'all' : 'unopened')}
+            className={`p-3 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
+              selectedStatusFilter === 'unopened'
+                ? 'bg-amber-500/20 border-amber-500/50 ring-1 ring-amber-500'
+                : 'bg-[#111115] border-white/5 hover:border-neutral-700'
+            }`}
+          >
+            <div className="flex items-center justify-between text-neutral-400 text-[10px]">
+              <span className="font-semibold">Belum Dibuka</span>
+              <Mail className="w-3.5 h-3.5 text-amber-400" />
+            </div>
+            <div className="text-lg font-bold text-amber-400 mt-1">
+              {unopenedCount} <span className="text-[10px] text-neutral-400 font-normal">Tamu</span>
+            </div>
+            <div className="text-[9px] text-neutral-500 mt-0.5">
+              {totalCount > 0 ? Math.round((unopenedCount / totalCount) * 100) : 0}% dari total
+            </div>
+          </div>
+
+          {/* Card Sudah Dibuka */}
+          <div
+            onClick={() => setSelectedStatusFilter(selectedStatusFilter === 'opened' ? 'all' : 'opened')}
+            className={`p-3 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
+              selectedStatusFilter === 'opened'
+                ? 'bg-blue-500/20 border-blue-500/50 ring-1 ring-blue-500'
+                : 'bg-[#111115] border-white/5 hover:border-neutral-700'
+            }`}
+          >
+            <div className="flex items-center justify-between text-neutral-400 text-[10px]">
+              <span className="font-semibold">Sudah Dibuka</span>
+              <MailOpen className="w-3.5 h-3.5 text-blue-400" />
+            </div>
+            <div className="text-lg font-bold text-blue-400 mt-1">
+              {openedCount} <span className="text-[10px] text-neutral-400 font-normal">Tamu</span>
+            </div>
+            <div className="text-[9px] text-neutral-500 mt-0.5">
+              {totalCount > 0 ? Math.round((openedCount / totalCount) * 100) : 0}% telah melihat
+            </div>
+          </div>
+
+          {/* Card Konfirmasi Hadir */}
+          <div
+            onClick={() => setSelectedStatusFilter(selectedStatusFilter === 'attending' ? 'all' : 'attending')}
+            className={`p-3 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
+              selectedStatusFilter === 'attending'
+                ? 'bg-emerald-500/20 border-emerald-500/50 ring-1 ring-emerald-500'
+                : 'bg-[#111115] border-white/5 hover:border-neutral-700'
+            }`}
+          >
+            <div className="flex items-center justify-between text-neutral-400 text-[10px]">
+              <span className="font-semibold">Konfirmasi Hadir</span>
+              <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+            </div>
+            <div className="text-lg font-bold text-emerald-400 mt-1">
+              {attendingCount} <span className="text-[10px] text-neutral-400 font-normal">RSVP</span>
+            </div>
+            <div className="text-[9px] text-neutral-500 mt-0.5">
+              {checkedInCount} telah check-in
+            </div>
+          </div>
+
+          {/* Card Tidak Hadir */}
+          <div
+            onClick={() => setSelectedStatusFilter(selectedStatusFilter === 'not_attending' ? 'all' : 'not_attending')}
+            className={`p-3 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
+              selectedStatusFilter === 'not_attending'
+                ? 'bg-rose-500/20 border-rose-500/50 ring-1 ring-rose-500'
+                : 'bg-[#111115] border-white/5 hover:border-neutral-700'
+            }`}
+          >
+            <div className="flex items-center justify-between text-neutral-400 text-[10px]">
+              <span className="font-semibold">Tidak Hadir</span>
+              <UserX className="w-3.5 h-3.5 text-rose-400" />
+            </div>
+            <div className="text-lg font-bold text-rose-400 mt-1">
+              {notAttendingCount} <span className="text-[10px] text-neutral-400 font-normal">Tamu</span>
+            </div>
+            <div className="text-[9px] text-neutral-500 mt-0.5">
+              Berhalangan hadir
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Trial Limit Warning Banner */}
       {showLimitBanner && (
         <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/35 text-amber-300 text-xs flex items-center justify-between animate-in fade-in">
@@ -150,7 +262,7 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
         </div>
       )}
 
-      {/* 2. FORM TAMBAH TAMU MANUAL (RESPONSIVE) */}
+      {/* 3. FORM TAMBAH TAMU MANUAL (RESPONSIVE) */}
       <form
         onSubmit={(e) => {
           if (isLimitReached) {
@@ -215,7 +327,7 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
         </button>
       </form>
 
-      {/* 3. SEARCH & CATEGORY FILTER BAR */}
+      {/* 4. SEARCH & STATUS/CATEGORY FILTER BAR */}
       {guests.length > 0 && (
         <div className="space-y-2">
           {/* Search Input */}
@@ -238,46 +350,82 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
             )}
           </div>
 
-          {/* Category Chips */}
+          {/* Status Quick Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
             <button
-              onClick={() => setSelectedGroupFilter('all')}
+              onClick={() => setSelectedStatusFilter('all')}
               className={`px-3 py-1 rounded-lg shrink-0 font-semibold transition cursor-pointer ${
-                selectedGroupFilter === 'all'
-                  ? 'bg-[#c4a661] text-neutral-950'
+                selectedStatusFilter === 'all'
+                  ? 'bg-[#c4a661] text-neutral-950 shadow-xs'
                   : 'bg-neutral-900 text-neutral-400 hover:text-white'
               }`}
             >
-              Semua ({guests.length})
+              Semua ({totalCount})
             </button>
-            {allGroups.map((grp) => {
-              const count = guests.filter((g) => (g.group || 'Umum') === grp).length;
-              return (
-                <button
-                  key={grp}
-                  onClick={() => setSelectedGroupFilter(grp)}
-                  className={`px-3 py-1 rounded-lg shrink-0 font-semibold transition cursor-pointer ${
-                    selectedGroupFilter.toLowerCase() === grp.toLowerCase()
-                      ? 'bg-[#c4a661] text-neutral-950'
-                      : 'bg-neutral-900 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  {grp} ({count})
-                </button>
-              );
-            })}
+
+            <button
+              onClick={() => setSelectedStatusFilter('unopened')}
+              className={`px-3 py-1 rounded-lg shrink-0 font-semibold transition cursor-pointer flex items-center gap-1 ${
+                selectedStatusFilter === 'unopened'
+                  ? 'bg-amber-500 text-neutral-950 shadow-xs font-bold'
+                  : 'bg-neutral-900 text-amber-400/90 hover:bg-neutral-800'
+              }`}
+            >
+              <Mail className="w-3 h-3" />
+              <span>Belum Dibuka ({unopenedCount})</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedStatusFilter('opened')}
+              className={`px-3 py-1 rounded-lg shrink-0 font-semibold transition cursor-pointer flex items-center gap-1 ${
+                selectedStatusFilter === 'opened'
+                  ? 'bg-blue-500 text-white shadow-xs font-bold'
+                  : 'bg-neutral-900 text-blue-400/90 hover:bg-neutral-800'
+              }`}
+            >
+              <MailOpen className="w-3 h-3" />
+              <span>Sudah Dibuka ({openedCount})</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedStatusFilter('attending')}
+              className={`px-3 py-1 rounded-lg shrink-0 font-semibold transition cursor-pointer flex items-center gap-1 ${
+                selectedStatusFilter === 'attending'
+                  ? 'bg-emerald-500 text-neutral-950 shadow-xs font-bold'
+                  : 'bg-neutral-900 text-emerald-400/90 hover:bg-neutral-800'
+              }`}
+            >
+              <UserCheck className="w-3 h-3" />
+              <span>Hadir ({attendingCount})</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedStatusFilter('not_attending')}
+              className={`px-3 py-1 rounded-lg shrink-0 font-semibold transition cursor-pointer flex items-center gap-1 ${
+                selectedStatusFilter === 'not_attending'
+                  ? 'bg-rose-500 text-white shadow-xs font-bold'
+                  : 'bg-neutral-900 text-rose-400/90 hover:bg-neutral-800'
+              }`}
+            >
+              <UserX className="w-3 h-3" />
+              <span>Tidak Hadir ({notAttendingCount})</span>
+            </button>
           </div>
         </div>
       )}
 
-      {/* 4. GUEST LIST CARDS (RESPONSIVE FOR MOBILE) */}
+      {/* 5. GUEST LIST CARDS (RESPONSIVE FOR MOBILE) */}
       {filteredGuests.length === 0 ? (
         <div className="p-8 text-center bg-[#111115] border border-white/5 rounded-2xl space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-neutral-900 mx-auto flex items-center justify-center text-neutral-500">
             <Users className="w-6 h-6" />
           </div>
           <p className="text-xs font-bold text-white">
-            {searchQuery ? `Tidak ada tamu yang cocok dengan "${searchQuery}"` : 'Belum Ada Tamu Terdaftar'}
+            {searchQuery
+              ? `Tidak ada tamu yang cocok dengan pencarian "${searchQuery}"`
+              : selectedStatusFilter !== 'all'
+              ? `Tidak ada tamu dengan status filter "${selectedStatusFilter}"`
+              : 'Belum Ada Tamu Terdaftar'}
           </p>
           <p className="text-[11px] text-neutral-500 max-w-xs mx-auto">
             Gunakan formulir di atas untuk menambah tamu atau impor langsung file Excel/CSV.
@@ -288,13 +436,14 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
           {filteredGuests.map((guest) => {
             const cityText = guest.addressOrCity || guest.city;
             const isCopied = copiedLink === guest.name;
+            const isOpened = guest.hasOpened || guest.isAttending !== null || guest.isCheckedIn;
 
             return (
               <div
                 key={guest.id}
                 className="bg-[#111115] hover:bg-[#16161c] border border-white/5 rounded-2xl p-3 sm:p-3.5 space-y-2.5 transition shadow-xs"
               >
-                {/* Top Row: Name & Group Badge */}
+                {/* Top Row: Name & Status Badge */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-xs sm:text-sm text-white truncate">
@@ -318,11 +467,11 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
                     </div>
                   </div>
 
-                  {/* Attendance Badge */}
+                  {/* Attendance & Open Status Badge */}
                   <div>
                     {guest.isAttending !== null && guest.isAttending !== undefined ? (
                       <span
-                        className={`text-[9px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                        className={`text-[9px] px-2 py-0.5 rounded-full font-bold shrink-0 flex items-center gap-1 ${
                           guest.isAttending
                             ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                             : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
@@ -330,13 +479,15 @@ export const GuestListManager: React.FC<GuestListManagerProps> = ({
                       >
                         {guest.isAttending ? '✓ Hadir' : '✕ Tidak Hadir'}
                       </span>
-                    ) : guest.hasOpened ? (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium shrink-0">
-                        Sudah Dibuka
+                    ) : isOpened ? (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium shrink-0 flex items-center gap-1">
+                        <MailOpen className="w-2.5 h-2.5" />
+                        <span>Sudah Dibuka</span>
                       </span>
                     ) : (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700 font-medium shrink-0">
-                        Belum Dibuka
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium shrink-0 flex items-center gap-1">
+                        <Mail className="w-2.5 h-2.5" />
+                        <span>Belum Dibuka</span>
                       </span>
                     )}
                   </div>
