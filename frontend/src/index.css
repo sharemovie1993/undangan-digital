@@ -141,6 +141,12 @@
   animation-play-state: paused;
 }
 
+/* 📱 SmartImage Shimmer Keyframes */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 /* Print Styles */
 @media print {
   body {

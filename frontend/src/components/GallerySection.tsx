@@ -19,7 +19,9 @@ const GalleryImageItem: React.FC<{
   activePrimary: string;
   caption?: string;
   delay?: number;
-}> = ({ src, alt, onClick, aspectClass = 'aspect-square', activePrimary, caption, delay = 0 }) => {
+  /** Foto pertama (LCP) — eager load + fetchpriority high */
+  isFirst?: boolean;
+}> = ({ src, alt, onClick, aspectClass = 'aspect-square', activePrimary, caption, delay = 0, isFirst = false }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
@@ -42,11 +44,14 @@ const GalleryImageItem: React.FC<{
       <img
         src={src}
         alt={alt || 'Foto Galeri'}
-        loading="lazy"
+        loading={isFirst ? 'eager' : 'lazy'}
+        decoding="async"
+        {...(isFirst ? { fetchPriority: 'high' } as any : {})}
         onLoad={() => setIsLoaded(true)}
         className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
+        referrerPolicy="no-referrer"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
         {caption && <span className="text-[11px] text-white/90 line-clamp-1">{caption}</span>}
@@ -58,7 +63,9 @@ const GalleryImageItem: React.FC<{
   );
 };
 
-export const GallerySection: React.FC<GallerySectionProps> = ({ data }) => {
+
+
+export const GallerySection: React.FC<GallerySectionProps> = React.memo(({ data }) => {
   const theme = themeRegistry.getTheme(data.theme);
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const activeBg = data.themeConfig?.bgColor || theme.bg || '#0a0a0b';
@@ -77,22 +84,18 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data }) => {
   const visiblePhotos = isExpanded ? gallery : gallery.slice(0, INITIAL_VISIBLE_COUNT);
   const remainingCount = gallery.length - INITIAL_VISIBLE_COUNT;
 
-  const openLightbox = (index: number) => setLightboxIndex(index);
-  const closeLightbox = () => setLightboxIndex(null);
+  const openLightbox = React.useCallback((index: number) => setLightboxIndex(index), []);
+  const closeLightbox = React.useCallback(() => setLightboxIndex(null), []);
 
-  const nextPhoto = (e: React.MouseEvent) => {
+  const nextPhoto = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (lightboxIndex !== null) {
-      setLightboxIndex((lightboxIndex + 1) % gallery.length);
-    }
-  };
+    setLightboxIndex((prev) => prev !== null ? (prev + 1) % gallery.length : null);
+  }, [gallery.length]);
 
-  const prevPhoto = (e: React.MouseEvent) => {
+  const prevPhoto = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (lightboxIndex !== null) {
-      setLightboxIndex((lightboxIndex - 1 + gallery.length) % gallery.length);
-    }
-  };
+    setLightboxIndex((prev) => prev !== null ? (prev - 1 + gallery.length) % gallery.length : null);
+  }, [gallery.length]);
 
   return (
     <section
@@ -128,7 +131,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data }) => {
 
       {/* Gallery Grid */}
       <div className="space-y-3 max-w-md mx-auto">
-        {/* Photo 1: Large Featured */}
+        {/* Photo 1: Large Featured â€” priority LCP */}
         {visiblePhotos[0] && (
           <GalleryImageItem
             src={visiblePhotos[0].url}
@@ -137,6 +140,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data }) => {
             aspectClass="aspect-[16/10]"
             activePrimary={activePrimary}
             delay={0}
+            isFirst={true}
           />
         )}
 
@@ -223,10 +227,13 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data }) => {
               className="relative max-w-3xl max-h-[85vh] flex flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* âœ… fetchpriority="high" untuk foto lightbox â€” user sedang melihatnya */}
               <img
                 src={gallery[lightboxIndex].url}
                 alt={gallery[lightboxIndex].caption || 'Foto Galeri'}
+                loading="eager"
                 decoding="async"
+                fetchPriority="high"
                 className="max-h-[75vh] max-w-full rounded-2xl object-contain shadow-2xl border border-neutral-800"
                 referrerPolicy="no-referrer"
               />
@@ -246,4 +253,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ data }) => {
       </AnimatePresence>
     </section>
   );
-};
+});
+
+GallerySection.displayName = 'GallerySection';
+

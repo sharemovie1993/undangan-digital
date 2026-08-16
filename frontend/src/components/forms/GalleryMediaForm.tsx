@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { InvitationData } from '../../types';
 import { Image, Plus, Trash2, Video, Upload, Loader2, Images } from 'lucide-react';
 import { api } from '../../api/client';
 import { compressImage } from '../../utils/imageCompressor';
+import { SmartImage } from '../SmartImage';
+import { useLocalField } from '../../hooks/useLocalField';
 
 interface GalleryMediaFormProps {
   data: InvitationData;
   onChange: (newData: InvitationData) => void;
 }
 
-export const GalleryMediaForm: React.FC<GalleryMediaFormProps> = ({ data, onChange }) => {
+export const GalleryMediaForm: React.FC<GalleryMediaFormProps> = memo(({ data, onChange }) => {
   const gallery = data.gallery || [];
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [newCaption, setNewCaption] = useState('');
@@ -232,7 +234,12 @@ export const GalleryMediaForm: React.FC<GalleryMediaFormProps> = ({ data, onChan
         <div className="grid grid-cols-2 gap-2.5">
           {gallery.map((item) => (
             <div key={item.id} className="relative group rounded-xl overflow-hidden border border-neutral-800 bg-neutral-950">
-              <img src={item.url} alt={item.caption} className="w-full h-24 object-cover" referrerPolicy="no-referrer" />
+              {/* 📱 SmartImage: lazy load + shimmer + decode async untuk HP low-end */}
+              <SmartImage
+                src={item.url}
+                alt={item.caption}
+                wrapperClassName="w-full h-24"
+              />
               <div className="p-1.5 text-[10px] text-neutral-300 truncate">{item.caption}</div>
               <button
                 type="button"
@@ -247,4 +254,6 @@ export const GalleryMediaForm: React.FC<GalleryMediaFormProps> = ({ data, onChan
       </div>
     </div>
   );
-};
+});
+
+GalleryMediaForm.displayName = 'GalleryMediaForm';
