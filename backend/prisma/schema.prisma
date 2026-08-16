@@ -48,6 +48,10 @@ model Invitation {
   guests          Guest[]
   rsvps           Rsvp[]
   mediaUploads    MediaUpload[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Guest {
@@ -65,6 +69,11 @@ model Guest {
   checkedInAt   DateTime?
   pax           Int         @default(1)
   createdAt     DateTime    @default(now())
+
+  @@index([invitationId])
+  @@index([name])
+  @@index([hasOpened])
+  @@index([isCheckedIn])
 }
 
 model Rsvp {
@@ -77,6 +86,9 @@ model Rsvp {
   message       String?
   likes         Int         @default(0)
   createdAt     DateTime    @default(now())
+
+  @@index([invitationId])
+  @@index([createdAt])
 }
 
 model Order {
@@ -94,6 +106,9 @@ model Order {
   licenseKey      String?
   paidAt          DateTime?
   createdAt       DateTime    @default(now())
+
+  @@index([userId])
+  @@index([status])
 }
 
 model MediaUpload {

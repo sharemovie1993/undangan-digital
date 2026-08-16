@@ -2,6 +2,8 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import compress from '@fastify/compress';
+import etag from '@fastify/etag';
 import formbody from '@fastify/formbody';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
@@ -9,7 +11,7 @@ import { registerApiRoutes } from './routes/api.routes';
 import { config } from './config/app.config';
 import { WireguardManager } from './services/wireguardManager';
 import { EasyTunnelService } from './modules/easy-tunnel/services/easy-tunnel.service';
-import { prisma } from './db';
+import { prisma, optimizeDatabase } from './db';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 
@@ -71,17 +73,30 @@ const start = async () => {
     }
     WireguardManager.ensureTunnelsDir();
 
+    // 🚀 Performance Optimization: SQLite WAL Mode + In-Memory PRAGMA Cache
+    await optimizeDatabase();
+
     // Auto-seed admin user
     await seedAdminUser();
 
-    // 1. SECURITY HARDENING: Helmet HTTP Security Headers
+    // 1. PERFORMANCE: Dynamic Gzip & Deflate Response Compression (Reduces payload size by up to 75%)
+    await fastify.register(compress, {
+      global: true,
+      encodings: ['gzip', 'deflate'],
+      threshold: 1024 // Only compress responses > 1KB
+    });
+
+    // 2. PERFORMANCE: HTTP ETag & 304 Caching for fast revalidation
+    await fastify.register(etag);
+
+    // 3. SECURITY HARDENING: Helmet HTTP Security Headers
     await fastify.register(helmet, {
       contentSecurityPolicy: false, // Disables strict CSP to allow rich audio/image CDNs
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: { policy: 'cross-origin' }
     });
 
-    // 2. SECURITY HARDENING: Rate Limiting & DDoS Prevention (300 req/min per IP)
+    // 4. SECURITY HARDENING: Rate Limiting & DDoS Prevention (300 req/min per IP)
     await fastify.register(rateLimit, {
       max: 300,
       timeWindow: '1 minute',
@@ -92,16 +107,16 @@ const start = async () => {
       })
     });
 
-    // 3. CORS configuration
+    // 5. CORS configuration
     await fastify.register(cors, {
       origin: true,
       credentials: true
     });
 
-    // 4. Form body parser
+    // 6. Form body parser
     await fastify.register(formbody);
 
-    // 5. Multipart file upload parser (up to 15MB)
+    // 7. Multipart file upload parser (up to 15MB)
     await fastify.register(multipart, {
       limits: {
         fileSize: 15 * 1024 * 1024,
@@ -109,7 +124,7 @@ const start = async () => {
       }
     });
 
-    // 6. Serve static files from /uploads with HTTP Range & Cache-Control for ultra-smooth audio streaming
+    // 8. Serve static files from /uploads with HTTP Range & Cache-Control for ultra-smooth audio streaming
     await fastify.register(fastifyStatic, {
       root: config.uploadDir,
       prefix: '/uploads/',
@@ -119,7 +134,7 @@ const start = async () => {
       cacheControl: true
     });
 
-    // 7. Global Error Sanitization (Prevent stack trace leak to public)
+    // 9. Global Error Sanitization (Prevent stack trace leak to public)
     fastify.setErrorHandler((error: any, _request, reply) => {
       fastify.log.error(error);
       const statusCode = error.statusCode || 500;
@@ -132,7 +147,7 @@ const start = async () => {
     // Health check endpoint
     fastify.get('/health', async () => ({
       status: 'ok',
-      service: 'LuxeInvite Backend 360 (Hardened)',
+      service: 'LuxeInvite Backend 360 (Hardened & Optimized)',
       timestamp: new Date().toISOString()
     }));
 
