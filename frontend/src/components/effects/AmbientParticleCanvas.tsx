@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { ParticleEffectId } from '../../types';
 
 interface AmbientParticleCanvasProps {
@@ -20,7 +20,7 @@ interface Particle {
   color: string;
 }
 
-export const AmbientParticleCanvas: React.FC<AmbientParticleCanvasProps> = ({
+export const AmbientParticleCanvas: React.FC<AmbientParticleCanvasProps> = memo(({
   effect = 'none',
   primaryColor = '#c4a661',
   isDark = true,
@@ -164,8 +164,12 @@ export const AmbientParticleCanvas: React.FC<AmbientParticleCanvasProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none absolute inset-0 z-10 w-full h-full"
+      /* 📱 particle-canvas: GPU isolated layer → will-change:contents + translateZ(0) */
+      className="particle-canvas absolute inset-0 z-10 w-full h-full"
       style={{ mixBlendMode: isDark ? 'screen' : 'multiply' }}
     />
   );
-};
+});
+
+AmbientParticleCanvas.displayName = 'AmbientParticleCanvas';
+

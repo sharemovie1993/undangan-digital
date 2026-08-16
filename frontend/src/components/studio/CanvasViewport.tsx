@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { InvitationData, WishMessage } from '../../types';
 import { themeRegistry } from '../../themes/registry';
@@ -18,7 +18,7 @@ interface CanvasViewportProps {
   onOpenStyleGallery?: () => void;
 }
 
-export const CanvasViewport: React.FC<CanvasViewportProps> = ({
+export const CanvasViewport: React.FC<CanvasViewportProps> = memo(({
   data,
   deviceFrame,
   isPhoneEnvelopeOpen,
@@ -35,10 +35,10 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   const activeBg = data.themeConfig?.bgColor || activeTheme?.bg || '#0a0a0b';
 
   return (
-    <div className="flex-1 flex justify-center p-0 sm:p-4 md:p-8 bg-[radial-gradient(circle_at_center,_#1a1a24_0%,_#0a0a0b_100%)] overflow-y-auto">
+    <div className="flex-1 flex justify-center p-0 sm:p-4 md:p-8 bg-[radial-gradient(circle_at_center,_#1a1a24_0%,_#0a0a0b_100%)] overflow-y-auto touch-scroll">
       {/* DYNAMIC RESPONSIVE DEVICE FRAME CANVAS */}
       <div
-        className={`transition-all duration-300 relative overflow-hidden flex flex-col w-full h-full ${
+        className={`transition-all duration-300 relative overflow-hidden flex flex-col w-full h-full contain-layout ${
           deviceFrame === 'mobile'
             ? 'sm:w-[375px] sm:h-[720px] sm:rounded-[48px] sm:border-[8px] sm:border-[#22222b] sm:shadow-[0_0_80px_rgba(0,0,0,0.8)]'
             : deviceFrame === 'tablet'
@@ -69,7 +69,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
         </div>
 
         {/* Live Inner Interactive Screen */}
-        <div className="flex-1 overflow-y-auto relative scrollbar-none pt-12 sm:pt-0">
+        <div className="flex-1 overflow-y-auto relative scrollbar-none pt-12 sm:pt-0 touch-scroll">
           <PageStitcher
             data={data}
             theme={data.theme}
@@ -89,4 +89,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
       </div>
     </div>
   );
-};
+});
+
+CanvasViewport.displayName = 'CanvasViewport';
+

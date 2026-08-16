@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Music2, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { romanticAudio } from '../utils/audioPlayer';
@@ -10,7 +10,7 @@ interface FloatingMusicPlayerProps {
   position?: 'fixed' | 'absolute';
 }
 
-export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({ data, position = 'absolute' }) => {
+export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = memo(({ data, position = 'absolute' }) => {
   const theme = THEMES[data.theme] || THEMES.champagne_gold;
   const activePrimary = data.themeConfig?.primaryColor || theme.primary || '#c4a661';
   const cardBg = data.themeConfig?.cardBgColor || theme.cardBg || '#121216';
@@ -135,15 +135,15 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({ data, 
               setShowDrawer(!showDrawer);
             }}
             title={isPlaying ? 'Jeda Musik (Klik untuk Jeda)' : 'Putar Musik Latar'}
-            className="group relative flex h-13 w-13 items-center justify-center rounded-full bg-neutral-950 p-1 shadow-2xl cursor-pointer border-2"
+            className="group relative flex h-13 w-13 items-center justify-center rounded-full bg-neutral-950 p-1 shadow-2xl cursor-pointer border-2 gpu-layer"
             style={{
               borderColor: activePrimary,
               boxShadow: `0 0 20px ${activePrimary}40`,
             }}
           >
-            {/* Spinning Vinyl Texture */}
+            {/* Spinning Vinyl Texture — GPU Accelerated Spin */}
             <div
-              className={`relative flex h-full w-full items-center justify-center rounded-full bg-radial from-neutral-800 via-neutral-950 to-black ${
+              className={`relative flex h-full w-full items-center justify-center rounded-full bg-radial from-neutral-800 via-neutral-950 to-black will-change-transform ${
                 isPlaying ? 'animate-spin-slow' : 'paused'
               }`}
             >
@@ -185,4 +185,7 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({ data, 
       </div>
     </>
   );
-};
+});
+
+FloatingMusicPlayer.displayName = 'FloatingMusicPlayer';
+

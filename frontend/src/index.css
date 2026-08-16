@@ -147,6 +147,83 @@
   100% { background-position: 200% 0; }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   📱 FASE 5: CSS PERFORMANCE LAYER — Mobile-First GPU & Layout Optimization
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* GPU Composite Layer — untuk elemen selalu-animasi (musik player, partikel) */
+.gpu-layer {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Animated element hints — pasang SEBELUM animasi dimulai */
+.will-change-transform { will-change: transform; }
+.will-change-opacity   { will-change: opacity; }
+.will-change-auto      { will-change: auto; }
+
+/* Layout Containment — isolasi reflow per blok */
+.contain-layout  { contain: layout; }
+.contain-paint   { contain: paint; }
+.contain-content { contain: content; }
+.contain-strict  { contain: strict; }
+
+/* Content Visibility — skip render section off-screen (TTI booster) */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
+}
+.cv-auto-tall {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 600px;
+}
+
+/* Native smooth touch scroll untuk HP iOS/Android */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+}
+
+/* Particle Canvas — GPU isolated layer */
+.particle-canvas {
+  will-change: contents;
+  transform: translateZ(0);
+  pointer-events: none;
+}
+
+/* Composite-only Pulse Ring (transform+opacity saja, 0 layout reflow) */
+@keyframes pulse-ring {
+  0%   { transform: scale(0.95); opacity: 0.8; }
+  50%  { transform: scale(1.05); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Fade-slide Entry — composite-only entrance untuk blok undangan */
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-slide-up {
+  animation: fade-slide-up 0.45s ease-out both;
+  will-change: transform, opacity;
+}
+
+/* Float Gentle — music player disc / dekorasi ornamen */
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: float-gentle 4s ease-in-out infinite;
+  will-change: transform;
+}
+
 /* Print Styles */
 @media print {
   body {
