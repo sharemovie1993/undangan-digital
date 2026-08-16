@@ -1,27 +1,14 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { pipeline } from 'stream/promises';
-import { config } from '../config/app.config';
+import { MinioService } from '../services/minio.service';
 import { prisma } from '../db';
 
 export class UploadController {
   /**
-   * Pastikan folder upload tersedia
-   */
-  private static ensureDirs() {
-    if (!fs.existsSync(config.uploadDir)) fs.mkdirSync(config.uploadDir, { recursive: true });
-    if (!fs.existsSync(config.uploadImagesDir)) fs.mkdirSync(config.uploadImagesDir, { recursive: true });
-    if (!fs.existsSync(config.uploadAudioDir)) fs.mkdirSync(config.uploadAudioDir, { recursive: true });
-  }
-
-  /**
-   * Upload Single Gambar (Profil)
+   * Upload Single Gambar (Foto Pasangan / Avatar / Cover)
    */
   static async uploadImage(request: FastifyRequest, reply: FastifyReply) {
-    UploadController.ensureDirs();
-
     try {
       const data = await request.file();
       if (!data) {
@@ -35,21 +22,20 @@ export class UploadController {
 
       const ext = path.extname(data.filename) || '.jpg';
       const uniqueName = `img_${Date.now()}_${crypto.randomBytes(4).toString('hex')}${ext}`;
-      const savePath = path.join(config.uploadImagesDir, uniqueName);
 
-      await pipeline(data.file, fs.createWriteStream(savePath));
-
-      const fileUrl = `http://localhost:${config.port}/uploads/images/${uniqueName}`;
+      const buffer = await data.toBuffer();
+      const uploadResult = await MinioService.uploadBuffer(buffer, uniqueName, data.mimetype, 'images');
 
       return reply.send({
         success: true,
-        message: 'Gambar berhasil diunggah!',
+        message: 'Gambar berhasil diunggah ke Storage!',
         data: {
           originalName: data.filename,
-          fileName: uniqueName,
-          fileUrl,
-          mimeType: data.mimetype
-        }
+          fileName: uploadResult.fileName,
+          fileUrl: uploadResult.fileUrl,
+          mimeType: data.mimetype,
+          storageType: uploadResult.storageType,
+        },
       });
     } catch (err: any) {
       console.error('[Upload Image Error]', err.message);
@@ -61,8 +47,6 @@ export class UploadController {
    * Upload Massal Gambar Galeri (Multiple Images Upload)
    */
   static async uploadMultipleImages(request: FastifyRequest, reply: FastifyReply) {
-    UploadController.ensureDirs();
-
     try {
       const parts = request.files();
       const uploadedResults = [];
@@ -73,16 +57,16 @@ export class UploadController {
 
         const ext = path.extname(part.filename) || '.jpg';
         const uniqueName = `img_${Date.now()}_${crypto.randomBytes(4).toString('hex')}${ext}`;
-        const savePath = path.join(config.uploadImagesDir, uniqueName);
 
-        await pipeline(part.file, fs.createWriteStream(savePath));
-        const fileUrl = `http://localhost:${config.port}/uploads/images/${uniqueName}`;
+        const buffer = await part.toBuffer();
+        const uploadResult = await MinioService.uploadBuffer(buffer, uniqueName, part.mimetype, 'images');
 
         uploadedResults.push({
           originalName: part.filename,
-          fileName: uniqueName,
-          fileUrl,
-          mimeType: part.mimetype
+          fileName: uploadResult.fileName,
+          fileUrl: uploadResult.fileUrl,
+          mimeType: part.mimetype,
+          storageType: uploadResult.storageType,
         });
       }
 
@@ -92,8 +76,8 @@ export class UploadController {
 
       return reply.send({
         success: true,
-        message: `Berhasil mengunggah ${uploadedResults.length} foto!`,
-        data: uploadedResults
+        message: `Berhasil mengunggah ${uploadedResults.length} foto ke Storage!`,
+        data: uploadedResults,
       });
     } catch (err: any) {
       console.error('[Upload Multiple Images Error]', err.message);
@@ -105,8 +89,6 @@ export class UploadController {
    * Upload File Audio Musik Kustom
    */
   static async uploadAudio(request: FastifyRequest, reply: FastifyReply) {
-    UploadController.ensureDirs();
-
     try {
       const data = await request.file();
       if (!data) {
@@ -119,21 +101,20 @@ export class UploadController {
       }
 
       const uniqueName = `audio_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.mp3`;
-      const savePath = path.join(config.uploadAudioDir, uniqueName);
 
-      await pipeline(data.file, fs.createWriteStream(savePath));
-
-      const fileUrl = `http://localhost:${config.port}/uploads/audio/${uniqueName}`;
+      const buffer = await data.toBuffer();
+      const uploadResult = await MinioService.uploadBuffer(buffer, uniqueName, data.mimetype || 'audio/mpeg', 'audio');
 
       return reply.send({
         success: true,
-        message: 'Berkas audio musik berhasil diunggah!',
+        message: 'Berkas audio musik berhasil diunggah ke Storage!',
         data: {
           originalName: data.filename,
-          fileName: uniqueName,
-          fileUrl,
-          mimeType: data.mimetype
-        }
+          fileName: uploadResult.fileName,
+          fileUrl: uploadResult.fileUrl,
+          mimeType: data.mimetype,
+          storageType: uploadResult.storageType,
+        },
       });
     } catch (err: any) {
       console.error('[Upload Audio Error]', err.message);
