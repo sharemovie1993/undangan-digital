@@ -383,127 +383,136 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
                 {/* Plan Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto pr-1 pt-1 pb-3 scrollbar-thin flex-1">
-                  {(pricingCategory === 'single'
-                    ? [
-                        {
-                          id: 'UND-BASIC',
-                          name: 'Paket Hemat (Khitan & Ultah)',
-                          badge: 'Hemat 🔥',
-                          badgeClass: 'bg-blue-500/20 text-blue-300 border border-blue-500/40',
-                          price: 49000,
-                          features: [
-                            'Bebas Watermark Resmi',
-                            '1 Acara Aktif (Khitan / Aqiqah / Ultah)',
-                            'Musik Latar & Galeri Foto',
-                            'Buku Tamu & Ucapan Doa Online',
-                            'Amplop Digital (Rekening Bank)',
-                            'Masa Aktif 3 Bulan'
-                          ]
-                        },
-                        {
-                          id: 'UND-GOLD',
-                          name: 'Paket Wedding Gold (All Features)',
-                          badge: 'Populer ⭐',
-                          badgeClass: 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold',
-                          price: 89000,
-                          features: [
-                            'Bebas Watermark & Semua Tema Mewah',
-                            'Galeri Foto Unlimited & Kisah Cinta',
-                            'Musik Latar Eksklusif (Player Melayang)',
-                            'Buku Tamu & RSVP Realtime',
-                            'Amplop Digital + QRIS Donasi',
-                            'Peta Lokasi Google Maps Presisi',
-                            'Masa Aktif 1 Tahun Penuh'
-                          ]
-                        },
-                        {
-                          id: 'UND-PLATINUM',
-                          name: 'Paket Platinum + Siap Cetak',
-                          badge: 'Lengkap + Cetak 🖨️',
-                          badgeClass: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
-                          price: 149000,
-                          features: [
-                            'Semua Fitur Paket Gold Termasuk',
-                            'Masa Aktif Selamanya (Tanpa Batas)',
-                            'File Undangan Siap Cetak HD (A5 & 4R)',
-                            'Cetak Label Nama Tamu (Tom & Jerry 103)',
-                            'Kartu Souvenir & Voucher Siap Print',
-                            'QR Scanner Check-in Tamu Resepsi',
-                            'WhatsApp Broadcast Generator'
-                          ]
-                        }
-                      ]
-                    : [
-                        {
-                          id: 'UND-RESELLER-5',
-                          name: 'Starter Reseller (5 Token)',
-                          badge: 'Starter 🥉',
-                          badgeClass: 'bg-neutral-800 text-amber-300 border border-amber-500/40',
-                          price: 225000,
-                          tokens: 5,
-                          unitPrice: 45000,
-                          profitEstimate: 'Potensi Laba ~Rp 275.000',
-                          features: [
-                            '5 Token Saldo Permanen (Tidak Hangus)',
-                            'Modal Rp 45.000 / Undangan',
-                            'Fitur Platinum Lengkap di Semua Proyek',
-                            'Unduh Print Kit 300 DPI Sepuasnya',
-                            'White-Label Studio & Bebas Watermark'
-                          ]
-                        },
-                        {
-                          id: 'UND-RESELLER',
-                          name: 'Business Reseller (10 Token)',
-                          badge: 'Paling Populer 🥈',
-                          badgeClass: 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold',
-                          price: 450000,
-                          tokens: 10,
-                          unitPrice: 45000,
-                          profitEstimate: 'Potensi Laba ~Rp 550.000',
-                          features: [
-                            '10 Token Saldo Permanen (Tidak Hangus)',
-                            'Modal Rp 45.000 / Undangan',
-                            'Fitur Platinum Lengkap di Semua Proyek',
-                            'Unduh Print Kit HD Sepuasnya',
-                            'White-Label Studio & Bebas Watermark'
-                          ]
-                        },
-                        {
-                          id: 'UND-RESELLER-25',
-                          name: 'Pro Reseller (25 Token)',
-                          badge: 'Hemat 22% 🥇',
-                          badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40',
-                          price: 875000,
-                          tokens: 25,
-                          unitPrice: 35000,
-                          profitEstimate: 'Potensi Laba ~Rp 1.625.000',
-                          features: [
-                            '25 Token Saldo Permanen (Tidak Hangus)',
-                            'Modal Super Hemat: Rp 35.000 / Acara',
-                            'Fitur Platinum Lengkap di Semua Proyek',
-                            'Unduh Print Kit HD 300 DPI Sepuasnya',
-                            'Bebas Watermark & Prioritas Render'
-                          ]
-                        },
-                        {
-                          id: 'UND-RESELLER-50',
-                          name: 'Vendor & Percetakan (50 Token)',
-                          badge: 'Super Hemat 44% 👑',
-                          badgeClass: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold',
-                          price: 1250000,
-                          tokens: 50,
-                          unitPrice: 25000,
-                          profitEstimate: 'Potensi Laba ~Rp 3.750.000',
-                          features: [
-                            '50 Token Saldo Permanen (Tidak Hangus)',
-                            'Modal Grosir: Rp 25.000 / Acara',
-                            'Fitur Platinum Lengkap di Semua Proyek',
-                            'Unduh Print Kit HD Sepuasnya',
-                            'Akses Vendor Prioritas & VIP Support'
-                          ]
-                        }
-                      ]
-                  ).map((pkg: any) => {
+                  {(() => {
+                    // Helper: Ambil harga realtime dari Server Lisensi (api.absenta.id)
+                    const getLivePrice = (planId: string, fallback: number): number => {
+                      if (!packagesData || !Array.isArray(packagesData)) return fallback;
+                      const found = packagesData.find((p: any) => p.id === planId);
+                      return found ? (found.priceOnetime || found.priceMonthly || fallback) : fallback;
+                    };
+
+                    const activeList = pricingCategory === 'single'
+                      ? [
+                          {
+                            id: 'UND-BASIC',
+                            name: 'Paket Hemat (Khitan & Ultah)',
+                            badge: 'Hemat 🔥',
+                            badgeClass: 'bg-blue-500/20 text-blue-300 border border-blue-500/40',
+                            price: getLivePrice('UND-BASIC', 49000),
+                            features: [
+                              'Bebas Watermark Resmi',
+                              '1 Acara Aktif (Khitan / Aqiqah / Ultah)',
+                              'Musik Latar & Galeri Foto',
+                              'Buku Tamu & Ucapan Doa Online',
+                              'Amplop Digital (Rekening Bank)',
+                              'Masa Aktif 3 Bulan'
+                            ]
+                          },
+                          {
+                            id: 'UND-GOLD',
+                            name: 'Paket Wedding Gold (All Features)',
+                            badge: 'Populer ⭐',
+                            badgeClass: 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold',
+                            price: getLivePrice('UND-GOLD', 99000),
+                            features: [
+                              'Bebas Watermark & Semua Tema Mewah',
+                              'Galeri Foto Unlimited & Kisah Cinta',
+                              'Musik Latar Eksklusif (Player Melayang)',
+                              'Buku Tamu & RSVP Realtime',
+                              'Amplop Digital + QRIS Donasi',
+                              'Peta Lokasi Google Maps Presisi',
+                              'Masa Aktif 1 Tahun Penuh'
+                            ]
+                          },
+                          {
+                            id: 'UND-PLATINUM',
+                            name: 'Paket Platinum + Siap Cetak',
+                            badge: 'Lengkap + Cetak 🖨️',
+                            badgeClass: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
+                            price: getLivePrice('UND-PLATINUM', 149000),
+                            features: [
+                              'Semua Fitur Paket Gold Termasuk',
+                              'Masa Aktif Selamanya (Tanpa Batas)',
+                              'File Undangan Siap Cetak HD (A5 & 4R)',
+                              'Cetak Label Nama Tamu (Tom & Jerry 103)',
+                              'Kartu Souvenir & Voucher Siap Print',
+                              'QR Scanner Check-in Tamu Resepsi',
+                              'WhatsApp Broadcast Generator'
+                            ]
+                          }
+                        ]
+                      : [
+                          {
+                            id: 'UND-RESELLER-5',
+                            name: 'Starter Reseller (5 Token)',
+                            badge: 'Starter 🥉',
+                            badgeClass: 'bg-neutral-800 text-amber-300 border border-amber-500/40',
+                            price: getLivePrice('UND-RESELLER-5', 225000),
+                            tokens: 5,
+                            unitPrice: 45000,
+                            profitEstimate: 'Potensi Laba ~Rp 275.000',
+                            features: [
+                              '5 Token Saldo Permanen (Tidak Hangus)',
+                              'Modal Rp 45.000 / Undangan',
+                              'Fitur Platinum Lengkap di Semua Proyek',
+                              'Unduh Print Kit 300 DPI Sepuasnya',
+                              'White-Label Studio & Bebas Watermark'
+                            ]
+                          },
+                          {
+                            id: 'UND-RESELLER',
+                            name: 'Business Reseller (10 Token)',
+                            badge: 'Paling Populer 🥈',
+                            badgeClass: 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold',
+                            price: getLivePrice('UND-RESELLER', 450000),
+                            tokens: 10,
+                            unitPrice: 45000,
+                            profitEstimate: 'Potensi Laba ~Rp 550.000',
+                            features: [
+                              '10 Token Saldo Permanen (Tidak Hangus)',
+                              'Modal Rp 45.000 / Undangan',
+                              'Fitur Platinum Lengkap di Semua Proyek',
+                              'Unduh Print Kit HD Sepuasnya',
+                              'White-Label Studio & Bebas Watermark'
+                            ]
+                          },
+                          {
+                            id: 'UND-RESELLER-25',
+                            name: 'Pro Reseller (25 Token)',
+                            badge: 'Hemat 22% 🥇',
+                            badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40',
+                            price: getLivePrice('UND-RESELLER-25', 875000),
+                            tokens: 25,
+                            unitPrice: 35000,
+                            profitEstimate: 'Potensi Laba ~Rp 1.625.000',
+                            features: [
+                              '25 Token Saldo Permanen (Tidak Hangus)',
+                              'Modal Super Hemat: Rp 35.000 / Acara',
+                              'Fitur Platinum Lengkap di Semua Proyek',
+                              'Unduh Print Kit HD 300 DPI Sepuasnya',
+                              'Bebas Watermark & Prioritas Render'
+                            ]
+                          },
+                          {
+                            id: 'UND-RESELLER-50',
+                            name: 'Vendor & Percetakan (50 Token)',
+                            badge: 'Super Hemat 44% 👑',
+                            badgeClass: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold',
+                            price: getLivePrice('UND-RESELLER-50', 1250000),
+                            tokens: 50,
+                            unitPrice: 25000,
+                            profitEstimate: 'Potensi Laba ~Rp 3.750.000',
+                            features: [
+                              '50 Token Saldo Permanen (Tidak Hangus)',
+                              'Modal Grosir: Rp 25.000 / Acara',
+                              'Fitur Platinum Lengkap di Semua Proyek',
+                              'Unduh Print Kit HD Sepuasnya',
+                              'Akses Vendor Prioritas & VIP Support'
+                            ]
+                          }
+                        ];
+
+                    return activeList.map((pkg: any) => {
                     const isSelected = selectedPlanId === pkg.id;
                     const planIdUpper = (pkg.id || '').toUpperCase();
 
@@ -578,7 +587,8 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                         </div>
                       </div>
                     );
-                  })}
+                  });
+                    })()}
                 </div>
 
                 {/* Sticky Bottom Action */}
