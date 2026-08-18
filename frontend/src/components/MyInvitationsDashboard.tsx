@@ -877,9 +877,155 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
                 </button>
               </div>
             ) : viewMode === 'table' ? (
-              /* 📋 TABLE VIEW (Kompak, Cepat, Padat Informasi) */
+              /* 📋 TABLE VIEW (Responsive: Compact Mobile Tile List on <sm, Multi-Column Table on >=sm) */
               <div className="bg-[#111115] rounded-2xl sm:rounded-3xl border border-[#1f1f27] overflow-hidden shadow-xl">
-                <div className="overflow-x-auto">
+                {/* 📱 MOBILE VIEW: Compact Thumb-Friendly List (<640px) */}
+                <div className="block sm:hidden divide-y divide-[#1b1b24]">
+                  {filteredList.map((inv: any) => {
+                    const isLicenseActive = !inv.isWatermark || inv.licenseKey;
+                    const isCopied = copiedSlugId === inv.id;
+
+                    return (
+                      <div key={inv.id} className="p-3.5 space-y-2.5 hover:bg-[#14141c] transition">
+                        {/* Header: Event Icon + Title + Status Badge */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-xs shrink-0">
+                              {inv.eventType === 'KHITANAN' ? '🌿' : inv.eventType === 'AQIQAH' ? '👶' : inv.eventType === 'BIRTHDAY' ? '🎂' : '💍'}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4
+                                onClick={() => onSelectInvitation(inv)}
+                                className="font-bold text-white text-xs truncate active:text-[#c4a661] cursor-pointer"
+                              >
+                                {inv.title}
+                              </h4>
+                              <div className="text-[10px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
+                                <span className="uppercase font-semibold text-neutral-300">{inv.eventType}</span>
+                                <span>•</span>
+                                <span>{inv.themeId || 'Default'}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Status Badge */}
+                          {isLicenseActive ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold shrink-0">
+                              <Crown className="w-2.5 h-2.5 text-[#c4a661]" />
+                              <span>Aktif</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-400 text-[9px] font-medium shrink-0">
+                              <span>Draft</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Owner Info for Admin */}
+                        {isAdmin && inv.owner && (
+                          <div className="flex items-center gap-1 text-[10px] text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/25 w-fit">
+                            <span>👤 {inv.owner.name}</span>
+                            {inv.owner.phone && <span className="text-neutral-400">({inv.owner.phone})</span>}
+                          </div>
+                        )}
+
+                        {/* Middle Row: Link / Slug + Stats */}
+                        <div className="flex items-center justify-between gap-2 text-[11px] pt-0.5">
+                          {/* Slug with Copy */}
+                          <div className="flex items-center gap-1 min-w-0 bg-neutral-950 px-2 py-1 rounded-lg border border-neutral-800">
+                            <span className="font-mono text-[10px] text-neutral-300 truncate max-w-[120px]">
+                              /{inv.slug}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyLink(inv.slug, inv.id)}
+                              className="p-0.5 text-neutral-400 hover:text-white"
+                              title="Salin Link"
+                            >
+                              {isCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onViewGuestMode('Tamu Undangan', inv.slug)}
+                              className="p-0.5 text-neutral-500 hover:text-white"
+                              title="Buka Preview"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {/* Stats Chips */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="px-2 py-0.5 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-[10px]">
+                              👥 {inv.guestCount || 0}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-[10px]">
+                              💌 {inv.rsvpCount || 0}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Actions Toolbar on Mobile */}
+                        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-neutral-800/60">
+                          <button
+                            onClick={() => onSelectInvitation(inv)}
+                            className="flex-1 py-1.5 rounded-lg bg-[#c4a661] text-neutral-950 font-bold text-xs flex items-center justify-center gap-1 active:bg-[#d5b874] transition"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span>Edit Studio</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleTriggerPrintStudio(inv)}
+                            className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300"
+                            title="Print Studio"
+                          >
+                            <Printer className={`w-3.5 h-3.5 ${inv.allowPrintKit ? 'text-[#c4a661]' : 'text-neutral-500'}`} />
+                          </button>
+
+                          <button
+                            onClick={() => duplicateMutation.mutate(inv.id)}
+                            className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-sky-400"
+                            title="Duplikasi"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={() => setAdminTransferTarget(inv)}
+                                className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400"
+                                title="Transfer"
+                              >
+                                <ArrowRightLeft className="w-3.5 h-3.5" />
+                              </button>
+
+                              <button
+                                onClick={() => setAdminOverrideTarget(inv)}
+                                className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400"
+                                title="Override"
+                              >
+                                <Zap className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+
+                          <button
+                            onClick={() => handleTriggerDelete(inv)}
+                            className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-500 hover:text-rose-400"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 💻 TABLET & DESKTOP VIEW: Full Multi-Column Table (>=640px) */}
+                <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-left text-xs text-neutral-300">
                     <thead className="bg-[#14141c] text-neutral-400 border-b border-[#1f1f27] text-[11px] uppercase tracking-wider font-semibold">
                       <tr>
