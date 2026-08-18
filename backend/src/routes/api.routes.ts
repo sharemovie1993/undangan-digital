@@ -11,6 +11,7 @@ import { ThemeController } from '../controllers/theme.controller';
 import { registerEasyTunnelRoutes } from '../modules/easy-tunnel/routes/easy-tunnel.routes';
 import { registerBackupRoutes } from '../modules/backup/routes/backup.routes';
 import { registerAdminRoutes } from './admin.routes';
+import { registerResellerRoutes } from './reseller.routes';
 import { verifyAuth, optionalAuth } from '../middlewares/auth.middleware';
 
 export const registerApiRoutes = (fastify: FastifyInstance) => {
@@ -85,4 +86,7 @@ export const registerApiRoutes = (fastify: FastifyInstance) => {
 
   // 12. Super Admin Suite & User Management (Zero-Leak RBAC)
   registerAdminRoutes(fastify);
+
+  // 13. Reseller Partner Hub & Profit Analytics Suite
+  registerResellerRoutes(fastify);
 };

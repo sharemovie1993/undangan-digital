@@ -69,10 +69,28 @@ export const PLANS_CONFIG: Record<string, PlanConfig> = {
       'WhatsApp Broadcast Generator'
     ]
   },
+  'UND-RESELLER-5': {
+    id: 'UND-RESELLER-5',
+    name: 'Paket Reseller Starter (5 Slot)',
+    badge: 'Starter 🥉',
+    price: 225000,
+    durationLabel: 'Saldo Token Permanen',
+    isWatermark: false,
+    allowPrintKit: true,
+    isResellerToken: true,
+    tokensCount: 5,
+    features: [
+      '5 Token Aktivasi (Pakai Kapan Saja)',
+      'Modal Rp 45.000 / Acara',
+      'Fitur Platinum Lengkap di Semua Proyek',
+      'Unduh Print Kit HD 300 DPI Sepuasnya',
+      'Bebas Watermark di Semua Undangan'
+    ]
+  },
   'UND-RESELLER': {
     id: 'UND-RESELLER',
-    name: 'Paket Reseller / Percetakan (10 Slot)',
-    badge: 'Hemat Bisnis 💎',
+    name: 'Paket Reseller Business (10 Slot)',
+    badge: 'Paling Populer 🥈',
     price: 450000,
     durationLabel: 'Saldo Token Permanen',
     isWatermark: false,
@@ -81,10 +99,46 @@ export const PLANS_CONFIG: Record<string, PlanConfig> = {
     tokensCount: 10,
     features: [
       '10 Token Aktivasi (Pakai Kapan Saja)',
-      'Hemat Biaya (Rp 45.000 / Acara)',
+      'Modal Rp 45.000 / Acara',
       'Fitur Platinum Lengkap di Semua Proyek',
       'Unduh Print Kit HD Sepuasnya',
       'Bebas Watermark di Semua Undangan'
+    ]
+  },
+  'UND-RESELLER-25': {
+    id: 'UND-RESELLER-25',
+    name: 'Paket Reseller Pro (25 Slot)',
+    badge: 'Hemat 22% 🥇',
+    price: 875000,
+    durationLabel: 'Saldo Token Permanen',
+    isWatermark: false,
+    allowPrintKit: true,
+    isResellerToken: true,
+    tokensCount: 25,
+    features: [
+      '25 Token Aktivasi (Pakai Kapan Saja)',
+      'Modal Super Hemat: Rp 35.000 / Acara',
+      'Fitur Platinum Lengkap di Semua Proyek',
+      'Unduh Print Kit HD 300 DPI Sepuasnya',
+      'Bebas Watermark di Semua Undangan'
+    ]
+  },
+  'UND-RESELLER-50': {
+    id: 'UND-RESELLER-50',
+    name: 'Paket Vendor & Percetakan (50 Slot)',
+    badge: 'Super Hemat 44% 👑',
+    price: 1250000,
+    durationLabel: 'Saldo Token Permanen',
+    isWatermark: false,
+    allowPrintKit: true,
+    isResellerToken: true,
+    tokensCount: 50,
+    features: [
+      '50 Token Aktivasi (Pakai Kapan Saja)',
+      'Modal Grosir: Rp 25.000 / Acara',
+      'Fitur Platinum Lengkap di Semua Proyek',
+      'Unduh Print Kit HD Sepuasnya',
+      'Bebas Watermark & Akses Vendor Prioritas'
     ]
   }
 };

@@ -31,7 +31,8 @@ import {
   Check,
   CheckCircle2,
   ShieldCheck,
-  Filter
+  Filter,
+  TrendingUp
 } from 'lucide-react';
 import { EventType, ThemeToken } from '../types';
 import { VendorAuthModal } from './auth/VendorAuthModal';
@@ -43,6 +44,7 @@ import { BackupRestoreModal } from './BackupRestoreModal';
 import { AdminUserManagementModal } from './AdminUserManagementModal';
 import { AdminTransferModal } from './AdminTransferModal';
 import { AdminOverrideModal } from './AdminOverrideModal';
+import { ResellerPartnerHubModal } from './ResellerPartnerHubModal';
 import { useAuth } from '../hooks/useAuth';
 import { useInvitations } from '../hooks/useInvitations';
 import { useToast } from '../context/ToastContext';
@@ -134,6 +136,7 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   const [isEasyTunnelModalOpen, setIsEasyTunnelModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isAdminUserManagementOpen, setIsAdminUserManagementOpen] = useState(false);
+  const [isResellerHubOpen, setIsResellerHubOpen] = useState(false);
   const [adminTransferTarget, setAdminTransferTarget] = useState<any>(null);
   const [adminOverrideTarget, setAdminOverrideTarget] = useState<any>(null);
   const [copiedSlugId, setCopiedSlugId] = useState<string | null>(null);
@@ -434,6 +437,18 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
             <>
               {/* Desktop Only Extra Action Buttons */}
               <div className="hidden lg:flex items-center gap-2">
+                {/* Partner Hub Button for Reseller / Percetakan / Admin */}
+                {(isReseller || ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes((role || currentUser?.role || '').toUpperCase())) && (
+                  <button
+                    onClick={() => setIsResellerHubOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
+                    title="Pusat Analisis Keuntungan Reseller & Studio Branding"
+                  >
+                    <TrendingUp className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                    <span>Partner Hub</span>
+                  </button>
+                )}
+
                 {isAdmin && (
                   <>
                     <button
@@ -530,6 +545,21 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
                     </div>
 
                     {/* Mobile Quick Action Links */}
+                    {/* Partner Hub Menu for Reseller / Admin */}
+                    {(isReseller || ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes((role || currentUser?.role || '').toUpperCase())) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          setIsResellerHubOpen(true);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-amber-300 hover:text-white transition cursor-pointer"
+                      >
+                        <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Reseller Partner Hub & Laba</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => {
@@ -662,7 +692,7 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
                 </div>
               </div>
 
-              {(currentUser?.role || '').toUpperCase() === 'RESELLER' || (currentUser?.role || '').toUpperCase() === 'PERCETAKAN' ? (
+              {(isReseller || ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes((role || currentUser?.role || '').toUpperCase())) ? (
                 <div className="p-3 sm:p-4 bg-[#111115] rounded-2xl border border-[#c4a661]/40 flex items-center justify-between shadow-md relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-[#c4a661]/10 rounded-full blur-2xl pointer-events-none" />
                   <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -674,13 +704,23 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
                       <div className="text-base sm:text-xl font-bold text-white mt-0.5 truncate">{currentUser?.quotaTokens || 0} Token</div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPricingForInvitation()}
-                    className="px-2 py-1 rounded-lg sm:rounded-xl bg-[#c4a661] hover:bg-[#d5b874] text-neutral-950 font-bold text-[9px] sm:text-[10px] transition cursor-pointer shrink-0 shadow ml-1"
-                  >
-                    + Top-Up
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0 ml-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsResellerHubOpen(true)}
+                      className="px-2 py-1 rounded-lg sm:rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-amber-300 font-bold text-[9px] sm:text-[10px] transition cursor-pointer shadow"
+                      title="Pusat Analisis Keuntungan Reseller & Studio Branding"
+                    >
+                      📊 Hub
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenPricingForInvitation()}
+                      className="px-2 py-1 rounded-lg sm:rounded-xl bg-[#c4a661] hover:bg-[#d5b874] text-neutral-950 font-bold text-[9px] sm:text-[10px] transition cursor-pointer shadow"
+                    >
+                      + Top-Up
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div
@@ -1587,6 +1627,14 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
         onUpdated={() => {
           queryClient.invalidateQueries({ queryKey: ['invitations-list'] });
         }}
+      />
+
+      {/* 💎 Reseller Partner Hub & Profit Analytics Suite */}
+      <ResellerPartnerHubModal
+        isOpen={isResellerHubOpen}
+        onClose={() => setIsResellerHubOpen(false)}
+        quotaTokens={currentUser?.quotaTokens || 0}
+        onOpenPricing={() => handleOpenPricingForInvitation()}
       />
     </div>
   );
