@@ -39,7 +39,11 @@ export class ResellerController {
           email: true,
           phone: true,
           role: true,
-          quotaTokens: true
+          quotaTokens: true,
+          studioName: true,
+          studioPhone: true,
+          studioWebsite: true,
+          customDomain: true
         }
       });
 
@@ -47,11 +51,12 @@ export class ResellerController {
         return reply.status(404).send({ success: false, message: 'Pengguna tidak ditemukan.' });
       }
 
-      // Default branding profile jika belum ada kustomisasi
-      const defaultBranding = {
-        studioName: user.name || 'Studio Undangan Digital',
-        studioPhone: user.phone || '',
-        studioWebsite: '',
+      // Branding profile dari database atau default
+      const branding = {
+        studioName: user.studioName || user.name || 'Studio Undangan Digital',
+        studioPhone: user.studioPhone || user.phone || '',
+        studioWebsite: user.studioWebsite || '',
+        customDomain: user.customDomain || '',
         defaultSellingPrice: 100000,
         estimatedTokenCost: 45000,
         enableWhiteLabel: true
@@ -61,7 +66,7 @@ export class ResellerController {
         success: true,
         data: {
           user,
-          branding: defaultBranding
+          branding
         }
       });
     } catch (err: any) {
@@ -69,6 +74,71 @@ export class ResellerController {
       return reply.status(500).send({
         success: false,
         message: 'Gagal memuat profil reseller: ' + err.message
+      });
+    }
+  }
+
+  /**
+   * POST /api/reseller/profile
+   * Menyimpan identitas branding studio & Custom Domain Reseller
+   */
+  public static async saveProfile(request: FastifyRequest, reply: FastifyReply) {
+    if (!ResellerController.verifyResellerAccess(request, reply)) return;
+
+    try {
+      const userId = (request as any).user.userId || (request as any).user.id;
+      const body = request.body as {
+        studioName?: string;
+        studioPhone?: string;
+        studioWebsite?: string;
+        customDomain?: string;
+      };
+
+      const cleanDomain = body.customDomain !== undefined
+        ? (body.customDomain ? body.customDomain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '') : null)
+        : undefined;
+
+      // Cek apakah customDomain sudah dipakai oleh user/undangan lain
+      if (cleanDomain) {
+        const domainExists = await prisma.user.findFirst({
+          where: { customDomain: cleanDomain, id: { not: userId } }
+        });
+        if (domainExists) {
+          return reply.status(400).send({
+            success: false,
+            message: `Domain '${cleanDomain}' sudah digunakan oleh akun lain.`
+          });
+        }
+      }
+
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(body.studioName !== undefined ? { studioName: body.studioName } : {}),
+          ...(body.studioPhone !== undefined ? { studioPhone: body.studioPhone } : {}),
+          ...(body.studioWebsite !== undefined ? { studioWebsite: body.studioWebsite } : {}),
+          ...(cleanDomain !== undefined ? { customDomain: cleanDomain } : {})
+        },
+        select: {
+          id: true,
+          name: true,
+          studioName: true,
+          studioPhone: true,
+          studioWebsite: true,
+          customDomain: true
+        }
+      });
+
+      return reply.send({
+        success: true,
+        message: 'Pengaturan branding studio & custom domain berhasil disimpan.',
+        data: updatedUser
+      });
+    } catch (err: any) {
+      request.log.error(err);
+      return reply.status(500).send({
+        success: false,
+        message: 'Gagal menyimpan profil reseller: ' + err.message
       });
     }
   }

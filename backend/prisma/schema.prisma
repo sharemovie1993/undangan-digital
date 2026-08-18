@@ -8,19 +8,23 @@ generator client {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  phone        String?       @unique
-  name         String
-  password     String
-  role         String        @default("USER") // USER, RESELLER, PERCETAKAN, ADMIN
-  quotaTokens  Int           @default(0)
-  avatarUrl    String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  invitations  Invitation[]
-  orders       Order[]
-  mediaUploads MediaUpload[]
+  id            String        @id @default(uuid())
+  email         String        @unique
+  phone         String?       @unique
+  name          String
+  password      String
+  role          String        @default("USER") // USER, RESELLER, PERCETAKAN, ADMIN
+  quotaTokens   Int           @default(0)
+  studioName    String?
+  studioPhone   String?
+  studioWebsite String?
+  customDomain  String?       @unique
+  avatarUrl     String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  invitations   Invitation[]
+  orders        Order[]
+  mediaUploads  MediaUpload[]
 }
 
 model Invitation {

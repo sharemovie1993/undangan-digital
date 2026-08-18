@@ -62,6 +62,9 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
   const [studioWebsite, setStudioWebsite] = useState<string>(() => {
     return localStorage.getItem('absenta_reseller_studio_website') || '';
   });
+  const [customDomain, setCustomDomain] = useState<string>('');
+  const [isSavingBranding, setIsSavingBranding] = useState<boolean>(false);
+  const [copiedDns, setCopiedDns] = useState<boolean>(false);
 
   // WhatsApp Parser State
   const [rawText, setRawText] = useState<string>('');
@@ -71,8 +74,17 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const data = await resellerApi.getAnalytics();
-      setAnalytics(data);
+      const [analyticsData, profileData] = await Promise.all([
+        resellerApi.getAnalytics().catch(() => null),
+        resellerApi.getProfile().catch(() => null)
+      ]);
+      if (analyticsData) setAnalytics(analyticsData);
+      if (profileData && profileData.branding) {
+        if (profileData.branding.studioName) setStudioName(profileData.branding.studioName);
+        if (profileData.branding.studioPhone) setStudioPhone(profileData.branding.studioPhone);
+        if (profileData.branding.studioWebsite) setStudioWebsite(profileData.branding.studioWebsite);
+        if (profileData.branding.customDomain) setCustomDomain(profileData.branding.customDomain);
+      }
     } catch (err: any) {
       console.warn('Load reseller analytics error:', err.message);
     } finally {
@@ -91,16 +103,29 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
     localStorage.setItem('absenta_reseller_selling_price', price.toString());
   };
 
-  const handleSaveBranding = (e: React.FormEvent) => {
+  const handleSaveBranding = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('absenta_reseller_studio_name', studioName);
-    localStorage.setItem('absenta_reseller_studio_phone', studioPhone);
-    localStorage.setItem('absenta_reseller_studio_website', studioWebsite);
-    showToast(
-      'success',
-      'Identitas Studio & White-Label berhasil disimpan!',
-      'Branding Disimpan'
-    );
+    setIsSavingBranding(true);
+    try {
+      await resellerApi.saveProfile({
+        studioName,
+        studioPhone,
+        studioWebsite,
+        customDomain: customDomain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+      });
+      localStorage.setItem('absenta_reseller_studio_name', studioName);
+      localStorage.setItem('absenta_reseller_studio_phone', studioPhone);
+      localStorage.setItem('absenta_reseller_studio_website', studioWebsite);
+      showToast(
+        'success',
+        'Identitas Studio & Custom Domain Reseller berhasil disimpan!',
+        'Pengaturan Disimpan'
+      );
+    } catch (err: any) {
+      showToast('error', err.message || 'Gagal menyimpan branding.', 'Gagal');
+    } finally {
+      setIsSavingBranding(false);
+    }
   };
 
   // WhatsApp Parser logic
@@ -401,6 +426,61 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
                       </div>
                     </div>
 
+                    {/* 🌐 Master Custom Domain Reseller */}
+                    <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-neutral-200 font-bold text-xs flex items-center gap-1.5">
+                          <Globe className="w-4 h-4 text-amber-400" />
+                          <span>Custom Domain Studio (Portal Master Reseller):</span>
+                        </label>
+                        {customDomain && (
+                          <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                            SSL Otomatis Aktif
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={customDomain}
+                        onChange={(e) => setCustomDomain(e.target.value)}
+                        placeholder="Contoh: undangan.namastudio.id atau wedding.percetakanberkah.com"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-white font-mono text-xs focus:border-amber-500 focus:outline-none placeholder-neutral-500"
+                      />
+                      <p className="text-[11px] text-neutral-400 leading-relaxed">
+                        Cukup pasang <strong>1 domain studio</strong>, maka <strong>seluruh undangan klien Anda</strong> otomatis dapat diakses melalui domain Anda sendiri: <code className="text-amber-300">https://{customDomain || 'undangan.namastudio.id'}/[slug-klien]</code>
+                      </p>
+
+                      {/* DNS CNAME Guide Table */}
+                      <div className="grid grid-cols-3 gap-2 bg-[#0c0c10] p-2.5 rounded-xl border border-neutral-800 text-[11px] mt-1.5">
+                        <div>
+                          <span className="text-neutral-500 block text-[9px] uppercase font-bold">Tipe DNS</span>
+                          <span className="font-mono font-bold text-amber-400">CNAME</span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-500 block text-[9px] uppercase font-bold">Host / Subdomain</span>
+                          <span className="font-mono font-bold text-white">undangan</span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-500 block text-[9px] uppercase font-bold">Target Server</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono font-bold text-[#c4a661] truncate">luxury.absenta.id</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText('luxury.absenta.id');
+                                setCopiedDns(true);
+                                setTimeout(() => setCopiedDns(false), 2000);
+                              }}
+                              className="p-0.5 text-neutral-400 hover:text-white"
+                              title="Salin Target"
+                            >
+                              {copiedDns ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Live Footer Preview */}
                     <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1.5">
                       <div className="text-[10px] text-neutral-500 font-semibold uppercase">Pratinjau Footer Undangan Klien:</div>
@@ -418,10 +498,11 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
                     <div className="pt-2 flex justify-end">
                       <button
                         type="submit"
-                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-neutral-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow"
+                        disabled={isSavingBranding}
+                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-neutral-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow disabled:opacity-50"
                       >
                         <Save className="w-4 h-4" />
-                        <span>Simpan Branding Studio</span>
+                        <span>{isSavingBranding ? 'Menyimpan...' : 'Simpan Branding Studio & Domain'}</span>
                       </button>
                     </div>
                   </form>

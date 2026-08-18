@@ -7,6 +7,7 @@ export async function registerResellerRoutes(fastify: FastifyInstance) {
     resellerApp.addHook('preHandler', verifyAuth);
 
     resellerApp.get('/api/reseller/profile', ResellerController.getProfile);
+    resellerApp.post('/api/reseller/profile', ResellerController.saveProfile);
     resellerApp.get('/api/reseller/analytics', ResellerController.getAnalytics);
   });
 }

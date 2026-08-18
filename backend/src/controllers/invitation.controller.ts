@@ -299,6 +299,9 @@ export class InvitationController {
         ? (body.customDomain ? body.customDomain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '') : null)
         : undefined;
 
+      // Ekstrak guest list untuk batch sync
+      const rawGuestList = (body as any).guestList || (eventData && (eventData as any).guestList);
+
       // ⚡ EKSEKUSI TRANSAKSI ATOMIK (ACID Transaction)
       const savedInvitation = await prisma.$transaction(async (tx) => {
         let inv;
@@ -657,11 +660,12 @@ export class InvitationController {
     }
 
     try {
-      const invitation = await prisma.invitation.findFirst({
-        where: { customDomain: cleanDomain }
-      });
+      const [invitation, reseller] = await Promise.all([
+        prisma.invitation.findFirst({ where: { customDomain: cleanDomain } }),
+        prisma.user.findFirst({ where: { customDomain: cleanDomain } })
+      ]);
 
-      if (invitation) {
+      if (invitation || reseller) {
         return reply.status(200).send('OK');
       }
 

@@ -4,6 +4,7 @@ export interface ResellerBranding {
   studioName: string;
   studioPhone?: string;
   studioWebsite?: string;
+  customDomain?: string;
   defaultSellingPrice: number;
   estimatedTokenCost: number;
   enableWhiteLabel: boolean;
@@ -40,6 +41,22 @@ export const resellerApi = {
       throw new Error(res.data?.message || 'Gagal memuat profil reseller.');
     }
     return res.data.data;
+  },
+
+  /**
+   * Menyimpan profil branding studio & custom domain reseller
+   */
+  async saveProfile(payload: {
+    studioName?: string;
+    studioPhone?: string;
+    studioWebsite?: string;
+    customDomain?: string;
+  }): Promise<any> {
+    const res = await apiClient.post('/api/reseller/profile', payload);
+    if (!res.data || !res.data.success) {
+      throw new Error(res.data?.message || 'Gagal menyimpan profil reseller.');
+    }
+    return res.data;
   },
 
   /**
