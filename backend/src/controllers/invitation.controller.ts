@@ -441,6 +441,7 @@ export class InvitationController {
   /**
    * Mengambil semua daftar undangan milik user untuk Multi-Project Dashboard
    * 🚀 Dioptimasi dengan ringkasan efisien (tanpa deep JSON overhead)
+   * 🛡️ Zero-Leak: Informasi relasi user/pemilik HANYA disertakan jika pemanggil ber-role ADMIN
    */
   static async list(request: FastifyRequest, reply: FastifyReply) {
     try {
@@ -452,7 +453,9 @@ export class InvitationController {
         });
       }
 
-      const filterWhere = (loggedUser.role === 'ADMIN')
+      const isAdmin = (loggedUser.role || '').toUpperCase() === 'ADMIN';
+
+      const filterWhere = isAdmin
         ? {}
         : { userId: loggedUser.userId };
 
@@ -461,14 +464,21 @@ export class InvitationController {
         include: {
           _count: {
             select: { guests: true, rsvps: true }
-          }
+          },
+          ...(isAdmin
+            ? {
+                user: {
+                  select: { id: true, name: true, phone: true, email: true, role: true }
+                }
+              }
+            : {})
         },
         orderBy: { updatedAt: 'desc' }
       });
 
       return reply.send({
         success: true,
-        data: invitations.map(inv => {
+        data: invitations.map((inv: any) => {
           let eventData = {};
           try {
             eventData = JSON.parse(inv.eventDataJson || '{}');
@@ -479,6 +489,7 @@ export class InvitationController {
 
           return {
             id: inv.id,
+            userId: inv.userId,
             title: inv.title,
             slug: inv.slug,
             eventType: inv.eventType,
@@ -491,7 +502,14 @@ export class InvitationController {
             guestCount,
             rsvpCount,
             updatedAt: inv.updatedAt,
-            eventData
+            eventData,
+            owner: isAdmin && inv.user ? {
+              id: inv.user.id,
+              name: inv.user.name,
+              phone: inv.user.phone,
+              email: inv.user.email,
+              role: inv.user.role
+            } : undefined
           };
         })
       });
