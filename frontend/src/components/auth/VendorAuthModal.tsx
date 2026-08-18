@@ -27,7 +27,7 @@ interface VendorAuthModalProps {
 }
 
 export type AuthMode = 'login' | 'register';
-export type UserRoleChoice = 'USER' | 'RESELLER';
+export type UserRoleChoice = 'USER' | 'RESELLER' | 'PERCETAKAN';
 
 interface AuthErrorDetail {
   message: string;
@@ -275,26 +275,39 @@ export const VendorAuthModal: React.FC<VendorAuthModalProps> = ({
                 <motion.form key="register" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} onSubmit={handleRegister} className="space-y-3">
                   <div>
                     <label className="block text-neutral-400 text-[10px] font-semibold mb-1.5 uppercase tracking-wider">Daftar Sebagai</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                       {([
-                        { value: 'USER' as UserRoleChoice, icon: '👤', label: 'User Personal', desc: 'Buat undangan pribadi' },
-                        { value: 'RESELLER' as UserRoleChoice, icon: '🤝', label: 'Mitra Reseller', desc: 'Kelola banyak klien' }
+                        { value: 'USER' as UserRoleChoice, icon: '👤', label: 'Personal', desc: 'Acara pribadi' },
+                        { value: 'RESELLER' as UserRoleChoice, icon: '🤝', label: 'Reseller', desc: 'Jasa & desainer' },
+                        { value: 'PERCETAKAN' as UserRoleChoice, icon: '🖨️', label: 'Percetakan/WO', desc: 'Vendor cetak' }
                       ]).map(r => (
                         <button key={r.value} type="button" onClick={() => setRole(r.value)}
-                          className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${role === r.value ? 'border-[#c4a661] bg-[#c4a661]/10' : 'border-neutral-700 bg-neutral-900 hover:border-neutral-600'}`}>
-                          <div className="text-base mb-0.5">{r.icon}</div>
-                          <div className={`text-xs font-bold ${role === r.value ? 'text-[#c4a661]' : 'text-white'}`}>{r.label}</div>
-                          <div className="text-[9px] text-neutral-400 mt-0.5 leading-tight">{r.desc}</div>
+                          className={`p-2 rounded-xl border text-center transition cursor-pointer ${role === r.value ? 'border-[#c4a661] bg-[#c4a661]/15 text-[#c4a661]' : 'border-neutral-700 bg-neutral-900 hover:border-neutral-600 text-white'}`}>
+                          <div className="text-sm mb-0.5">{r.icon}</div>
+                          <div className={`text-[11px] font-bold truncate ${role === r.value ? 'text-[#c4a661]' : 'text-white'}`}>{r.label}</div>
+                          <div className="text-[8px] text-neutral-400 mt-0.5 leading-tight truncate">{r.desc}</div>
                         </button>
                       ))}
                     </div>
+
+                    {/* Benefit Highlight for Business Partners */}
+                    {(role === 'RESELLER' || role === 'PERCETAKAN') && (
+                      <div className="mt-2 p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-1.5 text-[10px] text-amber-300">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>Termasuk akses <strong>Reseller Partner Hub</strong>, White-Label Studio & Modal Grosir!</span>
+                      </div>
+                    )}
                   </div>
+
                   <div>
-                    <label className="block text-neutral-400 text-[10px] font-semibold mb-1 uppercase tracking-wider">{role === 'RESELLER' ? 'Nama Studio / Usaha' : 'Nama Lengkap'}</label>
+                    <label className="block text-neutral-400 text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                      {role === 'PERCETAKAN' ? 'Nama Percetakan / Usaha WO' : role === 'RESELLER' ? 'Nama Studio / Brand Jasa' : 'Nama Lengkap Anda'}
+                    </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-500" />
                       <input autoFocus type="text" required value={name} onChange={e => { setName(e.target.value); setErrorDetail(null); }}
-                        placeholder={role === 'RESELLER' ? 'Nama Studio / Usaha Anda' : 'Nama lengkap Anda'} className={inputClass + ' pl-9'} />
+                        placeholder={role === 'PERCETAKAN' ? 'Nama Percetakan / Usaha Anda' : role === 'RESELLER' ? 'Nama Studio / Brand Anda' : 'Nama lengkap Anda'}
+                        className={inputClass + ' pl-9'} />
                     </div>
                   </div>
                   <div>
