@@ -19,7 +19,8 @@ import {
   Building2,
   Save,
   HelpCircle,
-  ExternalLink
+  ExternalLink,
+  Globe
 } from 'lucide-react';
 import { resellerApi, ResellerAnalytics, ResellerBranding } from '../api/reseller.api';
 import { useToast } from '../context/ToastContext';
