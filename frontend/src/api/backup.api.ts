@@ -1,6 +1,4 @@
-import { API_BASE_URL } from './client';
-
-const API_BASE = API_BASE_URL || 'http://localhost:4000';
+import { apiClient, API_BASE_URL } from './client';
 
 export interface BackupManifest {
   app: string;
@@ -36,37 +34,22 @@ export const backupApi = {
    * Mengambil daftar file backup di server
    */
   async list(): Promise<BackupItem[]> {
-    const token = localStorage.getItem('absenta_auth_token');
-    const res = await fetch(`${API_BASE}/api/backup/list`, {
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    });
-    const json = await res.json();
-    if (!res.ok || !json.success) {
-      throw new Error(json.message || 'Gagal mengambil riwayat backup.');
+    const res = await apiClient.get('/api/backup/list');
+    if (!res.data || !res.data.success) {
+      throw new Error(res.data?.message || 'Gagal mengambil riwayat backup.');
     }
-    return json.data || [];
+    return res.data.data || [];
   },
 
   /**
    * Memicu pembuatan backup baru di server
    */
   async create(includeMedia: boolean = true): Promise<BackupItem> {
-    const token = localStorage.getItem('absenta_auth_token');
-    const res = await fetch(`${API_BASE}/api/backup/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ includeMedia })
-    });
-    const json = await res.json();
-    if (!res.ok || !json.success) {
-      throw new Error(json.message || 'Gagal membuat file backup.');
+    const res = await apiClient.post('/api/backup/create', { includeMedia });
+    if (!res.data || !res.data.success) {
+      throw new Error(res.data?.message || 'Gagal membuat file backup.');
     }
-    return json.data;
+    return res.data.data;
   },
 
   /**
@@ -74,7 +57,9 @@ export const backupApi = {
    */
   async download(filename: string): Promise<void> {
     const token = localStorage.getItem('absenta_auth_token');
-    const res = await fetch(`${API_BASE}/api/backup/download/${encodeURIComponent(filename)}`, {
+    const downloadUrl = `${API_BASE_URL}/api/backup/download/${encodeURIComponent(filename)}`;
+    
+    const res = await fetch(downloadUrl, {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
@@ -105,16 +90,9 @@ export const backupApi = {
    * Menghapus file backup dari server
    */
   async delete(filename: string): Promise<void> {
-    const token = localStorage.getItem('absenta_auth_token');
-    const res = await fetch(`${API_BASE}/api/backup/${encodeURIComponent(filename)}`, {
-      method: 'DELETE',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    });
-    const json = await res.json();
-    if (!res.ok || !json.success) {
-      throw new Error(json.message || 'Gagal menghapus file backup.');
+    const res = await apiClient.delete(`/api/backup/${encodeURIComponent(filename)}`);
+    if (!res.data || !res.data.success) {
+      throw new Error(res.data?.message || 'Gagal menghapus file backup.');
     }
   },
 
@@ -127,22 +105,18 @@ export const backupApi = {
     restoredCounts: Record<string, number>;
     message: string;
   }> {
-    const token = localStorage.getItem('absenta_auth_token');
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch(`${API_BASE}/api/backup/restore`, {
-      method: 'POST',
+    const res = await apiClient.post('/api/backup/restore', formData, {
       headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: formData
+        'Content-Type': 'multipart/form-data'
+      }
     });
 
-    const json = await res.json();
-    if (!res.ok || !json.success) {
-      throw new Error(json.message || 'Gagal memulihkan data dari berkas backup.');
+    if (!res.data || !res.data.success) {
+      throw new Error(res.data?.message || 'Gagal memulihkan data dari berkas backup.');
     }
-    return json.data;
+    return res.data.data;
   }
 };
