@@ -50,6 +50,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   const isResellerUser = ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes((loggedUser?.role || '').toUpperCase());
 
   const [step, setStep] = useState<'plan' | 'channel'>('plan');
+  const [pricingCategory, setPricingCategory] = useState<'single' | 'bulk'>(() => {
+    return isResellerUser ? 'bulk' : 'single';
+  });
   const [selectedPlanId, setSelectedPlanId] = useState<string>(() => {
     if (isResellerUser) return 'UND-RESELLER';
     if (currentInvitationPlan?.toUpperCase().includes('BASIC')) return 'UND-PLATINUM';
@@ -329,145 +332,254 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                   </div>
                 )}
 
-                {isLoadingPackages ? (
-                  <div className="py-12 flex flex-col items-center justify-center gap-3 text-neutral-400">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#c4a661]" />
-                    <span className="text-xs">Memuat katalog paket realtime dari Server Lisensi...</span>
-                  </div>
-                ) : packagesError ? (
-                  <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center my-auto">
-                    Gagal terhubung ke Server Lisensi. Pastikan server backend aktif.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto pr-1 pt-2 pb-3 scrollbar-thin">
-                    {(packagesData || []).map((pkg: any) => {
-                      const isSelected = selectedPlanId === pkg.id;
-                      const planIdUpper = (pkg.id || '').toUpperCase();
-
-                      // Copywriting Ramah Orang Awam
-                      let friendlyTitle = pkg.name;
-                      let badgeText = null;
-                      let badgeClass = 'bg-[#c4a661] text-neutral-950';
-                      let friendlyFeatures: string[] = [];
-
-                      if (planIdUpper.includes('BASIC') || planIdUpper.includes('HEMAT')) {
-                        friendlyTitle = 'Paket Hemat (Khitan & Ultah)';
-                        badgeText = 'Khitan / Ultah';
-                        badgeClass = 'bg-blue-500/20 text-blue-300 border border-blue-500/40';
-                        friendlyFeatures = [
-                          'Bebas Watermark Resmi',
-                          '1 Acara Aktif (Khitan / Aqiqah / Ultah)',
-                          'Musik Latar & Galeri Foto',
-                          'Buku Tamu & Ucapan Doa Online',
-                          'Amplop Digital (Rekening Bank)',
-                          'Masa Aktif 3 Bulan'
-                        ];
-                      } else if (planIdUpper.includes('GOLD') || planIdUpper.includes('WEDDING')) {
-                        friendlyTitle = 'Paket Wedding Gold (All Features)';
-                        badgeText = 'Populer ⭐';
-                        badgeClass = 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold';
-                        friendlyFeatures = [
-                          'Bebas Watermark & Semua Tema Mewah',
-                          'Galeri Foto Unlimited & Kisah Cinta',
-                          'Musik Latar Eksklusif (Player Melayang)',
-                          'Buku Tamu & RSVP Realtime',
-                          'Amplop Digital + QRIS Donasi',
-                          'Peta Lokasi Google Maps Presisi',
-                          'Masa Aktif 1 Tahun Penuh'
-                        ];
-                      } else if (planIdUpper.includes('PLATINUM')) {
-                        friendlyTitle = 'Paket Platinum + Siap Cetak';
-                        badgeText = 'Lengkap + Cetak 🖨️';
-                        badgeClass = 'bg-purple-500/20 text-purple-300 border border-purple-500/40';
-                        friendlyFeatures = [
-                          'Semua Fitur Paket Gold Termasuk',
-                          'Masa Aktif Selamanya (Tanpa Batas)',
-                          'File Undangan Siap Cetak HD (A5 & 4R)',
-                          'Cetak Label Nama Tamu (Tom & Jerry 103)',
-                          'Kartu Souvenir & Voucher Siap Print',
-                          'QR Scanner Check-in Tamu Resepsi',
-                          'WhatsApp Broadcast Generator'
-                        ];
-                      } else if (planIdUpper.includes('RESELLER') || planIdUpper.includes('PERCETAKAN') || planIdUpper.includes('VENDOR')) {
-                        friendlyTitle = 'Paket Reseller / Percetakan (10 Slot)';
-                        badgeText = 'Hemat Bisnis 💎';
-                        badgeClass = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-                        friendlyFeatures = [
-                          '10 Token Aktivasi (Pakai Kapan Saja)',
-                          'Hemat Biaya (Rp 45.000 / Acara)',
-                          'Fitur Platinum Lengkap di Semua Proyek',
-                          'Unduh Print Kit HD Sepuasnya',
-                          'Bebas Watermark di Semua Undangan'
-                        ];
-                      } else {
-                        friendlyFeatures = typeof pkg.featuresJson === 'string'
-                          ? JSON.parse(pkg.featuresJson)
-                          : (pkg.featuresJson || ['Fitur Lengkap']);
+                {/* 🎴 DUAL-MODE SEGMENT SWITCHER (Satuan 1 Acara vs Grosir Saldo Token) */}
+                <div className="flex p-1 bg-neutral-900/90 rounded-2xl border border-neutral-800 shrink-0 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPricingCategory('single');
+                      if (selectedPlanId.includes('RESELLER')) {
+                        setSelectedPlanId('UND-GOLD');
                       }
+                    }}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      pricingCategory === 'single'
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 shadow-md font-bold'
+                        : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <span>💍 Paket Satuan (1 Acara)</span>
+                    <span className="text-[10px] opacity-75 font-normal hidden sm:inline">• Personal</span>
+                  </button>
 
-                      // Smart Dynamic Status Badge jika membuka modal dari undangan yang sudah berlisensi
-                      if (currentInvitationPlan) {
-                        const curUpper = currentInvitationPlan.toUpperCase();
-                        if (
-                          pkg.id === currentInvitationPlan ||
-                          (curUpper.includes('BASIC') && planIdUpper.includes('BASIC')) ||
-                          (curUpper.includes('GOLD') && planIdUpper.includes('GOLD')) ||
-                          (curUpper.includes('PLATINUM') && planIdUpper.includes('PLATINUM'))
-                        ) {
-                          badgeText = '✓ Paket Anda';
-                          badgeClass = 'bg-neutral-800 text-emerald-400 border border-emerald-500/50';
-                        } else if (planIdUpper.includes('PLATINUM') && (curUpper.includes('BASIC') || curUpper.includes('GOLD'))) {
-                          badgeText = '🚀 Upgrade (+ Print Kit)';
-                          badgeClass = 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold animate-pulse';
-                        }
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPricingCategory('bulk');
+                      if (!selectedPlanId.includes('RESELLER')) {
+                        setSelectedPlanId('UND-RESELLER');
                       }
+                    }}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      pricingCategory === 'bulk'
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 shadow-md font-bold'
+                        : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <span>💎 Grosir Saldo Token</span>
+                    <span className="text-[10px] opacity-75 font-normal hidden sm:inline">• Reseller & Percetakan</span>
+                  </button>
+                </div>
 
-                      return (
-                        <div
-                          key={pkg.id}
-                          onClick={() => setSelectedPlanId(pkg.id)}
-                          className={`relative rounded-2xl p-4 border transition cursor-pointer flex flex-col justify-between ${
-                            isSelected
-                              ? 'border-[#c4a661] bg-[#c4a661]/15 shadow-[0_0_25px_rgba(196,166,97,0.2)] ring-1 ring-[#c4a661]'
-                              : 'border-neutral-800 bg-neutral-900/60 hover:border-neutral-700'
-                          }`}
-                        >
-                          {badgeText && (
-                            <div className={`absolute top-3.5 right-3.5 text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md uppercase tracking-wider ${badgeClass}`}>
-                              {badgeText}
-                            </div>
-                          )}
-                          <div>
-                            <div className="flex items-center gap-1.5 mb-1 pr-24">
-                              <Crown className="w-4 h-4 text-[#c4a661] shrink-0" />
-                              <h3 className="font-bold text-sm text-white leading-tight">{friendlyTitle}</h3>
-                            </div>
-                            <div className="text-lg font-serif font-bold text-[#c4a661] mb-2.5">
-                              Rp {(pkg.priceOnetime || pkg.priceMonthly || 0).toLocaleString('id-ID')}
-                            </div>
-                            <ul className="space-y-1.5 text-[11px] text-neutral-300">
-                              {friendlyFeatures.map((feat, idx) => {
-                                const isHighlight = feat.toLowerCase().includes('watermark') || feat.toLowerCase().includes('selamanya');
-                                return (
-                                  <li key={idx} className="flex items-start gap-1.5">
-                                    <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isHighlight ? 'text-emerald-400' : 'text-[#c4a661]'}`} />
-                                    <span className={`leading-tight ${isHighlight ? 'text-white font-medium' : ''}`}>{feat}</span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          </div>
-
-                          <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] font-bold">
-                            <span className={isSelected ? 'text-[#c4a661]' : 'text-neutral-400'}>
-                              {isSelected ? '✓ Paket Terpilih' : 'Klik untuk Memilih'}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                {/* Reseller Value Callout in Bulk Mode */}
+                {pricingCategory === 'bulk' && (
+                  <div className="mb-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 text-[11px] text-amber-300 shrink-0">
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      <strong>Keuntungan Mitra:</strong> Setiap token otomatis mengaktifkan fitur <strong>PLATINUM LENGKAP</strong> (Print Kit 300 DPI + Aktif Selamanya). Saldo token tidak pernah hangus & Anda bebas menentukan tarif ke klien!
+                    </span>
                   </div>
                 )}
+
+                {/* Plan Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto pr-1 pt-1 pb-3 scrollbar-thin flex-1">
+                  {(pricingCategory === 'single'
+                    ? [
+                        {
+                          id: 'UND-BASIC',
+                          name: 'Paket Hemat (Khitan & Ultah)',
+                          badge: 'Hemat 🔥',
+                          badgeClass: 'bg-blue-500/20 text-blue-300 border border-blue-500/40',
+                          price: 49000,
+                          features: [
+                            'Bebas Watermark Resmi',
+                            '1 Acara Aktif (Khitan / Aqiqah / Ultah)',
+                            'Musik Latar & Galeri Foto',
+                            'Buku Tamu & Ucapan Doa Online',
+                            'Amplop Digital (Rekening Bank)',
+                            'Masa Aktif 3 Bulan'
+                          ]
+                        },
+                        {
+                          id: 'UND-GOLD',
+                          name: 'Paket Wedding Gold (All Features)',
+                          badge: 'Populer ⭐',
+                          badgeClass: 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold',
+                          price: 89000,
+                          features: [
+                            'Bebas Watermark & Semua Tema Mewah',
+                            'Galeri Foto Unlimited & Kisah Cinta',
+                            'Musik Latar Eksklusif (Player Melayang)',
+                            'Buku Tamu & RSVP Realtime',
+                            'Amplop Digital + QRIS Donasi',
+                            'Peta Lokasi Google Maps Presisi',
+                            'Masa Aktif 1 Tahun Penuh'
+                          ]
+                        },
+                        {
+                          id: 'UND-PLATINUM',
+                          name: 'Paket Platinum + Siap Cetak',
+                          badge: 'Lengkap + Cetak 🖨️',
+                          badgeClass: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
+                          price: 149000,
+                          features: [
+                            'Semua Fitur Paket Gold Termasuk',
+                            'Masa Aktif Selamanya (Tanpa Batas)',
+                            'File Undangan Siap Cetak HD (A5 & 4R)',
+                            'Cetak Label Nama Tamu (Tom & Jerry 103)',
+                            'Kartu Souvenir & Voucher Siap Print',
+                            'QR Scanner Check-in Tamu Resepsi',
+                            'WhatsApp Broadcast Generator'
+                          ]
+                        }
+                      ]
+                    : [
+                        {
+                          id: 'UND-RESELLER-5',
+                          name: 'Starter Reseller (5 Token)',
+                          badge: 'Starter 🥉',
+                          badgeClass: 'bg-neutral-800 text-amber-300 border border-amber-500/40',
+                          price: 225000,
+                          tokens: 5,
+                          unitPrice: 45000,
+                          profitEstimate: 'Potensi Laba ~Rp 275.000',
+                          features: [
+                            '5 Token Saldo Permanen (Tidak Hangus)',
+                            'Modal Rp 45.000 / Undangan',
+                            'Fitur Platinum Lengkap di Semua Proyek',
+                            'Unduh Print Kit 300 DPI Sepuasnya',
+                            'White-Label Studio & Bebas Watermark'
+                          ]
+                        },
+                        {
+                          id: 'UND-RESELLER',
+                          name: 'Business Reseller (10 Token)',
+                          badge: 'Paling Populer 🥈',
+                          badgeClass: 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold',
+                          price: 450000,
+                          tokens: 10,
+                          unitPrice: 45000,
+                          profitEstimate: 'Potensi Laba ~Rp 550.000',
+                          features: [
+                            '10 Token Saldo Permanen (Tidak Hangus)',
+                            'Modal Rp 45.000 / Undangan',
+                            'Fitur Platinum Lengkap di Semua Proyek',
+                            'Unduh Print Kit HD Sepuasnya',
+                            'White-Label Studio & Bebas Watermark'
+                          ]
+                        },
+                        {
+                          id: 'UND-RESELLER-25',
+                          name: 'Pro Reseller (25 Token)',
+                          badge: 'Hemat 22% 🥇',
+                          badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40',
+                          price: 875000,
+                          tokens: 25,
+                          unitPrice: 35000,
+                          profitEstimate: 'Potensi Laba ~Rp 1.625.000',
+                          features: [
+                            '25 Token Saldo Permanen (Tidak Hangus)',
+                            'Modal Super Hemat: Rp 35.000 / Acara',
+                            'Fitur Platinum Lengkap di Semua Proyek',
+                            'Unduh Print Kit HD 300 DPI Sepuasnya',
+                            'Bebas Watermark & Prioritas Render'
+                          ]
+                        },
+                        {
+                          id: 'UND-RESELLER-50',
+                          name: 'Vendor & Percetakan (50 Token)',
+                          badge: 'Super Hemat 44% 👑',
+                          badgeClass: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold',
+                          price: 1250000,
+                          tokens: 50,
+                          unitPrice: 25000,
+                          profitEstimate: 'Potensi Laba ~Rp 3.750.000',
+                          features: [
+                            '50 Token Saldo Permanen (Tidak Hangus)',
+                            'Modal Grosir: Rp 25.000 / Acara',
+                            'Fitur Platinum Lengkap di Semua Proyek',
+                            'Unduh Print Kit HD Sepuasnya',
+                            'Akses Vendor Prioritas & VIP Support'
+                          ]
+                        }
+                      ]
+                  ).map((pkg: any) => {
+                    const isSelected = selectedPlanId === pkg.id;
+                    const planIdUpper = (pkg.id || '').toUpperCase();
+
+                    let badgeText = pkg.badge;
+                    let badgeClass = pkg.badgeClass;
+
+                    // Dynamic badge jika membuka modal dari undangan yang sudah berlisensi
+                    if (currentInvitationPlan && pricingCategory === 'single') {
+                      const curUpper = currentInvitationPlan.toUpperCase();
+                      if (
+                        pkg.id === currentInvitationPlan ||
+                        (curUpper.includes('BASIC') && planIdUpper.includes('BASIC')) ||
+                        (curUpper.includes('GOLD') && planIdUpper.includes('GOLD')) ||
+                        (curUpper.includes('PLATINUM') && planIdUpper.includes('PLATINUM'))
+                      ) {
+                        badgeText = '✓ Paket Anda';
+                        badgeClass = 'bg-neutral-800 text-emerald-400 border border-emerald-500/50';
+                      } else if (planIdUpper.includes('PLATINUM') && (curUpper.includes('BASIC') || curUpper.includes('GOLD'))) {
+                        badgeText = '🚀 Upgrade (+ Print Kit)';
+                        badgeClass = 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold animate-pulse';
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={pkg.id}
+                        onClick={() => setSelectedPlanId(pkg.id)}
+                        className={`relative rounded-2xl p-4 border transition cursor-pointer flex flex-col justify-between ${
+                          isSelected
+                            ? 'border-[#c4a661] bg-[#c4a661]/15 shadow-[0_0_25px_rgba(196,166,97,0.2)] ring-1 ring-[#c4a661]'
+                            : 'border-neutral-800 bg-neutral-900/60 hover:border-neutral-700'
+                        }`}
+                      >
+                        {badgeText && (
+                          <div className={`absolute top-3.5 right-3.5 text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md uppercase tracking-wider ${badgeClass}`}>
+                            {badgeText}
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-1 pr-24">
+                            <Crown className="w-4 h-4 text-[#c4a661] shrink-0" />
+                            <h3 className="font-bold text-sm text-white leading-tight">{pkg.name}</h3>
+                          </div>
+                          <div className="text-lg font-serif font-bold text-[#c4a661] mb-1">
+                            Rp {pkg.price.toLocaleString('id-ID')}
+                          </div>
+
+                          {pkg.unitPrice && (
+                            <div className="text-[10px] text-emerald-400 font-semibold mb-2 flex items-center justify-between">
+                              <span>Modal: Rp {pkg.unitPrice.toLocaleString('id-ID')}/acara</span>
+                              {pkg.profitEstimate && <span className="text-amber-300 font-mono text-[9px]">{pkg.profitEstimate}</span>}
+                            </div>
+                          )}
+
+                          <ul className="space-y-1.5 text-[11px] text-neutral-300 mt-2">
+                            {pkg.features.map((feat: string, idx: number) => {
+                              const isHighlight = feat.toLowerCase().includes('watermark') || feat.toLowerCase().includes('selamanya') || feat.toLowerCase().includes('modal');
+                              return (
+                                <li key={idx} className="flex items-start gap-1.5">
+                                  <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isHighlight ? 'text-emerald-400' : 'text-[#c4a661]'}`} />
+                                  <span className={`leading-tight ${isHighlight ? 'text-white font-medium' : ''}`}>{feat}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+
+                        <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] font-bold">
+                          <span className={isSelected ? 'text-[#c4a661]' : 'text-neutral-400'}>
+                            {isSelected ? '✓ Paket Terpilih' : 'Klik untuk Memilih'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
 
                 {/* Sticky Bottom Action */}
                 <div className="pt-3 mt-2 border-t border-neutral-800 flex items-center justify-between shrink-0 bg-[#111115]">
