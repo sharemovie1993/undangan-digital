@@ -52,7 +52,8 @@ export class InvitationController {
         where: {
           OR: [
             { slug: cleanKey },
-            { id: slug }
+            { id: slug },
+            { customDomain: cleanKey }
           ]
         },
         include: {
@@ -633,6 +634,37 @@ export class InvitationController {
     } catch (err: any) {
       console.error('[Delete Invitation Error]', err.message);
       return reply.status(500).send({ success: false, message: 'Gagal menghapus undangan.' });
+    }
+  }
+
+  /**
+   * Endpoint verifikasi domain untuk Caddy On-Demand TLS (ask endpoint)
+   * GET /api/public/verify-custom-domain?domain=foo.com
+   */
+  static async verifyCustomDomain(request: FastifyRequest, reply: FastifyReply) {
+    const { domain } = request.query as { domain?: string };
+    if (!domain) {
+      return reply.status(400).send('Domain parameter required');
+    }
+    const cleanDomain = domain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+    // Whitelist default domains
+    if (['luxury.absenta.id', 'smkn1pld.absenta.id', 'absenta.id', 'localhost'].includes(cleanDomain)) {
+      return reply.status(200).send('OK');
+    }
+
+    try {
+      const invitation = await prisma.invitation.findFirst({
+        where: { customDomain: cleanDomain }
+      });
+
+      if (invitation) {
+        return reply.status(200).send('OK');
+      }
+
+      return reply.status(404).send('Domain not whitelisted');
+    } catch {
+      return reply.status(500).send('Error verifying domain');
     }
   }
 }

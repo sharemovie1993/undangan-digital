@@ -29,6 +29,7 @@ export const registerApiRoutes = (fastify: FastifyInstance) => {
   fastify.post('/api/upload/audio', UploadController.uploadAudio);
 
   // 3. Invitations CRUD & Duplicate (Multi-Tenant Isolated)
+  fastify.get('/api/public/verify-custom-domain', InvitationController.verifyCustomDomain);
   fastify.get('/api/invitations/list', { preHandler: [optionalAuth] }, InvitationController.list);
   fastify.get('/api/invitations/slug/:slug', InvitationController.getBySlug);
   fastify.get('/api/invitations/:id', InvitationController.getById);

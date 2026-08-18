@@ -140,10 +140,18 @@ export default function App() {
       setInvitationData((prev) => ({ ...prev, theme: themeParam as ThemeToken }));
     }
 
+    // 🌐 Smart Custom Domain Auto-Detection: Jika domain kustom diakses (bukan luxury.absenta.id), langsung tampilkan undangan tamu
+    const hostname = window.location.hostname.toLowerCase();
+    const isCustomDomain = !['luxury.absenta.id', 'smkn1pld.absenta.id', 'absenta.id', 'localhost', '127.0.0.1'].includes(hostname) && !hostname.endsWith('.absenta.id');
+
+    if (isCustomDomain && !modeParam) {
+      setViewMode('invitation');
+    }
+
     // Sync Initial Invitation & Guest List from SQLite Backend
     const syncFromBackend = async () => {
       try {
-        const querySlugOrId = params.get('slug') || params.get('id');
+        const querySlugOrId = params.get('slug') || params.get('id') || (isCustomDomain ? hostname : null);
         const targetIdentifier = querySlugOrId || localStorage.getItem('absenta_active_invitation_id');
         let res: any;
 
