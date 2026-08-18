@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Key,
   Globe,
+  Database,
   LogOut
 } from 'lucide-react';
 import { EventType, ThemeToken } from '../types';
@@ -30,10 +31,12 @@ import { PricingModal } from './PricingModal';
 import { TransferLicenseModal } from './TransferLicenseModal';
 import { ActiveLicenseModal } from './ActiveLicenseModal';
 import { EasyTunnelModal } from './EasyTunnelModal';
+import { BackupRestoreModal } from './BackupRestoreModal';
 import { useAuth } from '../hooks/useAuth';
 import { useInvitations } from '../hooks/useInvitations';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { isPrintKitAllowed, getPlanDetails } from '../constants/plans';
 
 interface MyInvitationsDashboardProps {
@@ -84,6 +87,7 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   const isAdmin = (role || currentUser?.role || '').toUpperCase() === 'ADMIN' ||
     (role || currentUser?.role || '').toUpperCase() === 'OWNER' ||
     currentUser?.email === 'admin@absenta.id';
+  const queryClient = useQueryClient();
   const {
     invitations: list,
     unassignedOrders,
@@ -112,6 +116,7 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isActiveLicenseModalOpen, setIsActiveLicenseModalOpen] = useState(false);
   const [isEasyTunnelModalOpen, setIsEasyTunnelModalOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [activeLicenseTarget, setActiveLicenseTarget] = useState<any>(null);
   const [pricingTargetInvitation, setPricingTargetInvitation] = useState<any>(null);
   const [transferTargetInvitation, setTransferTargetInvitation] = useState<any>(null);
@@ -370,14 +375,25 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
               {/* Desktop Only Extra Action Buttons */}
               <div className="hidden lg:flex items-center gap-2">
                 {isAdmin && (
-                  <button
-                    onClick={() => setIsEasyTunnelModalOpen(true)}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                    title="Akses Publik Instan & Terowongan WireGuard"
-                  >
-                    <Globe className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
-                    <span>Easy Tunnel</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setIsEasyTunnelModalOpen(true)}
+                      className="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
+                      title="Akses Publik Instan & Terowongan WireGuard"
+                    >
+                      <Globe className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                      <span>Easy Tunnel</span>
+                    </button>
+
+                    <button
+                      onClick={() => setIsBackupModalOpen(true)}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
+                      title="Backup & Restore Data untuk Migrasi Server"
+                    >
+                      <Database className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                      <span>Backup & Restore</span>
+                    </button>
+                  </>
                 )}
 
                 <button
@@ -458,17 +474,31 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
                     </button>
 
                     {isAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          setIsEasyTunnelModalOpen(true);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-neutral-300 hover:text-white transition cursor-pointer"
-                      >
-                        <Globe className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Easy Tunnel WireGuard</span>
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            setIsEasyTunnelModalOpen(true);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-neutral-300 hover:text-white transition cursor-pointer"
+                        >
+                          <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Easy Tunnel WireGuard</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            setIsBackupModalOpen(true);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-emerald-300 hover:text-white transition cursor-pointer"
+                        >
+                          <Database className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Backup & Restore Studio</span>
+                        </button>
+                      </>
                     )}
 
                     <div className="h-px bg-neutral-800/80 my-1" />
@@ -1018,6 +1048,12 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
       <EasyTunnelModal
         isOpen={isEasyTunnelModalOpen}
         onClose={() => setIsEasyTunnelModalOpen(false)}
+      />
+
+      {/* Backup & Disaster Recovery Studio Modal */}
+      <BackupRestoreModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
       />
     </div>
   );

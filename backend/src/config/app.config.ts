@@ -16,12 +16,18 @@ export const config = {
   // MinIO S3 Storage Engine Config
   minio: {
     enabled: process.env.MINIO_ENABLED !== 'false',
-    endPoint: process.env.MINIO_ENDPOINT || '127.0.0.1',
-    port: parseInt(process.env.MINIO_PORT || '9000', 10),
-    useSSL: process.env.MINIO_USE_SSL === 'true',
-    accessKey: process.env.MINIO_ROOT_USER || process.env.MINIO_ACCESS_KEY || 'minioadmin',
-    secretKey: process.env.MINIO_ROOT_PASSWORD || process.env.MINIO_SECRET_KEY || 'minioadmin',
-    bucketName: process.env.MINIO_BUCKET || 'absenta-storage',
-    publicUrl: process.env.MINIO_PUBLIC_URL || '', // Jika kosong, gunakan format default endpoint/bucketName
+    endPoint: (process.env.MINIO_ENDPOINT || process.env.S3_ENDPOINT || '127.0.0.1').replace(/^https?:\/\//, '').split(':')[0],
+    port: parseInt(
+      process.env.MINIO_PORT ||
+      process.env.S3_PORT ||
+      (process.env.S3_ENDPOINT || '').replace(/^https?:\/\//, '').split(':')[1] ||
+      '9000',
+      10
+    ),
+    useSSL: process.env.MINIO_USE_SSL === 'true' || (process.env.S3_ENDPOINT || '').startsWith('https://'),
+    accessKey: process.env.MINIO_ROOT_USER || process.env.MINIO_ACCESS_KEY || process.env.S3_ACCESS_KEY || 'minioadmin',
+    secretKey: process.env.MINIO_ROOT_PASSWORD || process.env.MINIO_SECRET_KEY || process.env.S3_SECRET_KEY || 'minioadmin',
+    bucketName: process.env.MINIO_BUCKET || process.env.S3_BUCKET || 'undangan-storage',
+    publicUrl: process.env.MINIO_PUBLIC_URL || process.env.S3_PUBLIC_URL || '', // Jika kosong, gunakan format default endpoint/bucketName
   }
 };

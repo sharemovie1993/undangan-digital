@@ -146,4 +146,101 @@ export class MinioService {
     const buffer = Buffer.concat(chunks);
     return MinioService.uploadBuffer(buffer, objectName, mimeType, folder);
   }
+
+  /**
+   * Cek apakah MinIO aktif & dapat digunakan
+   */
+  public static async isAvailable(): Promise<boolean> {
+    return await MinioService.init();
+  }
+
+  /**
+   * Mengambil daftar seluruh nama object yang tersimpan di MinIO bucket
+   */
+  public static async listAllObjects(prefix: string = ''): Promise<string[]> {
+    const isOk = await MinioService.init();
+    if (!isOk || !MinioService.client) return [];
+
+    return new Promise((resolve, reject) => {
+      const objects: string[] = [];
+      const stream = MinioService.client!.listObjectsV2(config.minio.bucketName, prefix, true);
+
+      stream.on('data', (item) => {
+        if (item && item.name) {
+          objects.push(item.name);
+        }
+      });
+
+      stream.on('error', (err) => {
+        console.warn('[MinIO listObjects error]:', err.message);
+        resolve(objects); // return yang sudah didapat alih-alih crash
+      });
+
+      stream.on('end', () => {
+        resolve(objects);
+      });
+    });
+  }
+
+  /**
+   * Mengambil buffer file dari MinIO
+   */
+  public static async getObjectBuffer(objectName: string): Promise<Buffer | null> {
+    const isOk = await MinioService.init();
+    if (!isOk || !MinioService.client) return null;
+
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        console.warn(`[MinIO getObject timeout] ${objectName}`);
+        resolve(null);
+      }, 10000);
+
+      MinioService.client!.getObject(config.minio.bucketName, objectName)
+        .then((stream) => {
+          const chunks: Buffer[] = [];
+          stream.on('data', (chunk) => {
+            chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+          });
+          stream.on('end', () => {
+            clearTimeout(timeout);
+            resolve(Buffer.concat(chunks));
+          });
+          stream.on('error', (err) => {
+            clearTimeout(timeout);
+            console.warn(`[MinIO getObject stream error] ${objectName}:`, err.message);
+            resolve(null);
+          });
+        })
+        .catch((err) => {
+          clearTimeout(timeout);
+          console.warn(`[MinIO getObject error] ${objectName}:`, err.message);
+          resolve(null);
+        });
+    });
+  }
+
+  /**
+   * Simpan buffer langsung ke MinIO
+   */
+  public static async putDirectObject(objectName: string, buffer: Buffer, mimeType?: string): Promise<boolean> {
+    const isOk = await MinioService.init();
+    if (!isOk || !MinioService.client) return false;
+
+    try {
+      await MinioService.client.putObject(
+        config.minio.bucketName,
+        objectName,
+        buffer,
+        buffer.length,
+        {
+          ...(mimeType ? { 'Content-Type': mimeType } : {}),
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        }
+      );
+      return true;
+    } catch (err: any) {
+      console.warn(`[MinIO putDirectObject error] ${objectName}:`, err.message);
+      return false;
+    }
+  }
 }
