@@ -19,7 +19,7 @@ const fastify = Fastify({
   logger: {
     level: 'info'
   },
-  bodyLimit: 30 * 1024 * 1024 // 30 MB body limit
+  bodyLimit: 1024 * 1024 * 1024 // 1 GB body limit for Large Full Media Backups
 });
 
 async function seedAdminUser() {
@@ -116,10 +116,10 @@ const start = async () => {
     // 6. Form body parser
     await fastify.register(formbody);
 
-    // 7. Multipart file upload parser (up to 15MB)
+    // 7. Multipart file upload parser (up to 1GB for Full Disaster Recovery Backups)
     await fastify.register(multipart, {
       limits: {
-        fileSize: 15 * 1024 * 1024,
+        fileSize: 1024 * 1024 * 1024,
         files: 10
       }
     });

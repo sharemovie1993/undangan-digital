@@ -15,6 +15,12 @@ export class MinioService {
   public static async init(): Promise<boolean> {
     if (MinioService.isInitialized) return MinioService.isMinioHealthy;
 
+    if (process.env.STORAGE_DRIVER === 'local' || config.minio.enabled === false) {
+      MinioService.isMinioHealthy = false;
+      MinioService.isInitialized = true;
+      return false;
+    }
+
     try {
       MinioService.client = new Minio.Client({
         endPoint: config.minio.endPoint,
@@ -24,8 +30,13 @@ export class MinioService {
         secretKey: config.minio.secretKey,
       });
 
-      // Cek apakah MinIO server merespons
-      const bucketExists = await MinioService.client.bucketExists(config.minio.bucketName);
+      // Quick timeout check for MinIO connectivity (1.5s)
+      const checkPromise = MinioService.client.bucketExists(config.minio.bucketName);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('MinIO connection timeout (1.5s)')), 1500)
+      );
+
+      const bucketExists = await Promise.race([checkPromise, timeoutPromise]);
       if (!bucketExists) {
         await MinioService.client.makeBucket(config.minio.bucketName, 'us-east-1');
         console.log(`[MinIO] Bucket '${config.minio.bucketName}' berhasil dibuat.`);

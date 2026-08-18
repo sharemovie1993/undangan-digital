@@ -110,7 +110,7 @@ export const backupApi = {
 
     const res = await apiClient.post('/api/backup/restore', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': undefined
       }
     });
 
