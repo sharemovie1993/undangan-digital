@@ -364,6 +364,12 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                       );
                     }
 
+                    // Cari patokan harga dasar untuk komparasi diskon dinamis
+                    const baseResellerTier = bulkPackages.length > 0 ? bulkPackages[0] : null;
+                    const baseUnitPrice = baseResellerTier && (baseResellerTier.deviceLimit || 1) > 0
+                      ? Math.round((baseResellerTier.priceOnetime || baseResellerTier.priceMonthly || 0) / baseResellerTier.deviceLimit)
+                      : 45000;
+
                     return activeList.map((pkg: any) => {
                       const isSelected = selectedPlanId === pkg.id;
                       const planIdUpper = (pkg.id || '').toUpperCase();
@@ -371,15 +377,25 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                       const deviceLimit = pkg.deviceLimit || 1;
                       const unitPrice = deviceLimit > 1 ? Math.round(price / deviceLimit) : null;
 
-                      // Parse features realtime dari JSON Server Lisensi
-                      const features: string[] = Array.isArray(pkg.featuresJson)
+                      // Hitung % diskon hemat dinamis dibanding paket dasar
+                      const discountVsBase = (unitPrice && baseUnitPrice > unitPrice)
+                        ? Math.round(((baseUnitPrice - unitPrice) / baseUnitPrice) * 100)
+                        : 0;
+
+                      // Parse & bersihkan features dari redundansi hardcoded modal
+                      const rawFeatures: string[] = Array.isArray(pkg.featuresJson)
                         ? pkg.featuresJson
                         : typeof pkg.featuresJson === 'string'
                         ? (() => { try { return JSON.parse(pkg.featuresJson); } catch { return [pkg.featuresJson]; } })()
                         : ['Fitur Lengkap'];
 
-                      // Badge dinamis berdasarkan ID / deviceLimit
-                      let badgeText = null;
+                      const features = rawFeatures.filter((f: string) => {
+                        const low = f.toLowerCase();
+                        return !low.startsWith('modal') && !low.includes('rp ');
+                      });
+
+                      // Badge dinamis 100% kalkulasi
+                      let badgeText: string | null = null;
                       let badgeClass = 'bg-[#c4a661] text-neutral-950';
 
                       if (planIdUpper.includes('BASIC')) {
@@ -391,18 +407,18 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                       } else if (planIdUpper.includes('PLATINUM')) {
                         badgeText = 'Lengkap + Cetak 🖨️';
                         badgeClass = 'bg-purple-500/20 text-purple-300 border border-purple-500/40';
-                      } else if (planIdUpper.includes('RESELLER-5') || deviceLimit === 5) {
-                        badgeText = 'Starter 🥉';
-                        badgeClass = 'bg-neutral-800 text-amber-300 border border-amber-500/40';
+                      } else if (planIdUpper === 'UND-RESELLER-50' || deviceLimit >= 50) {
+                        badgeText = discountVsBase > 0 ? `Super Hemat ${discountVsBase}% 👑` : 'Vendor 👑';
+                        badgeClass = 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold';
+                      } else if (planIdUpper === 'UND-RESELLER-25' || deviceLimit === 25) {
+                        badgeText = discountVsBase > 0 ? `Hemat ${discountVsBase}% 🥇` : 'Pro 🥇';
+                        badgeClass = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
                       } else if (planIdUpper === 'UND-RESELLER' || deviceLimit === 10) {
                         badgeText = 'Paling Populer 🥈';
                         badgeClass = 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold';
-                      } else if (planIdUpper.includes('RESELLER-25') || deviceLimit === 25) {
-                        badgeText = 'Hemat 22% 🥇';
-                        badgeClass = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-                      } else if (planIdUpper.includes('RESELLER-50') || deviceLimit >= 50) {
-                        badgeText = 'Super Hemat 44% 👑';
-                        badgeClass = 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold';
+                      } else if (planIdUpper === 'UND-RESELLER-5' || deviceLimit === 5) {
+                        badgeText = 'Starter 🥉';
+                        badgeClass = 'bg-neutral-800 text-amber-300 border border-amber-500/40';
                       }
 
                       // Dynamic badge jika membuka modal dari undangan yang sudah berlisensi
