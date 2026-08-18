@@ -212,7 +212,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-md p-2.5 sm:p-4 md:p-6 overflow-y-auto">
-      <div className="relative w-full max-w-lg md:max-w-3xl lg:max-w-4xl rounded-3xl border border-[#c4a661]/40 bg-[#111115] text-[#e2e2e7] shadow-2xl p-4 sm:p-6 md:p-7 flex flex-col max-h-[92vh] my-auto">
+      <div className="relative w-full max-w-lg md:max-w-4xl lg:max-w-5xl rounded-3xl border border-[#c4a661]/40 bg-[#111115] text-[#e2e2e7] shadow-2xl p-4 sm:p-6 flex flex-col max-h-[92vh] my-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -223,82 +223,43 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
         {!activeInvoice ? (
           <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="text-center mb-4 sm:mb-5 shrink-0">
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#c4a661]/15 border border-[#c4a661]/30 text-[#c4a661] text-[10px] sm:text-xs font-semibold mb-1.5">
-                <Sparkles className="w-3 h-3" />
-                <span>SERVER LISENSI RESMI ABSENTA</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">
+            {/* Clean Header */}
+            <div className="text-center mb-2.5 shrink-0">
+              <h2 className="text-lg sm:text-xl font-serif font-bold text-white">
                 {step === 'plan'
-                  ? (isResellerUser ? 'Top-Up Saldo Token Reseller' : 'Pilih Paket Lisensi Undangan')
+                  ? (pricingCategory === 'bulk' ? 'Beli Saldo Token Reseller' : 'Pilih Paket Lisensi Undangan')
                   : 'Pilih Metode Pembayaran'}
               </h2>
-              <p className="text-[11px] sm:text-xs text-neutral-400 mt-0.5">
-                {step === 'plan'
-                  ? (isResellerUser
-                      ? 'Beli kuota aktivasi instan untuk mengaktifkan undangan klien Anda (Rp 45.000 / undangan)'
-                      : 'Aktifkan seluruh tema luxury, musik & hapus watermark resmi')
-                  : `Paket: ${selectedPlan?.name || selectedPlanId} (Rp ${(selectedPlan?.priceOnetime || selectedPlan?.priceMonthly || 0).toLocaleString('id-ID')})`}
-              </p>
             </div>
 
             {step === 'plan' && (
               <div className="flex flex-col flex-1 overflow-hidden">
-                {standbyOrders && standbyOrders.length > 0 && (
-                  <div className="mb-3.5 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-transparent border border-[#c4a661]/50 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg shrink-0 text-left">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#c4a661] to-[#8a7238] text-neutral-950 flex items-center justify-center font-bold text-sm shrink-0 shadow">
-                        <Key className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
-                          <span>💡 Anda Memiliki {standbyOrders.length} Lisensi Standby ({standbyOrders[0]?.planName || 'Paket Platinum'})</span>
-                        </div>
-                        <div className="text-[10px] font-mono text-[#c4a661] mt-0.5">
-                          Key: {standbyOrders[0]?.licenseKey}
-                        </div>
-                        <div className="text-[10px] text-neutral-400 mt-0.5">
-                          Lisensi siap dipasangkan tanpa biaya tambahan, atau pilih paket di bawah untuk acara baru.
-                        </div>
-                      </div>
-                    </div>
-
-                    {onUseStandbyLicense && (
-                      <button
-                        type="button"
-                        onClick={() => onUseStandbyLicense(standbyOrders[0])}
-                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-neutral-950 font-bold text-xs shadow-md transition cursor-pointer shrink-0 whitespace-nowrap"
-                      >
-                        ⚡ Pasang ke Undangan Ini
-                      </button>
-                    )}
-                  </div>
-                )}
-
+                {/* Consolidate Standby License & Token Saldo into 1 Ultra-Sleek Strip */}
                 {(() => {
                   const tokenCount = loggedUser?.quotaTokens || 0;
-                  if (tokenCount <= 0) return null;
+                  const hasStandby = standbyOrders && standbyOrders.length > 0;
+                  if (!hasStandby && tokenCount <= 0) return null;
 
                   return (
-                    <div className="mb-3.5 p-3.5 rounded-2xl bg-gradient-to-r from-[#c4a661]/25 via-[#c4a661]/15 to-transparent border border-[#c4a661]/50 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg shrink-0">
-                      <div className="flex items-center gap-2.5 text-left w-full sm:w-auto">
-                        <div className="w-9 h-9 rounded-xl bg-[#c4a661] text-neutral-950 flex items-center justify-center font-bold text-sm shrink-0 shadow">
-                          💎
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                            <span>Saldo Token Akun Anda:</span>
-                            <span className="text-[#c4a661] font-mono font-bold text-sm bg-neutral-950 px-2 py-0.5 rounded-lg border border-[#c4a661]/40">
-                              {tokenCount} Token
+                    <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-neutral-900/90 border border-[#c4a661]/40 flex items-center justify-between gap-2 shadow-xs shrink-0 text-left">
+                      <div className="flex items-center gap-2 min-w-0 text-xs">
+                        <span className="text-sm">💎</span>
+                        <div className="truncate">
+                          {tokenCount > 0 && (
+                            <span className="font-semibold text-white">
+                              Saldo: <strong className="text-[#c4a661]">{tokenCount} Token</strong>
                             </span>
-                          </div>
-                          <div className="text-[10px] text-neutral-400 mt-0.5">
-                            Terhubung ke Akun: <span className="text-emerald-400 font-semibold">{loggedUser?.phone || loggedUser?.name}</span>
-                          </div>
+                          )}
+                          {tokenCount > 0 && hasStandby && <span className="text-neutral-500 mx-1.5">•</span>}
+                          {hasStandby && (
+                            <span className="text-emerald-400 font-mono text-[11px]">
+                              Lisensi Standby: {standbyOrders[0]?.licenseKey}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      {invitationId && invitationId !== 'inv-preview-123' && (
+                      {invitationId && invitationId !== 'inv-preview-123' && tokenCount > 0 ? (
                         <button
                           type="button"
                           onClick={async () => {
@@ -316,24 +277,32 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                               setOrderError('Gagal aktivasi token: ' + err.message);
                             }
                           }}
-                          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#c4a661] hover:bg-[#d5b874] text-neutral-950 font-bold text-xs shadow-md transition cursor-pointer shrink-0 whitespace-nowrap"
+                          className="px-3 py-1 rounded-lg bg-[#c4a661] hover:bg-[#d5b874] text-neutral-950 font-bold text-[11px] transition cursor-pointer shrink-0 whitespace-nowrap"
                         >
-                          ⚡ Gunakan 1 Token Sekarang
+                          ⚡ Gunakan 1 Token
                         </button>
-                      )}
+                      ) : hasStandby && onUseStandbyLicense ? (
+                        <button
+                          type="button"
+                          onClick={() => onUseStandbyLicense(standbyOrders[0])}
+                          className="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-[11px] transition cursor-pointer shrink-0 whitespace-nowrap"
+                        >
+                          ⚡ Pasang Lisensi
+                        </button>
+                      ) : null}
                     </div>
                   );
                 })()}
 
                 {orderError && (
-                  <div className="mb-4 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+                  <div className="mb-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between shrink-0">
                     <span>⚠️ {orderError}</span>
                     <button type="button" onClick={() => setOrderError(null)} className="text-rose-400 font-bold ml-2">✕</button>
                   </div>
                 )}
 
-                {/* 🎴 DUAL-MODE SEGMENT SWITCHER (Satuan 1 Acara vs Grosir Saldo Token) */}
-                <div className="flex p-1 bg-neutral-900/90 rounded-2xl border border-neutral-800 shrink-0 mb-3">
+                {/* Sleek Segment Switcher */}
+                <div className="flex p-0.5 bg-neutral-900 rounded-xl border border-neutral-800 shrink-0 mb-2.5 max-w-md mx-auto w-full">
                   <button
                     type="button"
                     onClick={() => {
@@ -342,14 +311,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                         setSelectedPlanId('UND-GOLD');
                       }
                     }}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                       pricingCategory === 'single'
-                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 shadow-md font-bold'
+                        ? 'bg-[#c4a661] text-neutral-950 shadow-xs font-bold'
                         : 'text-neutral-400 hover:text-white'
                     }`}
                   >
-                    <span>💍 Paket Satuan (1 Acara)</span>
-                    <span className="text-[10px] opacity-75 font-normal hidden sm:inline">• Personal</span>
+                    💍 Paket Satuan (1 Acara)
                   </button>
 
                   <button
@@ -360,29 +328,18 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                         setSelectedPlanId('UND-RESELLER');
                       }
                     }}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                       pricingCategory === 'bulk'
-                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 shadow-md font-bold'
+                        ? 'bg-[#c4a661] text-neutral-950 shadow-xs font-bold'
                         : 'text-neutral-400 hover:text-white'
                     }`}
                   >
-                    <span>💎 Grosir Saldo Token</span>
-                    <span className="text-[10px] opacity-75 font-normal hidden sm:inline">• Reseller & Percetakan</span>
+                    💎 Grosir Saldo Token
                   </button>
                 </div>
 
-                {/* Reseller Value Callout in Bulk Mode */}
-                {pricingCategory === 'bulk' && (
-                  <div className="mb-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 text-[11px] text-amber-300 shrink-0">
-                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>
-                      <strong>Keuntungan Mitra:</strong> Setiap token otomatis mengaktifkan fitur <strong>PLATINUM LENGKAP</strong> (Print Kit 300 DPI + Aktif Selamanya). Saldo token tidak pernah hangus & Anda bebas menentukan tarif ke klien!
-                    </span>
-                  </div>
-                )}
-
                 {/* Plan Cards Grid (100% Realtime dari Server Lisensi) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto pr-1 pt-1 pb-3 scrollbar-thin flex-1">
+                <div className={`grid grid-cols-1 sm:grid-cols-2 ${pricingCategory === 'bulk' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 overflow-y-auto pr-1 pt-1 pb-2 scrollbar-thin flex-1`}>
                   {(() => {
                     const allPackages: any[] = packagesData || [];
 
