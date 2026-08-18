@@ -575,19 +575,19 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 pt-1 text-xs">
                       <div className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-emerald-500/20">
                         <div className="text-neutral-400 text-[9px] sm:text-[10px]">Undangan</div>
-                        <div className="text-white font-bold text-xs sm:text-sm">{restoreResult.data?.restoredCounts?.invitations ?? 0}</div>
+                        <div className="text-emerald-300 font-bold text-sm sm:text-base">{(restoreResult.restoredCounts?.invitations ?? restoreResult.data?.restoredCounts?.invitations) ?? 0}</div>
                       </div>
                       <div className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-emerald-500/20">
                         <div className="text-neutral-400 text-[9px] sm:text-[10px]">Tamu & QR</div>
-                        <div className="text-white font-bold text-xs sm:text-sm">{restoreResult.data?.restoredCounts?.guests ?? 0}</div>
+                        <div className="text-emerald-300 font-bold text-sm sm:text-base">{(restoreResult.restoredCounts?.guests ?? restoreResult.data?.restoredCounts?.guests) ?? 0}</div>
                       </div>
                       <div className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-emerald-500/20">
                         <div className="text-neutral-400 text-[9px] sm:text-[10px]">RSVP / Ucapan</div>
-                        <div className="text-white font-bold text-xs sm:text-sm">{restoreResult.data?.restoredCounts?.rsvps ?? 0}</div>
+                        <div className="text-emerald-300 font-bold text-sm sm:text-base">{(restoreResult.restoredCounts?.rsvps ?? restoreResult.data?.restoredCounts?.rsvps) ?? 0}</div>
                       </div>
                       <div className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-emerald-500/20">
                         <div className="text-neutral-400 text-[9px] sm:text-[10px]">Berkas Media</div>
-                        <div className="text-white font-bold text-xs sm:text-sm">{restoreResult.data?.restoredCounts?.mediaFiles ?? 0}</div>
+                        <div className="text-emerald-300 font-bold text-sm sm:text-base">{(restoreResult.restoredCounts?.mediaFiles ?? restoreResult.data?.restoredCounts?.mediaFiles) ?? 0}</div>
                       </div>
                     </div>
                   </div>
