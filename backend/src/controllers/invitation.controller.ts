@@ -295,8 +295,9 @@ export class InvitationController {
         }
       }
 
-      // Ekstrak guest list untuk batch sync
-      const rawGuestList = (body as any).guestList || (eventData && (eventData as any).guestList);
+      const customDomain = body.customDomain !== undefined
+        ? (body.customDomain ? body.customDomain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '') : null)
+        : undefined;
 
       // ⚡ EKSEKUSI TRANSAKSI ATOMIK (ACID Transaction)
       const savedInvitation = await prisma.$transaction(async (tx) => {
@@ -313,13 +314,15 @@ export class InvitationController {
               themeConfig: themeConfig ? JSON.stringify(themeConfig) : null,
               stitchBlocks: stitchBlocks ? JSON.stringify(stitchBlocks) : null,
               printConfig: printConfig ? JSON.stringify(printConfig) : null,
-              eventDataJson: JSON.stringify(eventData || {})
+              eventDataJson: JSON.stringify(eventData || {}),
+              ...(customDomain !== undefined ? { customDomain } : {})
             },
             create: {
               id,
               userId: activeUserId,
               title,
               slug: cleanSlug,
+              customDomain: customDomain || null,
               eventType: eventType || 'WEDDING',
               themeId: themeId || 'champagne_gold',
               themeConfig: themeConfig ? JSON.stringify(themeConfig) : null,

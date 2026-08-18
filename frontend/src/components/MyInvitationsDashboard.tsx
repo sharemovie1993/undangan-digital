@@ -45,6 +45,7 @@ import { AdminUserManagementModal } from './AdminUserManagementModal';
 import { AdminTransferModal } from './AdminTransferModal';
 import { AdminOverrideModal } from './AdminOverrideModal';
 import { ResellerPartnerHubModal } from './ResellerPartnerHubModal';
+import { CustomDomainModal } from './CustomDomainModal';
 import { useAuth } from '../hooks/useAuth';
 import { useInvitations } from '../hooks/useInvitations';
 import { useToast } from '../context/ToastContext';
@@ -144,6 +145,7 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   const [activeLicenseTarget, setActiveLicenseTarget] = useState<any>(null);
   const [pricingTargetInvitation, setPricingTargetInvitation] = useState<any>(null);
   const [transferTargetInvitation, setTransferTargetInvitation] = useState<any>(null);
+  const [customDomainTarget, setCustomDomainTarget] = useState<any>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
 
@@ -1031,6 +1033,16 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
                             <Copy className="w-3.5 h-3.5" />
                           </button>
 
+                          <button
+                            onClick={() => setCustomDomainTarget(inv)}
+                            className={`p-1.5 rounded-lg bg-neutral-900 border transition ${
+                              inv.customDomain ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' : 'border-neutral-800 text-neutral-400 hover:text-white'
+                            }`}
+                            title={inv.customDomain ? `Custom Domain: ${inv.customDomain}` : 'Atur Custom Domain'}
+                          >
+                            <Globe className="w-3.5 h-3.5" />
+                          </button>
+
                           {isAdmin && (
                             <>
                               <button
@@ -1205,6 +1217,16 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
                                   title="Duplikasi Undangan"
                                 >
                                   <Copy className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  onClick={() => setCustomDomainTarget(inv)}
+                                  className={`p-1.5 rounded-lg bg-neutral-900 border transition cursor-pointer ${
+                                    inv.customDomain ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' : 'border-neutral-800 text-neutral-400 hover:text-white'
+                                  }`}
+                                  title={inv.customDomain ? `Custom Domain: ${inv.customDomain}` : 'Atur Custom Domain'}
+                                >
+                                  <Globe className="w-3.5 h-3.5" />
                                 </button>
 
                                 {/* Admin Actions: Transfer & Override */}
@@ -1396,6 +1418,16 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
                           title="Duplikasi Proyek Undangan"
                         >
                           <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-400" />
+                        </button>
+
+                        <button
+                          onClick={() => setCustomDomainTarget(inv)}
+                          className={`p-2 sm:p-2.5 rounded-xl bg-neutral-900 border transition cursor-pointer ${
+                            inv.customDomain ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' : 'border-neutral-800 text-neutral-400 hover:text-white'
+                          }`}
+                          title={inv.customDomain ? `Custom Domain: ${inv.customDomain}` : 'Atur Custom Domain'}
+                        >
+                          <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
 
                         {/* Admin Action Buttons on Card (Transfer & Override) */}
@@ -1635,6 +1667,17 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
         onClose={() => setIsResellerHubOpen(false)}
         quotaTokens={currentUser?.quotaTokens || 0}
         onOpenPricing={() => handleOpenPricingForInvitation()}
+      />
+
+      {/* 🌐 Custom Domain Setup Modal */}
+      <CustomDomainModal
+        isOpen={Boolean(customDomainTarget)}
+        onClose={() => setCustomDomainTarget(null)}
+        invitation={customDomainTarget || {}}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['invitations-list'] });
+          setCustomDomainTarget(null);
+        }}
       />
     </div>
   );
