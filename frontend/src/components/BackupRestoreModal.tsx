@@ -83,10 +83,17 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
       const result = await backupApi.create(includeMedia);
       showToast(
         'success',
-        `Arsip ${result.filename} (${result.sizeFormatted}) berhasil dibuat di server.`,
+        `Arsip ${result.filename} (${result.sizeFormatted}) berhasil dibuat di server. Memulai unduhan otomatis...`,
         'Backup Selesai'
       );
       await loadBackups();
+
+      // 📥 Otomatis download file ZIP langsung ke komputer user
+      try {
+        await backupApi.download(result.filename);
+      } catch (dlErr: any) {
+        console.warn('Auto-download warning:', dlErr.message);
+      }
     } catch (err: any) {
       showToast('error', err.message || 'Gagal membuat backup data.', 'Gagal');
     } finally {
