@@ -348,7 +348,17 @@ export class BackupService {
       }
     }
 
-    // 4. Impor seluruh tabel Prisma secara berurutan dengan Smart Collision-Proof Resolvers
+    // 4. ATOMIC CLEAN WIPE: Kosongkan tabel data aplikasi terlebih dahulu agar bersih 1:1 tanpa konflik relasi
+    await prisma.$transaction([
+      prisma.rsvp.deleteMany(),
+      prisma.guest.deleteMany(),
+      prisma.mediaUpload.deleteMany(),
+      prisma.order.deleteMany(),
+      prisma.invitation.deleteMany(),
+      prisma.user.deleteMany(),
+      prisma.easyTunnel.deleteMany()
+    ]);
+
     const restoredCounts: Record<string, number> = {
       users: 0,
       invitations: 0,
@@ -362,55 +372,29 @@ export class BackupService {
       mediaFiles: mediaExtractedCount
     };
 
-    // A. Users (Resolve by ID, Email, or Phone)
+    // A. Users (Clean Pure Insert)
     if (Array.isArray(dumpData.users)) {
       for (const u of dumpData.users) {
         const { id, email, phone, name, password, role, quotaTokens, avatarUrl, createdAt, updatedAt } = u;
-        const existingUser = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { id },
-              { email },
-              ...(phone ? [{ phone }] : [])
-            ]
+        await prisma.user.create({
+          data: {
+            id,
+            email,
+            phone: phone || null,
+            name,
+            password,
+            role: role || 'USER',
+            quotaTokens: quotaTokens ?? 0,
+            avatarUrl: avatarUrl || null,
+            createdAt: createdAt ? new Date(createdAt) : new Date(),
+            updatedAt: updatedAt ? new Date(updatedAt) : new Date()
           }
         });
-
-        if (existingUser) {
-          await prisma.user.update({
-            where: { id: existingUser.id },
-            data: {
-              email,
-              phone: phone || null,
-              name,
-              password,
-              role: role || 'USER',
-              quotaTokens: quotaTokens ?? 0,
-              avatarUrl: avatarUrl || null,
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        } else {
-          await prisma.user.create({
-            data: {
-              id,
-              email,
-              phone: phone || null,
-              name,
-              password,
-              role: role || 'USER',
-              quotaTokens: quotaTokens ?? 0,
-              avatarUrl: avatarUrl || null,
-              createdAt: createdAt ? new Date(createdAt) : new Date(),
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        }
         restoredCounts.users++;
       }
     }
 
-    // B. Invitations (Resolve by ID or Slug)
+    // B. Invitations (Clean Pure Insert)
     if (Array.isArray(dumpData.invitations)) {
       for (const inv of dumpData.invitations) {
         const {
@@ -435,76 +419,34 @@ export class BackupService {
           updatedAt
         } = inv;
 
-        // Pastikan userId terhubung ke user yang valid di database
-        let validUserId = userId;
-        const userExists = await prisma.user.findUnique({ where: { id: userId } });
-        if (!userExists) {
-          const fallbackUser = await prisma.user.findFirst();
-          if (fallbackUser) validUserId = fallbackUser.id;
-        }
-
-        const existingInv = await prisma.invitation.findFirst({
-          where: {
-            OR: [
-              { id },
-              { slug }
-            ]
+        await prisma.invitation.create({
+          data: {
+            id,
+            userId,
+            eventType: eventType || 'WEDDING',
+            title,
+            slug,
+            customDomain: customDomain || null,
+            themeId: themeId || 'champagne_gold',
+            themeConfig: themeConfig || null,
+            stitchBlocks: stitchBlocks || null,
+            printConfig: printConfig || null,
+            eventDataJson,
+            status: status || 'DRAFT',
+            isWatermark: isWatermark ?? true,
+            allowPrintKit: allowPrintKit ?? false,
+            licenseKey: licenseKey || null,
+            planId: planId || null,
+            expiresAt: expiresAt ? new Date(expiresAt) : null,
+            createdAt: createdAt ? new Date(createdAt) : new Date(),
+            updatedAt: updatedAt ? new Date(updatedAt) : new Date()
           }
         });
-
-        if (existingInv) {
-          await prisma.invitation.update({
-            where: { id: existingInv.id },
-            data: {
-              userId: validUserId,
-              eventType: eventType || 'WEDDING',
-              title,
-              slug,
-              customDomain: customDomain || null,
-              themeId: themeId || 'champagne_gold',
-              themeConfig: themeConfig || null,
-              stitchBlocks: stitchBlocks || null,
-              printConfig: printConfig || null,
-              eventDataJson,
-              status: status || 'DRAFT',
-              isWatermark: isWatermark ?? true,
-              allowPrintKit: allowPrintKit ?? false,
-              licenseKey: licenseKey || null,
-              planId: planId || null,
-              expiresAt: expiresAt ? new Date(expiresAt) : null,
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        } else {
-          await prisma.invitation.create({
-            data: {
-              id,
-              userId: validUserId,
-              eventType: eventType || 'WEDDING',
-              title,
-              slug,
-              customDomain: customDomain || null,
-              themeId: themeId || 'champagne_gold',
-              themeConfig: themeConfig || null,
-              stitchBlocks: stitchBlocks || null,
-              printConfig: printConfig || null,
-              eventDataJson,
-              status: status || 'DRAFT',
-              isWatermark: isWatermark ?? true,
-              allowPrintKit: allowPrintKit ?? false,
-              licenseKey: licenseKey || null,
-              planId: planId || null,
-              expiresAt: expiresAt ? new Date(expiresAt) : null,
-              createdAt: createdAt ? new Date(createdAt) : new Date(),
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        }
         restoredCounts.invitations++;
       }
     }
 
-    // C. Guests (Resolve by ID or QRCode)
+    // C. Guests (Clean Pure Insert)
     if (Array.isArray(dumpData.guests)) {
       for (const g of dumpData.guests) {
         const {
@@ -523,91 +465,48 @@ export class BackupService {
           createdAt
         } = g;
 
-        const existingGuest = await prisma.guest.findFirst({
-          where: {
-            OR: [
-              { id },
-              { qrCode }
-            ]
+        await prisma.guest.create({
+          data: {
+            id,
+            invitationId,
+            name,
+            phone: phone || null,
+            address: address || null,
+            category: category || 'Tamu Undangan',
+            qrCode,
+            hasOpened: hasOpened ?? false,
+            openedAt: openedAt ? new Date(openedAt) : null,
+            isCheckedIn: isCheckedIn ?? false,
+            checkedInAt: checkedInAt ? new Date(checkedInAt) : null,
+            pax: pax ?? 1,
+            createdAt: createdAt ? new Date(createdAt) : new Date()
           }
         });
-
-        if (existingGuest) {
-          await prisma.guest.update({
-            where: { id: existingGuest.id },
-            data: {
-              invitationId,
-              name,
-              phone: phone || null,
-              address: address || null,
-              category: category || 'Tamu Undangan',
-              qrCode,
-              hasOpened: hasOpened ?? false,
-              openedAt: openedAt ? new Date(openedAt) : null,
-              isCheckedIn: isCheckedIn ?? false,
-              checkedInAt: checkedInAt ? new Date(checkedInAt) : null,
-              pax: pax ?? 1
-            }
-          });
-        } else {
-          await prisma.guest.create({
-            data: {
-              id,
-              invitationId,
-              name,
-              phone: phone || null,
-              address: address || null,
-              category: category || 'Tamu Undangan',
-              qrCode,
-              hasOpened: hasOpened ?? false,
-              openedAt: openedAt ? new Date(openedAt) : null,
-              isCheckedIn: isCheckedIn ?? false,
-              checkedInAt: checkedInAt ? new Date(checkedInAt) : null,
-              pax: pax ?? 1,
-              createdAt: createdAt ? new Date(createdAt) : new Date()
-            }
-          });
-        }
         restoredCounts.guests++;
       }
     }
 
-    // D. Rsvps
+    // D. Rsvps (Clean Pure Insert)
     if (Array.isArray(dumpData.rsvps)) {
       for (const r of dumpData.rsvps) {
         const { id, invitationId, name, attendance, pax, message, likes, createdAt } = r;
-        const existingRsvp = await prisma.rsvp.findUnique({ where: { id } });
-        if (existingRsvp) {
-          await prisma.rsvp.update({
-            where: { id },
-            data: {
-              invitationId,
-              name,
-              attendance: attendance || 'HADIR',
-              pax: pax ?? 1,
-              message: message || null,
-              likes: likes ?? 0
-            }
-          });
-        } else {
-          await prisma.rsvp.create({
-            data: {
-              id,
-              invitationId,
-              name,
-              attendance: attendance || 'HADIR',
-              pax: pax ?? 1,
-              message: message || null,
-              likes: likes ?? 0,
-              createdAt: createdAt ? new Date(createdAt) : new Date()
-            }
-          });
-        }
+        await prisma.rsvp.create({
+          data: {
+            id,
+            invitationId,
+            name,
+            attendance: attendance || 'HADIR',
+            pax: pax ?? 1,
+            message: message || null,
+            likes: likes ?? 0,
+            createdAt: createdAt ? new Date(createdAt) : new Date()
+          }
+        });
         restoredCounts.rsvps++;
       }
     }
 
-    // E. Orders (Resolve by ID or InvoiceNumber)
+    // E. Orders (Clean Pure Insert)
     if (Array.isArray(dumpData.orders)) {
       for (const o of dumpData.orders) {
         const {
@@ -626,93 +525,49 @@ export class BackupService {
           createdAt
         } = o;
 
-        const existingOrder = await prisma.order.findFirst({
-          where: {
-            OR: [
-              { id },
-              { invoiceNumber }
-            ]
+        await prisma.order.create({
+          data: {
+            id,
+            userId,
+            invitationId: invitationId || null,
+            invoiceNumber,
+            planId,
+            planName: planName || null,
+            amount: Number(amount) || 0,
+            status: status || 'unpaid',
+            paymentMethod: paymentMethod || 'QRIS2',
+            paymentDataJson: paymentDataJson || null,
+            licenseKey: licenseKey || null,
+            paidAt: paidAt ? new Date(paidAt) : null,
+            createdAt: createdAt ? new Date(createdAt) : new Date()
           }
         });
-
-        if (existingOrder) {
-          await prisma.order.update({
-            where: { id: existingOrder.id },
-            data: {
-              userId,
-              invitationId: invitationId || null,
-              invoiceNumber,
-              planId,
-              planName: planName || null,
-              amount: Number(amount) || 0,
-              status: status || 'unpaid',
-              paymentMethod: paymentMethod || 'QRIS2',
-              paymentDataJson: paymentDataJson || null,
-              licenseKey: licenseKey || null,
-              paidAt: paidAt ? new Date(paidAt) : null
-            }
-          });
-        } else {
-          await prisma.order.create({
-            data: {
-              id,
-              userId,
-              invitationId: invitationId || null,
-              invoiceNumber,
-              planId,
-              planName: planName || null,
-              amount: Number(amount) || 0,
-              status: status || 'unpaid',
-              paymentMethod: paymentMethod || 'QRIS2',
-              paymentDataJson: paymentDataJson || null,
-              licenseKey: licenseKey || null,
-              paidAt: paidAt ? new Date(paidAt) : null,
-              createdAt: createdAt ? new Date(createdAt) : new Date()
-            }
-          });
-        }
         restoredCounts.orders++;
       }
     }
 
-    // F. MediaUploads
+    // F. MediaUploads (Clean Pure Insert)
     if (Array.isArray(dumpData.mediaUploads)) {
       for (const m of dumpData.mediaUploads) {
         const { id, userId, invitationId, originalName, fileName, fileUrl, mimeType, sizeBytes, createdAt } = m;
-        const existingMedia = await prisma.mediaUpload.findUnique({ where: { id } });
-        if (existingMedia) {
-          await prisma.mediaUpload.update({
-            where: { id },
-            data: {
-              userId,
-              invitationId: invitationId || null,
-              originalName,
-              fileName,
-              fileUrl,
-              mimeType,
-              sizeBytes: Number(sizeBytes) || 0
-            }
-          });
-        } else {
-          await prisma.mediaUpload.create({
-            data: {
-              id,
-              userId,
-              invitationId: invitationId || null,
-              originalName,
-              fileName,
-              fileUrl,
-              mimeType,
-              sizeBytes: Number(sizeBytes) || 0,
-              createdAt: createdAt ? new Date(createdAt) : new Date()
-            }
-          });
-        }
+        await prisma.mediaUpload.create({
+          data: {
+            id,
+            userId,
+            invitationId: invitationId || null,
+            originalName,
+            fileName,
+            fileUrl,
+            mimeType,
+            sizeBytes: Number(sizeBytes) || 0,
+            createdAt: createdAt ? new Date(createdAt) : new Date()
+          }
+        });
         restoredCounts.mediaUploads++;
       }
     }
 
-    // G. ThemePresets
+    // G. ThemePresets (Master Catalog Upsert)
     if (Array.isArray(dumpData.themePresets)) {
       for (const t of dumpData.themePresets) {
         const {
@@ -733,52 +588,46 @@ export class BackupService {
           updatedAt
         } = t;
 
-        const existingTheme = await prisma.themePreset.findUnique({ where: { id } });
-        if (existingTheme) {
-          await prisma.themePreset.update({
-            where: { id },
-            data: {
-              name,
-              subtitle: subtitle || null,
-              category,
-              mode: mode || 'dark',
-              archetype: archetype || 'royal_arch',
-              paletteJson,
-              typographyJson: typographyJson || null,
-              ornamentsJson: ornamentsJson || null,
-              tags: tags || null,
-              isPremium: isPremium ?? false,
-              isActive: isActive ?? true,
-              sortOrder: sortOrder ?? 0,
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        } else {
-          await prisma.themePreset.create({
-            data: {
-              id,
-              name,
-              subtitle: subtitle || null,
-              category,
-              mode: mode || 'dark',
-              archetype: archetype || 'royal_arch',
-              paletteJson,
-              typographyJson: typographyJson || null,
-              ornamentsJson: ornamentsJson || null,
-              tags: tags || null,
-              isPremium: isPremium ?? false,
-              isActive: isActive ?? true,
-              sortOrder: sortOrder ?? 0,
-              createdAt: createdAt ? new Date(createdAt) : new Date(),
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        }
+        await prisma.themePreset.upsert({
+          where: { id },
+          update: {
+            name,
+            subtitle: subtitle || null,
+            category,
+            mode: mode || 'dark',
+            archetype: archetype || 'royal_arch',
+            paletteJson,
+            typographyJson: typographyJson || null,
+            ornamentsJson: ornamentsJson || null,
+            tags: tags || null,
+            isPremium: isPremium ?? false,
+            isActive: isActive ?? true,
+            sortOrder: sortOrder ?? 0,
+            updatedAt: updatedAt ? new Date(updatedAt) : new Date()
+          },
+          create: {
+            id,
+            name,
+            subtitle: subtitle || null,
+            category,
+            mode: mode || 'dark',
+            archetype: archetype || 'royal_arch',
+            paletteJson,
+            typographyJson: typographyJson || null,
+            ornamentsJson: ornamentsJson || null,
+            tags: tags || null,
+            isPremium: isPremium ?? false,
+            isActive: isActive ?? true,
+            sortOrder: sortOrder ?? 0,
+            createdAt: createdAt ? new Date(createdAt) : new Date(),
+            updatedAt: updatedAt ? new Date(updatedAt) : new Date()
+          }
+        });
         restoredCounts.themePresets++;
       }
     }
 
-    // H. StyleKitPresets
+    // H. StyleKitPresets (Master Catalog Upsert)
     if (Array.isArray(dumpData.styleKitPresets)) {
       for (const s of dumpData.styleKitPresets) {
         const {
@@ -800,97 +649,65 @@ export class BackupService {
           updatedAt
         } = s;
 
-        const existingKit = await prisma.styleKitPreset.findUnique({ where: { id } });
-        if (existingKit) {
-          await prisma.styleKitPreset.update({
-            where: { id },
-            data: {
-              name,
-              category,
-              tagline,
-              themeId,
-              fontPairingId,
-              frameShape,
-              previewGradient,
-              primaryColor,
-              description,
-              badge,
-              tags: tags || null,
-              isActive: isActive ?? true,
-              sortOrder: sortOrder ?? 0,
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        } else {
-          await prisma.styleKitPreset.create({
-            data: {
-              id,
-              name,
-              category,
-              tagline,
-              themeId,
-              fontPairingId,
-              frameShape,
-              previewGradient,
-              primaryColor,
-              description,
-              badge,
-              tags: tags || null,
-              isActive: isActive ?? true,
-              sortOrder: sortOrder ?? 0,
-              createdAt: createdAt ? new Date(createdAt) : new Date(),
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        }
+        await prisma.styleKitPreset.upsert({
+          where: { id },
+          update: {
+            name,
+            category,
+            tagline,
+            themeId,
+            fontPairingId,
+            frameShape,
+            previewGradient,
+            primaryColor,
+            description,
+            badge,
+            tags: tags || null,
+            isActive: isActive ?? true,
+            sortOrder: sortOrder ?? 0,
+            updatedAt: updatedAt ? new Date(updatedAt) : new Date()
+          },
+          create: {
+            id,
+            name,
+            category,
+            tagline,
+            themeId,
+            fontPairingId,
+            frameShape,
+            previewGradient,
+            primaryColor,
+            description,
+            badge,
+            tags: tags || null,
+            isActive: isActive ?? true,
+            sortOrder: sortOrder ?? 0,
+            createdAt: createdAt ? new Date(createdAt) : new Date(),
+            updatedAt: updatedAt ? new Date(updatedAt) : new Date()
+          }
+        });
         restoredCounts.styleKitPresets++;
       }
     }
 
-    // I. EasyTunnels (Resolve by ID, Slug, or LicenseKey)
+    // I. EasyTunnels (Clean Pure Insert)
     if (Array.isArray(dumpData.easyTunnels)) {
       for (const et of dumpData.easyTunnels) {
         const { id, appName, licenseKey, slug, localPort, status, customDomain, expiresAt, createdAt, updatedAt } = et;
-        const existingTunnel = await prisma.easyTunnel.findFirst({
-          where: {
-            OR: [
-              { id },
-              { slug },
-              { licenseKey }
-            ]
+        await prisma.easyTunnel.create({
+          data: {
+            id,
+            appName,
+            licenseKey,
+            slug,
+            localPort,
+            status: status || 'inactive',
+            customDomain: customDomain || null,
+            expiresAt: expiresAt ? new Date(expiresAt) : null,
+            createdAt: createdAt ? new Date(createdAt) : new Date(),
+            updatedAt: updatedAt ? new Date(updatedAt) : new Date()
           }
         });
-
-        if (existingTunnel) {
-          await prisma.easyTunnel.update({
-            where: { id: existingTunnel.id },
-            data: {
-              appName,
-              licenseKey,
-              slug,
-              localPort,
-              status: status || 'inactive',
-              customDomain: customDomain || null,
-              expiresAt: expiresAt ? new Date(expiresAt) : null,
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        } else {
-          await prisma.easyTunnel.create({
-            data: {
-              id,
-              appName,
-              licenseKey,
-              slug,
-              localPort,
-              status: status || 'inactive',
-              customDomain: customDomain || null,
-              expiresAt: expiresAt ? new Date(expiresAt) : null,
-              createdAt: createdAt ? new Date(createdAt) : new Date(),
-              updatedAt: updatedAt ? new Date(updatedAt) : new Date()
-            }
-          });
-        }
         restoredCounts.easyTunnels++;
       }
     }
