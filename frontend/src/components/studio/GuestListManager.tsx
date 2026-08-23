@@ -317,7 +317,7 @@ export const GuestListManager = memo(function GuestListManager({
   const handleCopyLinkOnly = useCallback((guest: GuestRecipient) => {
     const activeSlug = data.slug || data.id || 'undangan';
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://luxury.absenta.id';
-    const shareUrl = `${baseUrl}/?slug=${encodeURIComponent(activeSlug)}&to=${encodeURIComponent(guest.name)}&mode=invitation`;
+    const shareUrl = `${baseUrl}/?slug=${encodeURIComponent(activeSlug)}&to=${encodeURIComponent(guest.name)}`;
 
     navigator.clipboard.writeText(shareUrl);
     setCopiedGuestId(guest.id);

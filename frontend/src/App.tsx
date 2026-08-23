@@ -109,10 +109,21 @@ export default function App() {
   const [isEnvelopeOpen, setIsEnvelopeOpen] = useState(false);
   const [guestName, setGuestName] = useState('Bapak Joko & Istri');
 
-  // Initialize from URL parameters if provided (e.g. ?to=Nama+Tamu&mode=studio&theme=emerald_sage)
+  // Initialize from URL parameters & Pathname (supports clean URLs & legacy query URLs)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const toParam = params.get('to');
+    const pathname = window.location.pathname;
+    const pathSegments = pathname.split('/').filter(Boolean);
+
+    // Extract slug from path (e.g. /m-akmal-abdul-jalil or /slug/m-akmal-abdul-jalil)
+    const pathSlug =
+      pathSegments.length > 0 && !['api', 'print', 'studio', 'dashboard', 'uploads', 'assets'].includes(pathSegments[0])
+        ? pathSegments[0]
+        : null;
+
+    const toParam =
+      params.get('to') ||
+      (pathSegments.length >= 3 && pathSegments[1] === 'to' ? decodeURIComponent(pathSegments[2]) : null);
     const modeParam = params.get('mode');
     const eventParam = params.get('event');
     const themeParam = params.get('theme');
@@ -126,7 +137,7 @@ export default function App() {
       setViewMode('print');
     } else if (modeParam === 'dashboard') {
       setViewMode('dashboard');
-    } else if (modeParam === 'invitation' || toParam) {
+    } else if (modeParam === 'invitation' || toParam || pathSlug) {
       setViewMode('invitation');
     }
 
@@ -141,9 +152,11 @@ export default function App() {
       setInvitationData((prev) => ({ ...prev, theme: themeParam as ThemeToken }));
     }
 
-    // 🌐 Smart Custom Domain Auto-Detection: Jika domain kustom diakses (bukan luxury.absenta.id), langsung tampilkan undangan tamu
+    // 🌐 Smart Custom Domain Auto-Detection
     const hostname = window.location.hostname.toLowerCase();
-    const isCustomDomain = !['luxury.absenta.id', 'smkn1pld.absenta.id', 'absenta.id', 'localhost', '127.0.0.1'].includes(hostname) && !hostname.endsWith('.absenta.id');
+    const isCustomDomain =
+      !['luxury.absenta.id', 'smkn1pld.absenta.id', 'absenta.id', 'localhost', '127.0.0.1'].includes(hostname) &&
+      !hostname.endsWith('.absenta.id');
 
     if (isCustomDomain && !modeParam) {
       setViewMode('invitation');
@@ -152,7 +165,7 @@ export default function App() {
     // Sync Initial Invitation & Guest List from SQLite Backend
     const syncFromBackend = async () => {
       try {
-        const querySlugOrId = params.get('slug') || params.get('id') || (isCustomDomain ? hostname : null);
+        const querySlugOrId = params.get('slug') || params.get('id') || pathSlug || (isCustomDomain ? hostname : null);
         const targetIdentifier = querySlugOrId || localStorage.getItem('absenta_active_invitation_id');
         let res: any;
 

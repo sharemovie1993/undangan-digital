@@ -51,7 +51,7 @@ export const generateWhatsAppMessage = (
   baseUrl: string
 ): string => {
   const activeSlug = data.slug || data.id || 'undangan';
-  const shareUrl = `${baseUrl}/?slug=${encodeURIComponent(activeSlug)}&to=${encodeURIComponent(guest.name)}&mode=invitation`;
+  const shareUrl = `${baseUrl}/?slug=${encodeURIComponent(activeSlug)}&to=${encodeURIComponent(guest.name)}`;
   const eventType = (data.eventType || 'wedding').toLowerCase();
 
   // 1. Ambil Nama Profil Lengkap & Utuh (Prioritaskan Nama Lengkap)
