@@ -101,9 +101,15 @@ export const generateWhatsAppMessage = (
   const sessionTitle = firstSession?.title ? `\n🏷️ *Acara:* ${firstSession.title}` : '';
   const dateInfo = formattedDate ? `\n🗓️ *Hari/Tanggal:* ${formattedDate}` : '';
   const timeInfo = formattedTime ? `\n⏰ *Waktu:* ${formattedTime}` : '';
-  const locationInfo = firstSession?.venueName
-    ? `\n📍 *Tempat / Lokasi:* ${firstSession.venueName}${firstSession.venueAddress ? ` (${firstSession.venueAddress})` : ''}`
-    : '';
+  const locationInfo = (() => {
+    if (!firstSession?.venueName) return '';
+    const venue = firstSession.venueName.trim();
+    const address = (firstSession.venueAddress || '').trim();
+    if (address) {
+      return `\n📍 *Lokasi:* ${venue}\n   _${address}_`;
+    }
+    return `\n📍 *Lokasi:* ${venue}`;
+  })();
 
   // 3. Tanda Tangan Keluarga Besar
   const familySignature = (() => {
