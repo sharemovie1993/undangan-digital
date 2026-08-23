@@ -210,16 +210,14 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
               {effectiveTitle}
             </h1>
 
-            {/* Guest Envelope Recipient Card (with inner corner filigree & theme border) */}
+            {/* Guest Envelope Recipient Card (Clean Minimalist with theme border) */}
             <div
-              className="rounded-2xl p-4 mb-6 border relative overflow-hidden z-10 shadow-md"
+              className="rounded-2xl p-4 mb-6 border relative z-10 shadow-md backdrop-blur-xs"
               style={{
                 backgroundColor: theme.accentBg,
                 borderColor: `${activePrimary}35`,
               }}
             >
-              <CornerOrnaments type={cornerOrnamentType} primaryColor={activePrimary} />
-
               <p className="text-[10px] uppercase tracking-widest mb-1 font-medium" style={{ color: theme.textMuted }}>
                 Kepada Yth. Bapak/Ibu/Saudara/i:
               </p>
