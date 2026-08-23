@@ -341,30 +341,32 @@ export const RsvpWishesSection = memo(function RsvpWishesSection({
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-              {/* Nama Tamu */}
+              {/* 1. Field Nama Tamu */}
               <div>
-                <label className="block font-semibold mb-1" style={{ color: theme.textMain }}>Nama Lengkap</label>
+                <label className="block font-semibold mb-1" style={{ color: theme.textMain }}>
+                  Nama Lengkap
+                </label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 opacity-60" style={{ color: theme.textMuted }} />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 opacity-70" style={{ color: activePrimary }} />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Contoh: Bpk. Ahmad Suherman & Kel"
-                    className="w-full rounded-xl border pl-10 pr-4 py-2.5 placeholder-neutral-500 focus:outline-none focus:ring-1"
+                    className="w-full rounded-xl border pl-10 pr-4 py-2.5 transition focus:outline-none focus:ring-1"
                     style={{
-                      borderColor: `${activePrimary}40`,
-                      backgroundColor: theme.accentBg,
+                      borderColor: `${activePrimary}35`,
+                      backgroundColor: theme.accentBg || `${cardBg}ee`,
                       color: theme.textMain,
                     }}
                   />
                 </div>
               </div>
 
-              {/* Status Kehadiran (3 Chips) */}
+              {/* 2. Field Status Kehadiran (3 Chips Theme-Aware) */}
               <div>
-                <label className="block text-neutral-300 font-semibold mb-1.5">
+                <label className="block font-semibold mb-1.5" style={{ color: theme.textMain }}>
                   Konfirmasi Kehadiran
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -373,25 +375,34 @@ export const RsvpWishesSection = memo(function RsvpWishesSection({
                       id: 'hadir' as const,
                       label: 'Hadir',
                       icon: CheckCircle2,
-                      color: 'text-emerald-400',
-                      bg: 'bg-emerald-500/15',
-                      border: 'border-emerald-500/40',
+                      activeStyle: {
+                        backgroundColor: `${activePrimary}25`,
+                        borderColor: activePrimary,
+                        color: activePrimary,
+                        boxShadow: `0 0 12px ${activePrimary}25`,
+                      },
                     },
                     {
                       id: 'tidak_hadir' as const,
                       label: 'Tidak Hadir',
                       icon: XCircle,
-                      color: 'text-rose-400',
-                      bg: 'bg-rose-500/15',
-                      border: 'border-rose-500/40',
+                      activeStyle: {
+                        backgroundColor: 'rgba(244, 63, 94, 0.18)',
+                        borderColor: 'rgba(244, 63, 94, 0.5)',
+                        color: '#fb7185',
+                        boxShadow: '0 0 12px rgba(244, 63, 94, 0.2)',
+                      },
                     },
                     {
                       id: 'ragu' as const,
                       label: 'Masih Ragu',
                       icon: HelpCircle,
-                      color: 'text-amber-400',
-                      bg: 'bg-amber-500/15',
-                      border: 'border-amber-500/40',
+                      activeStyle: {
+                        backgroundColor: 'rgba(245, 158, 11, 0.18)',
+                        borderColor: 'rgba(245, 158, 11, 0.5)',
+                        color: '#fbbf24',
+                        boxShadow: '0 0 12px rgba(245, 158, 11, 0.2)',
+                      },
                     },
                   ].map((item) => {
                     const Icon = item.icon;
@@ -401,11 +412,16 @@ export const RsvpWishesSection = memo(function RsvpWishesSection({
                         key={item.id}
                         type="button"
                         onClick={() => setStatus(item.id)}
-                        className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition cursor-pointer ${
+                        className="flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition cursor-pointer"
+                        style={
                           isSelected
-                            ? `${item.bg} ${item.border} ${item.color} font-bold shadow-md`
-                            : 'bg-neutral-950/60 border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                        }`}
+                            ? { ...item.activeStyle, fontWeight: 700 }
+                            : {
+                                backgroundColor: `${cardBg}aa`,
+                                borderColor: `${activePrimary}20`,
+                                color: theme.textMuted,
+                              }
+                        }
                       >
                         <Icon className="w-4 h-4 mb-1" />
                         <span className="text-[11px]">{item.label}</span>
@@ -415,39 +431,41 @@ export const RsvpWishesSection = memo(function RsvpWishesSection({
                 </div>
               </div>
 
-              {/* Jumlah Pax (Hanya jika hadir) */}
+              {/* 3. Field Jumlah Pax (Hanya jika hadir) */}
               {status === 'hadir' && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   className="space-y-1"
                 >
-                  <label className="block text-neutral-300 font-semibold mb-1">
+                  <label className="block font-semibold mb-1" style={{ color: theme.textMain }}>
                     Jumlah Orang yang Hadir
                   </label>
                   <div className="relative">
-                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 opacity-70" style={{ color: activePrimary }} />
                     <select
                       value={pax}
                       onChange={(e) => setPax(Number(e.target.value))}
-                      className="w-full rounded-xl border bg-neutral-950/80 pl-10 pr-4 py-2.5 text-white focus:outline-none focus:ring-1 appearance-none cursor-pointer"
+                      className="w-full rounded-xl border pl-10 pr-4 py-2.5 focus:outline-none focus:ring-1 appearance-none cursor-pointer"
                       style={{
-                        borderColor: `${activePrimary}40`,
+                        borderColor: `${activePrimary}35`,
+                        backgroundColor: theme.accentBg || `${cardBg}ee`,
+                        color: theme.textMain,
                       }}
                     >
-                      <option value={1}>1 Orang</option>
-                      <option value={2}>2 Orang (Pasangan)</option>
-                      <option value={3}>3 Orang (Keluarga)</option>
-                      <option value={4}>4 Orang</option>
-                      <option value={5}>5+ Orang</option>
+                      <option value={1} style={{ backgroundColor: cardBg, color: theme.textMain }}>1 Orang</option>
+                      <option value={2} style={{ backgroundColor: cardBg, color: theme.textMain }}>2 Orang (Pasangan)</option>
+                      <option value={3} style={{ backgroundColor: cardBg, color: theme.textMain }}>3 Orang (Keluarga)</option>
+                      <option value={4} style={{ backgroundColor: cardBg, color: theme.textMain }}>4 Orang</option>
+                      <option value={5} style={{ backgroundColor: cardBg, color: theme.textMain }}>5+ Orang</option>
                     </select>
                   </div>
                 </motion.div>
               )}
 
-              {/* Ucapan & Doa Restu */}
+              {/* 4. Field Ucapan & Doa Restu */}
               <div>
-                <label className="block text-neutral-300 font-semibold mb-1">
+                <label className="block font-semibold mb-1" style={{ color: theme.textMain }}>
                   Ucapan & Doa Restu
                 </label>
                 <textarea
@@ -455,21 +473,24 @@ export const RsvpWishesSection = memo(function RsvpWishesSection({
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Tuliskan ucapan selamat dan doa restu yang tulus..."
-                  className="w-full rounded-xl border bg-neutral-950/80 p-3 text-white placeholder-neutral-500 focus:outline-none focus:ring-1 resize-none"
+                  className="w-full rounded-xl border p-3 focus:outline-none focus:ring-1 resize-none placeholder:opacity-60"
                   style={{
-                    borderColor: `${activePrimary}40`,
+                    borderColor: `${activePrimary}35`,
+                    backgroundColor: theme.accentBg || `${cardBg}ee`,
+                    color: theme.textMain,
                   }}
                 />
               </div>
 
-              {/* Submit Button */}
+              {/* 5. Tombol Submit (Theme-Aware Primary Button) */}
               <button
                 type="submit"
                 disabled={submitMutation.isPending || !name.trim()}
                 className="w-full py-3 rounded-xl font-bold text-xs tracking-wide transition shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 style={{
                   backgroundColor: activePrimary,
-                  color: '#0a0a0b',
+                  color: theme.mode === 'light' ? '#ffffff' : '#0a0a0b',
+                  boxShadow: `0 4px 20px ${activePrimary}35`,
                 }}
               >
                 {submitMutation.isPending ? (
