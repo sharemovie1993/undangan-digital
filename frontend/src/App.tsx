@@ -184,13 +184,32 @@ export default function App() {
             try { parsedStitchBlocks = JSON.parse(parsedStitchBlocks); } catch {}
           }
 
+          const rawTitle = inv.title || evData.eventTitle || '';
+          const detectedEventType =
+            inv.eventType?.toLowerCase() ||
+            (/khitan/i.test(rawTitle) ? 'khitanan' :
+             /aqiqah/i.test(rawTitle) ? 'aqiqah' :
+             /birthday|ulang tahun/i.test(rawTitle) ? 'birthday' :
+             prev.eventType);
+
+          // Auto-correct tagline if it was left as 'THE WEDDING OF' on a non-wedding event
+          let safeTagline = evData.tagline;
+          if (detectedEventType === 'khitanan' && (!safeTagline || safeTagline.toUpperCase() === 'THE WEDDING OF')) {
+            safeTagline = 'WALIMATUL KHITAN';
+          } else if (detectedEventType === 'aqiqah' && (!safeTagline || safeTagline.toUpperCase() === 'THE WEDDING OF')) {
+            safeTagline = 'TASYAKURAN AQIQAH';
+          } else if (detectedEventType === 'birthday' && (!safeTagline || safeTagline.toUpperCase() === 'THE WEDDING OF')) {
+            safeTagline = 'HAPPY BIRTHDAY';
+          }
+
           setInvitationData((prev) => ({
             ...prev,
             ...evData,
             id: inv.id,
             slug: inv.slug,
             eventTitle: inv.title,
-            eventType: inv.eventType?.toLowerCase() || prev.eventType,
+            eventType: detectedEventType,
+            tagline: safeTagline || evData.tagline,
             theme: inv.themeId || prev.theme,
             themeConfig: parsedThemeConfig || evData.themeConfig || prev.themeConfig,
             enabledBlocks: evData.enabledBlocks || prev.enabledBlocks,

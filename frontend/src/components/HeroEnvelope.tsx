@@ -28,34 +28,99 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
   const particleEffect = data.themeConfig?.particleEffect || (theme.mode === 'dark' ? 'gold_dust' : 'none');
   const waxColor = data.themeConfig?.waxSealColor || (theme.category === 'royal' ? 'gold' : theme.category === 'traditional' ? 'maroon' : 'sage');
 
-  const defaultTagline =
-    data.eventType === 'khitanan'
-      ? 'WALIMATUL KHITAN'
-      : data.eventType === 'aqiqah'
-      ? 'TASYAKURAN AQIQAH'
-      : data.eventType === 'birthday'
-      ? 'HAPPY BIRTHDAY'
-      : 'THE WEDDING OF';
+  // 1. Deteksi Jenis Acara Cerdas (dari eventType atau analisis kata kunci di Judul)
+  const rawTitle = data.eventTitle || (data as any).title || '';
+  const isKhitanDetected =
+    data.eventType === 'khitanan' ||
+    /khitan/i.test(rawTitle) ||
+    /khitan/i.test(data.tagline || '');
 
-  const effectiveTagline = data.tagline || defaultTagline;
+  const isAqiqahDetected =
+    data.eventType === 'aqiqah' ||
+    /aqiqah/i.test(rawTitle) ||
+    /aqiqah/i.test(data.tagline || '');
 
+  const isBirthdayDetected =
+    data.eventType === 'birthday' ||
+    /birthday|ulang tahun/i.test(rawTitle) ||
+    /birthday|ulang tahun/i.test(data.tagline || '');
+
+  const isWedding = !isKhitanDetected && !isAqiqahDetected && !isBirthdayDetected;
+
+  // 2. Tagline Cerdas (Cegah muncul 'THE WEDDING OF' pada acara Khitanan / Aqiqah / Ultah)
+  const effectiveTagline = (() => {
+    if (isKhitanDetected) {
+      if (!data.tagline || data.tagline.trim().toUpperCase() === 'THE WEDDING OF') {
+        return 'WALIMATUL KHITAN';
+      }
+      return data.tagline;
+    }
+    if (isAqiqahDetected) {
+      if (!data.tagline || data.tagline.trim().toUpperCase() === 'THE WEDDING OF') {
+        return 'TASYAKURAN AQIQAH';
+      }
+      return data.tagline;
+    }
+    if (isBirthdayDetected) {
+      if (!data.tagline || data.tagline.trim().toUpperCase() === 'THE WEDDING OF') {
+        return 'HAPPY BIRTHDAY';
+      }
+      return data.tagline;
+    }
+    return data.tagline || 'THE WEDDING OF';
+  })();
+
+  // 3. Rekonstruksi Judul Undangan Lengkap (Cegah nama terpotong "M.")
+  const effectiveTitle = (() => {
+    if (isKhitanDetected) {
+      const childName = data.profiles?.[0]?.name?.trim() || data.profiles?.[0]?.fullName?.trim();
+      // Jika rawTitle terpotong (misal "Walimatul Khitan M." atau hanya "Walimatul Khitan") tapi profil memiliki nama lebih lengkap
+      if (childName && (!rawTitle || /walimatul khitan\s+[a-z]\.?$/i.test(rawTitle.trim()) || rawTitle.trim().toLowerCase() === 'walimatul khitan')) {
+        return `Walimatul Khitan ${childName}`;
+      }
+      return rawTitle || (childName ? `Walimatul Khitan ${childName}` : 'Walimatul Khitan');
+    }
+    if (isAqiqahDetected) {
+      const childName = data.profiles?.[0]?.name?.trim() || data.profiles?.[0]?.fullName?.trim();
+      if (childName && (!rawTitle || /tasyakuran aqiqah\s+[a-z]\.?$/i.test(rawTitle.trim()) || rawTitle.trim().toLowerCase() === 'tasyakuran aqiqah')) {
+        return `Tasyakuran Aqiqah ${childName}`;
+      }
+      return rawTitle || (childName ? `Tasyakuran Aqiqah ${childName}` : 'Tasyakuran Aqiqah');
+    }
+    if (isBirthdayDetected) {
+      const name = data.profiles?.[0]?.name?.trim() || data.profiles?.[0]?.fullName?.trim();
+      if (name && (!rawTitle || rawTitle.trim().toLowerCase() === 'birthday')) {
+        return `Ulang Tahun ${name}`;
+      }
+      return rawTitle || (name ? `Ulang Tahun ${name}` : 'Birthday Celebration');
+    }
+    // Wedding
+    const p1 = data.profiles?.[0]?.name?.trim();
+    const p2 = data.profiles?.[1]?.name?.trim();
+    if (p1 && p2 && (!rawTitle || !rawTitle.includes('&'))) {
+      return `${p1} & ${p2}`;
+    }
+    return rawTitle || 'Romeo & Juliet';
+  })();
+
+  // 4. Monogram Segel Lilin Cerdas
   const monogram = (() => {
-    if (data.eventType === 'wedding') {
-      const p1 = data.profiles?.[0]?.name?.trim()?.[0] || data.eventTitle?.split('&')[0]?.trim()?.[0] || 'R';
-      const p2 = data.profiles?.[1]?.name?.trim()?.[0] || data.eventTitle?.split('&')[1]?.trim()?.[0] || 'J';
+    if (isWedding) {
+      const p1 = data.profiles?.[0]?.name?.trim()?.[0] || effectiveTitle?.split('&')[0]?.trim()?.[0] || 'R';
+      const p2 = data.profiles?.[1]?.name?.trim()?.[0] || effectiveTitle?.split('&')[1]?.trim()?.[0] || 'J';
       return `${p1.toUpperCase()} & ${p2.toUpperCase()}`;
     }
     // Anak / Yang berulang tahun
-    const rawName = data.profiles?.[0]?.name?.trim() || data.eventTitle?.replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Syukuran|Ulang Tahun)\s*/i, '').trim() || '';
+    const rawName = data.profiles?.[0]?.name?.trim() || data.profiles?.[0]?.fullName?.trim() || effectiveTitle?.replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Syukuran|Ulang Tahun)\s*/i, '').trim() || '';
     if (rawName) {
       const words = rawName.split(/\s+/).filter(Boolean);
-      // Jika kata pertama adalah singkatan "M." atau "M", ambil kata kedua
+      // Jika kata pertama adalah singkatan "M." atau "M", ambil kata kedua jika tersedia
       if (words.length > 1 && (words[0].length <= 2 || words[0].endsWith('.'))) {
         return words[1][0].toUpperCase();
       }
       return words[0][0].toUpperCase();
     }
-    return 'L';
+    return isKhitanDetected ? 'K' : isAqiqahDetected ? 'A' : 'B';
   })();
 
   return (
@@ -107,7 +172,7 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
 
             {/* Event Title */}
             <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6 leading-tight" style={{ color: theme.textMain }}>
-              {data.eventTitle}
+              {effectiveTitle}
             </h1>
 
             {/* Guest Envelope Recipient Card */}
