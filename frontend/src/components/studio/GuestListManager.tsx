@@ -23,7 +23,7 @@ interface GuestListManagerProps {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 📱 GuestCardItem — Memoized Card Component untuk Menghemat CPU HP
+// 📱 GuestCardItem — 1-Row Ultra-Compact Layout (Nama | Keluarga | Aksi)
 // ─────────────────────────────────────────────────────────────────────────────
 interface GuestCardItemProps {
   guest: GuestRecipient;
@@ -48,103 +48,96 @@ const GuestCardItem = memo(function GuestCardItem({
   const isOpened = Boolean(guest.hasOpened || guest.isCheckedIn || isAttending || isNotAttending);
 
   return (
-    <div className="bg-[#111115] hover:bg-[#16161c] border border-white/5 rounded-2xl p-3 space-y-2 transition shadow-xs contain-content">
-      {/* Top Row: Name & Status Badge */}
-      <div className="flex items-start justify-between gap-2">
+    <div className="bg-[#111115] hover:bg-[#16161c] border border-white/5 hover:border-white/10 rounded-xl px-2.5 py-2 flex items-center justify-between gap-2 transition shadow-xs">
+      {/* 1. NAMA & STATUS (KIRI) */}
+      <div className="min-w-0 flex-1 flex items-center gap-2">
+        <span
+          className={`w-2 h-2 rounded-full shrink-0 ${
+            isAttending
+              ? 'bg-emerald-400 ring-2 ring-emerald-400/20'
+              : isNotAttending
+              ? 'bg-rose-400 ring-2 ring-rose-400/20'
+              : isOpened
+              ? 'bg-blue-400 ring-2 ring-blue-400/20'
+              : 'bg-amber-400 ring-2 ring-amber-400/20'
+          }`}
+          title={isAttending ? 'Hadir' : isNotAttending ? 'Tidak Hadir' : isOpened ? 'Sudah Dibuka' : 'Belum Dibuka'}
+        />
         <div className="min-w-0 flex-1">
-          <h4 className="font-bold text-xs sm:text-sm text-white truncate">
-            {guest.name}
-          </h4>
-          <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-neutral-400 flex-wrap">
-            <span className="px-1.5 py-0.2 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium">
-              {guest.group || 'Tamu Undangan'}
-            </span>
-            {cityText && (
-              <span className="flex items-center gap-0.5 text-neutral-400">
-                <MapPin className="w-2.5 h-2.5 text-[#c4a661]" />
-                <span>{cityText}</span>
-              </span>
-            )}
-            {guest.paxQuota && (
-              <span className="text-neutral-500">
-                • {guest.paxQuota} Pax
+          <div className="flex items-center gap-1.5">
+            <h4 className="font-bold text-xs sm:text-sm text-white truncate">
+              {guest.name}
+            </h4>
+            {guest.paxQuota && guest.paxQuota > 1 && (
+              <span className="text-[9px] px-1 rounded bg-neutral-900 text-neutral-400 border border-neutral-800 shrink-0 font-medium">
+                {guest.paxQuota}p
               </span>
             )}
           </div>
-        </div>
-
-        {/* Attendance & Open Status Badge */}
-        <div>
-          {isAttending ? (
-            <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
-              ✓ Hadir
-            </span>
-          ) : isNotAttending ? (
-            <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0 flex items-center gap-1">
-              ✕ Tidak Hadir
-            </span>
-          ) : isOpened ? (
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium shrink-0 flex items-center gap-1">
-              <MailOpen className="w-2.5 h-2.5" />
-              <span>Sudah Dibuka</span>
-            </span>
-          ) : (
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium shrink-0 flex items-center gap-1">
-              <Mail className="w-2.5 h-2.5" />
-              <span>Belum Dibuka</span>
-            </span>
+          {cityText && (
+            <p className="text-[9.5px] text-neutral-500 truncate flex items-center gap-0.5 mt-0.5">
+              <MapPin className="w-2.5 h-2.5 text-[#c4a661] shrink-0" />
+              <span className="truncate">{cityText}</span>
+            </p>
           )}
         </div>
       </div>
 
-      {/* Bottom Action Row */}
-      <div className="flex items-center justify-between pt-1.5 border-t border-neutral-800/60 gap-1.5">
-        {/* WhatsApp Direct Share Button */}
+      {/* 2. KELUARGA / KATEGORI (TENGAH) */}
+      <div className="shrink-0 max-w-[90px] sm:max-w-[120px] text-center">
+        <span
+          className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold truncate block ${
+            (guest.group || '').toLowerCase() === 'keluarga'
+              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+              : 'bg-neutral-900 text-neutral-300 border border-neutral-800'
+          }`}
+          title={guest.group || 'Umum'}
+        >
+          {guest.group || 'Umum'}
+        </span>
+      </div>
+
+      {/* 3. AKSI (KANAN - 1 BARIS COMPACT) */}
+      <div className="flex items-center gap-1 shrink-0">
+        {/* Tombol Kirim WA */}
         <button
           type="button"
           onClick={() => onSendWhatsApp(guest)}
-          className="flex-1 py-1.5 px-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
-          title="Kirim Undangan Langsung ke WhatsApp"
+          className="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 transition cursor-pointer flex items-center justify-center"
+          title="Kirim Undangan ke WhatsApp"
         >
-          <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-          <span>Kirim WA</span>
+          <MessageSquare className="w-3.5 h-3.5" />
         </button>
 
-        {/* Copy Link Button */}
+        {/* Tombol Salin Link */}
         <button
           type="button"
           onClick={() => onCopyLinkOnly(guest)}
-          className="py-1.5 px-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
-          title="Salin Link Undangan Khusus"
+          className={`p-1.5 rounded-lg border transition cursor-pointer flex items-center justify-center ${
+            isCopiedOnly
+              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+              : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-300'
+          }`}
+          title="Salin Link Undangan"
         >
-          {isCopiedOnly ? (
-            <>
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400 font-bold">Tersalin!</span>
-            </>
-          ) : (
-            <>
-              <Copy className="w-3.5 h-3.5" />
-              <span>Salin Link</span>
-            </>
-          )}
+          {isCopiedOnly ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
 
-        {/* Preview Button */}
+        {/* Tombol Preview Mode Tamu */}
         <button
           type="button"
           onClick={() => onViewGuestMode(guest.name)}
-          className="p-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition cursor-pointer"
-          title="Lihat Pratinjau Undangan Tamu Ini"
+          className="p-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition cursor-pointer flex items-center justify-center"
+          title="Lihat Pratinjau Undangan"
         >
           <Eye className="w-3.5 h-3.5" />
         </button>
 
-        {/* Delete Button */}
+        {/* Tombol Hapus */}
         <button
           type="button"
           onClick={() => onDeleteGuest(guest.id)}
-          className="p-1.5 rounded-xl hover:bg-rose-500/20 text-neutral-500 hover:text-rose-400 transition cursor-pointer"
+          className="p-1.5 rounded-lg hover:bg-rose-500/20 text-neutral-500 hover:text-rose-400 transition cursor-pointer flex items-center justify-center"
           title="Hapus Tamu"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -174,9 +167,10 @@ export const GuestListManager = memo(function GuestListManager({
 }: GuestListManagerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'unopened' | 'opened' | 'attending' | 'not_attending'>('all');
+  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [showLimitBanner, setShowLimitBanner] = useState(false);
-  const [visibleGuestLimit, setVisibleGuestLimit] = useState(15);
+  const [visibleGuestLimit, setVisibleGuestLimit] = useState(25);
 
   const isTrial = data.isWatermarked;
   const isLimitReached = isTrial && guests.length >= 5;
@@ -191,17 +185,32 @@ export const GuestListManager = memo(function GuestListManager({
   const isGuestOpened = useCallback((g: GuestRecipient) =>
     Boolean(g.hasOpened || g.isCheckedIn || isGuestAttending(g) || isGuestNotAttending(g)), [isGuestAttending, isGuestNotAttending]);
 
+  // Dynamic Unique Groups List (Termasuk Keluarga)
+  const availableGroups = useMemo(() => {
+    const groupSet = new Set<string>();
+    guests.forEach((g) => {
+      if (g.group && g.group.trim()) {
+        groupSet.add(g.group.trim());
+      }
+    });
+    // Pastikan 'Keluarga' selalu ada di pilihan jika diinginkan
+    groupSet.add('Keluarga');
+    return Array.from(groupSet);
+  }, [guests]);
+
   // Realtime Live Analytics Calculations (Memoized O(N) only on guests changes)
-  const { totalCount, openedCount, unopenedCount, attendingCount, notAttendingCount } = useMemo(() => {
+  const { totalCount, openedCount, unopenedCount, attendingCount, notAttendingCount, familyCount } = useMemo(() => {
     const total = guests.length;
     let opened = 0;
     let attending = 0;
     let notAttending = 0;
+    let family = 0;
 
     guests.forEach((g) => {
       if (isGuestAttending(g)) attending++;
       if (isGuestNotAttending(g)) notAttending++;
       if (isGuestOpened(g)) opened++;
+      if ((g.group || '').toLowerCase() === 'keluarga') family++;
     });
 
     return {
@@ -210,10 +219,11 @@ export const GuestListManager = memo(function GuestListManager({
       unopenedCount: total - opened,
       attendingCount: attending,
       notAttendingCount: notAttending,
+      familyCount: family,
     };
   }, [guests, isGuestAttending, isGuestNotAttending, isGuestOpened]);
 
-  // Filter guests by search query and open/attendance status (Memoized)
+  // Filter guests by search query, open/attendance status, and group/keluarga filter (Memoized)
   const filteredGuests = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
 
@@ -226,6 +236,15 @@ export const GuestListManager = memo(function GuestListManager({
 
       if (!matchesSearch) return false;
 
+      // Group/Keluarga Filter
+      if (selectedGroupFilter !== 'all') {
+        const guestGrp = (guest.group || 'Umum').toLowerCase();
+        if (guestGrp !== selectedGroupFilter.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // Status Filter
       const isOpened = isGuestOpened(guest);
       return selectedStatusFilter === 'all'
         ? true
@@ -239,7 +258,7 @@ export const GuestListManager = memo(function GuestListManager({
         ? isGuestNotAttending(guest)
         : true;
     });
-  }, [guests, searchQuery, selectedStatusFilter, isGuestOpened, isGuestAttending, isGuestNotAttending]);
+  }, [guests, searchQuery, selectedStatusFilter, selectedGroupFilter, isGuestOpened, isGuestAttending, isGuestNotAttending]);
 
   const paginatedGuests = useMemo(() => {
     return filteredGuests.slice(0, visibleGuestLimit);
@@ -404,7 +423,7 @@ export const GuestListManager = memo(function GuestListManager({
         </div>
       )}
 
-      {/* 3. SEARCH & MINI STATUS PILL FILTERS (1 CLEAN ROW) */}
+      {/* 3. SEARCH & DUAL FILTER (STATUS & KELUARGA / KATEGORI) */}
       <div className="space-y-2">
         {/* Search Input */}
         <div className="relative">
@@ -426,14 +445,19 @@ export const GuestListManager = memo(function GuestListManager({
           )}
         </div>
 
-        {/* Mini Status Filter Chips (Single Scrolling Row) */}
+        {/* 🏷️ Group / Kategori Filter Chips (Termasuk Filter Keluarga Cepat) */}
         {guests.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
+            <span className="text-[10px] uppercase font-bold text-neutral-500 shrink-0 mr-0.5">
+              Grup:
+            </span>
+
             <button
-              onClick={() => setSelectedStatusFilter('all')}
-              className={`px-3 py-1 rounded-xl shrink-0 font-semibold transition cursor-pointer ${
-                selectedStatusFilter === 'all'
-                  ? 'bg-[#c4a661] text-neutral-950 font-bold shadow-xs'
+              type="button"
+              onClick={() => setSelectedGroupFilter('all')}
+              className={`px-2.5 py-1 rounded-xl shrink-0 font-medium transition cursor-pointer ${
+                selectedGroupFilter === 'all'
+                  ? 'bg-neutral-200 text-neutral-950 font-bold shadow-xs'
                   : 'bg-[#111115] border border-neutral-800 text-neutral-400 hover:text-white'
               }`}
             >
@@ -441,57 +465,119 @@ export const GuestListManager = memo(function GuestListManager({
             </button>
 
             <button
-              onClick={() => setSelectedStatusFilter('unopened')}
-              className={`px-2.5 py-1 rounded-xl shrink-0 font-semibold transition cursor-pointer flex items-center gap-1 border ${
-                selectedStatusFilter === 'unopened'
-                  ? 'bg-amber-500 text-neutral-950 font-bold border-amber-500 shadow-xs'
-                  : 'bg-[#111115] border-neutral-800 text-amber-400 hover:border-amber-500/50'
+              type="button"
+              onClick={() => setSelectedGroupFilter(selectedGroupFilter === 'Keluarga' ? 'all' : 'Keluarga')}
+              className={`px-2.5 py-1 rounded-xl shrink-0 font-bold transition cursor-pointer flex items-center gap-1 border ${
+                selectedGroupFilter.toLowerCase() === 'keluarga'
+                  ? 'bg-amber-500 text-neutral-950 border-amber-500 shadow-xs'
+                  : 'bg-[#111115] border-amber-500/30 text-amber-300 hover:border-amber-500/60'
               }`}
             >
-              <Mail className="w-3 h-3" />
+              <span>👨‍👩‍👧 Keluarga ({familyCount})</span>
+            </button>
+
+            {availableGroups
+              .filter((grp) => grp.toLowerCase() !== 'keluarga')
+              .map((grp) => {
+                const count = guests.filter((g) => (g.group || '').toLowerCase() === grp.toLowerCase()).length;
+                const isActive = selectedGroupFilter.toLowerCase() === grp.toLowerCase();
+                return (
+                  <button
+                    key={grp}
+                    type="button"
+                    onClick={() => setSelectedGroupFilter(isActive ? 'all' : grp)}
+                    className={`px-2.5 py-1 rounded-xl shrink-0 font-medium transition cursor-pointer border ${
+                      isActive
+                        ? 'bg-[#c4a661] text-neutral-950 font-bold border-[#c4a661] shadow-xs'
+                        : 'bg-[#111115] border-neutral-800 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <span>{grp} ({count})</span>
+                  </button>
+                );
+              })}
+          </div>
+        )}
+
+        {/* 📊 Status Kehadiran / Buka Filter Chips */}
+        {guests.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
+            <span className="text-[10px] uppercase font-bold text-neutral-500 shrink-0 mr-0.5">
+              Status:
+            </span>
+
+            <button
+              onClick={() => setSelectedStatusFilter('all')}
+              className={`px-2.5 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer ${
+                selectedStatusFilter === 'all'
+                  ? 'bg-neutral-800 text-white font-bold'
+                  : 'text-neutral-500 hover:text-neutral-300'
+              }`}
+            >
+              Semua
+            </button>
+
+            <button
+              onClick={() => setSelectedStatusFilter('unopened')}
+              className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
+                selectedStatusFilter === 'unopened'
+                  ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40'
+                  : 'text-neutral-500 hover:text-amber-400'
+              }`}
+            >
+              <Mail className="w-2.5 h-2.5" />
               <span>Belum Buka ({unopenedCount})</span>
             </button>
 
             <button
               onClick={() => setSelectedStatusFilter('opened')}
-              className={`px-2.5 py-1 rounded-xl shrink-0 font-semibold transition cursor-pointer flex items-center gap-1 border ${
+              className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
                 selectedStatusFilter === 'opened'
-                  ? 'bg-blue-500 text-white font-bold border-blue-500 shadow-xs'
-                  : 'bg-[#111115] border-neutral-800 text-blue-400 hover:border-blue-500/50'
+                  ? 'bg-blue-500/20 text-blue-300 font-bold border border-blue-500/40'
+                  : 'text-neutral-500 hover:text-blue-400'
               }`}
             >
-              <MailOpen className="w-3 h-3" />
+              <MailOpen className="w-2.5 h-2.5" />
               <span>Sudah Buka ({openedCount})</span>
             </button>
 
             <button
               onClick={() => setSelectedStatusFilter('attending')}
-              className={`px-2.5 py-1 rounded-xl shrink-0 font-semibold transition cursor-pointer flex items-center gap-1 border ${
+              className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
                 selectedStatusFilter === 'attending'
-                  ? 'bg-emerald-500 text-neutral-950 font-bold border-emerald-500 shadow-xs'
-                  : 'bg-[#111115] border-neutral-800 text-emerald-400 hover:border-emerald-500/50'
+                  ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40'
+                  : 'text-neutral-500 hover:text-emerald-400'
               }`}
             >
-              <UserCheck className="w-3 h-3" />
+              <UserCheck className="w-2.5 h-2.5" />
               <span>Hadir ({attendingCount})</span>
             </button>
 
             <button
               onClick={() => setSelectedStatusFilter('not_attending')}
-              className={`px-2.5 py-1 rounded-xl shrink-0 font-semibold transition cursor-pointer flex items-center gap-1 border ${
+              className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
                 selectedStatusFilter === 'not_attending'
-                  ? 'bg-rose-500 text-white font-bold border-rose-500 shadow-xs'
-                  : 'bg-[#111115] border-neutral-800 text-rose-400 hover:border-rose-500/50'
+                  ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40'
+                  : 'text-neutral-500 hover:text-rose-400'
               }`}
             >
-              <UserX className="w-3 h-3" />
+              <UserX className="w-2.5 h-2.5" />
               <span>Tidak Hadir ({notAttendingCount})</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* 4. GUEST LIST CARDS (PROMINENT & DIRECTLY VISIBLE) */}
+      {/* 4. COMPACT TABLE HEADER (NAMA | KELUARGA | AKSI) */}
+      {guests.length > 0 && filteredGuests.length > 0 && (
+        <div className="px-3 py-1 flex items-center justify-between text-[10px] font-bold text-neutral-500 uppercase tracking-wider border-b border-neutral-800/60">
+          <div className="flex-1">Nama Tamu</div>
+          <div className="shrink-0 max-w-[90px] sm:max-w-[120px] text-center pr-3">Kategori</div>
+          <div className="shrink-0 w-[115px] text-right">Aksi</div>
+        </div>
+      )}
+
+      {/* 5. GUEST LIST CARDS (PROMINENT & DIRECTLY VISIBLE - 1 ROW COMPACT) */}
       {filteredGuests.length === 0 ? (
         <div className="p-8 text-center bg-[#111115] border border-white/5 rounded-2xl space-y-2">
           <div className="w-10 h-10 rounded-2xl bg-neutral-900 mx-auto flex items-center justify-center text-neutral-500">
@@ -500,16 +586,22 @@ export const GuestListManager = memo(function GuestListManager({
           <p className="text-xs font-bold text-white">
             {searchQuery
               ? `Tidak ada tamu yang cocok dengan "${searchQuery}"`
+              : selectedGroupFilter !== 'all'
+              ? `Tidak ada tamu di kategori "${selectedGroupFilter}"`
               : selectedStatusFilter !== 'all'
               ? `Tidak ada tamu dengan status filter ini`
               : 'Belum Ada Tamu Terdaftar'}
           </p>
           <button
             type="button"
-            onClick={() => setIsAddFormOpen(true)}
-            className="text-xs text-[#c4a661] font-bold hover:underline"
+            onClick={() => {
+              setSelectedGroupFilter('all');
+              setSelectedStatusFilter('all');
+              setSearchQuery('');
+            }}
+            className="text-xs text-[#c4a661] font-bold hover:underline cursor-pointer"
           >
-            + Tambah Tamu Sekarang
+            Reset Semua Filter
           </button>
         </div>
       ) : (
