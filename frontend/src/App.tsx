@@ -639,7 +639,30 @@ export default function App() {
         {/* Footer with Blessing */}
         <footer className="px-6 py-10 text-center border-t border-[#1f1f27] mt-8 bg-[#111115]">
           <p className="font-serif text-lg font-bold text-[#c4a661] mb-1">
-            {invitationData.eventTitle}
+            {(() => {
+              const p1 = invitationData.profiles?.[0];
+              const p2 = invitationData.profiles?.[1];
+              const isKhitan = invitationData.eventType === 'khitanan' || invitationData.eventType === 'aqiqah';
+              const isBirthday = invitationData.eventType === 'birthday';
+
+              if (isKhitan || isBirthday) {
+                const childName = p1?.fullName?.trim() || p1?.name?.trim();
+                if (childName) {
+                  return isKhitan ? `Walimatul Khitan ${childName}` : `Tasyakuran ${childName}`;
+                }
+                const stripped = (invitationData.eventTitle || '').replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Happy Birthday|Ulang Tahun)\s*/i, '').trim();
+                if (stripped && stripped.length > 2) {
+                  return isKhitan ? `Walimatul Khitan ${stripped}` : stripped;
+                }
+                return 'Walimatul Khitan M. Akmal Abdul Jalil';
+              }
+
+              if (p1?.name && p2?.name) {
+                return `${p1.name} & ${p2.name}`;
+              }
+
+              return invitationData.eventTitle || 'Undangan Digital';
+            })()}
           </p>
           <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
             Merupakan suatu kehormatan dan kebahagiaan bagi kami atas kehadiran dan doa restu Bapak/Ibu/Saudara/i sekalian.
