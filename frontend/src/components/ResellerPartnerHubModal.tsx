@@ -29,6 +29,8 @@ interface ResellerPartnerHubModalProps {
   isOpen: boolean;
   onClose: () => void;
   quotaTokens: number;
+  targetCname?: string;
+  isDirectVps?: boolean;
   onOpenPricing: () => void;
 }
 
@@ -36,6 +38,8 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
   isOpen,
   onClose,
   quotaTokens,
+  targetCname = 'luxury.absenta.id',
+  isDirectVps = false,
   onOpenPricing
 }) => {
   const { showToast } = useToast();
@@ -44,25 +48,13 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Financial State
-  const [sellingPrice, setSellingPrice] = useState<number>(() => {
-    const saved = localStorage.getItem('absenta_reseller_selling_price');
-    return saved ? parseInt(saved, 10) : 100000;
-  });
-  const [tokenCost, setTokenCost] = useState<number>(() => {
-    const saved = localStorage.getItem('absenta_reseller_token_cost');
-    return saved ? parseInt(saved, 10) : 45000;
-  });
+  const [sellingPrice, setSellingPrice] = useState<number>(100000);
+  const [tokenCost, setTokenCost] = useState<number>(45000);
 
-  // Branding State
-  const [studioName, setStudioName] = useState<string>(() => {
-    return localStorage.getItem('absenta_reseller_studio_name') || 'Luxe Studio Wedding';
-  });
-  const [studioPhone, setStudioPhone] = useState<string>(() => {
-    return localStorage.getItem('absenta_reseller_studio_phone') || '';
-  });
-  const [studioWebsite, setStudioWebsite] = useState<string>(() => {
-    return localStorage.getItem('absenta_reseller_studio_website') || '';
-  });
+  // Branding State (Strict Database Isolated Tenant Profile)
+  const [studioName, setStudioName] = useState<string>('');
+  const [studioPhone, setStudioPhone] = useState<string>('');
+  const [studioWebsite, setStudioWebsite] = useState<string>('');
   const [customDomain, setCustomDomain] = useState<string>('');
   const [isSavingBranding, setIsSavingBranding] = useState<boolean>(false);
   const [copiedDns, setCopiedDns] = useState<boolean>(false);
@@ -79,12 +71,14 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
         resellerApi.getAnalytics().catch(() => null),
         resellerApi.getProfile().catch(() => null)
       ]);
-      if (analyticsData) setAnalytics(analyticsData);
+      if (analyticsData) {
+        setAnalytics(analyticsData);
+      }
       if (profileData && profileData.branding) {
-        if (profileData.branding.studioName) setStudioName(profileData.branding.studioName);
-        if (profileData.branding.studioPhone) setStudioPhone(profileData.branding.studioPhone);
-        if (profileData.branding.studioWebsite) setStudioWebsite(profileData.branding.studioWebsite);
-        if (profileData.branding.customDomain) setCustomDomain(profileData.branding.customDomain);
+        setStudioName(profileData.branding.studioName || profileData.user?.name || '');
+        setStudioPhone(profileData.branding.studioPhone || profileData.user?.phone || '');
+        setStudioWebsite(profileData.branding.studioWebsite || '');
+        setCustomDomain(profileData.branding.customDomain || '');
       }
     } catch (err: any) {
       console.warn('Load reseller analytics error:', err.message);
@@ -101,7 +95,6 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
 
   const handleSaveSellingPrice = (price: number) => {
     setSellingPrice(price);
-    localStorage.setItem('absenta_reseller_selling_price', price.toString());
   };
 
   const handleSaveBranding = async (e: React.FormEvent) => {
@@ -114,9 +107,6 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
         studioWebsite,
         customDomain: customDomain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
       });
-      localStorage.setItem('absenta_reseller_studio_name', studioName);
-      localStorage.setItem('absenta_reseller_studio_phone', studioPhone);
-      localStorage.setItem('absenta_reseller_studio_website', studioWebsite);
       showToast(
         'success',
         'Identitas Studio & Custom Domain Reseller berhasil disimpan!',
@@ -177,16 +167,16 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 md:p-6 overflow-y-auto bg-black/85 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 overflow-hidden bg-black/90 md:backdrop-blur-md">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          initial={{ opacity: 0, scale: 0.96, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          exit={{ opacity: 0, scale: 0.96, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-5xl bg-[#111116] border border-[#2a2a38] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-neutral-200 flex flex-col max-h-[94vh] sm:max-h-[90vh]"
+          className="relative w-full h-full md:h-auto max-w-5xl bg-[#111116] border-0 md:border md:border-[#2a2a38] rounded-none md:rounded-3xl shadow-2xl overflow-hidden text-neutral-200 flex flex-col max-h-screen md:max-h-[90vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-[#20202b] bg-[#14141c] shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-[#20202b] bg-[#14141c] shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-neutral-950 font-bold shadow-md shadow-amber-500/20 shrink-0">
                 <TrendingUp className="w-5 h-5" />
@@ -194,27 +184,28 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-sm sm:text-base md:text-lg font-serif font-bold text-white tracking-wide truncate">
-                    Reseller Partner Hub & Profit Suite
+                    Reseller Partner Hub
                   </h2>
                   <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
                     👑 MITRA BISNIS
                   </span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-neutral-400 truncate">
-                  Pusat kalkulasi laba bersih, kustomisasi studio branding, dan alat percepatan produksi
+                <p className="text-[10px] sm:text-xs text-neutral-400 truncate hidden xs:block">
+                  Kalkulasi laba bersih & kustomisasi studio branding
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 sm:p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer shrink-0 ml-2"
+              className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer shrink-0 ml-2"
+              title="Tutup Modal"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Navigation Tabs (Horizontal Scroll on Mobile) */}
-          <div className="px-4 sm:px-6 border-b border-[#20202b] bg-[#111116] flex items-center gap-2 overflow-x-auto scrollbar-none shrink-0 py-2.5">
+          {/* Navigation Tabs (Visible on Desktop / Tablet: hidden md:flex) */}
+          <div className="hidden md:flex px-4 sm:px-6 border-b border-[#20202b] bg-[#111116] items-center gap-2 overflow-x-auto scrollbar-none shrink-0 py-2.5">
             {[
               { id: 'profit', label: '📊 Laba & Finansial', icon: DollarSign },
               { id: 'branding', label: '🏷️ White-Label Studio', icon: Building2 },
@@ -241,7 +232,7 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
           </div>
 
           {/* Body Content */}
-          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5 pb-24 md:pb-6 scrollbar-thin scrollbar-thumb-neutral-800">
             {/* TAB 1: 📊 Laba & Finansial (Profit Calculator) */}
             {activeTab === 'profit' && (
               <div className="space-y-5">
@@ -455,7 +446,7 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
                       <div className="grid grid-cols-3 gap-2 bg-[#0c0c10] p-2.5 rounded-xl border border-neutral-800 text-[11px] mt-1.5">
                         <div>
                           <span className="text-neutral-500 block text-[9px] uppercase font-bold">Tipe DNS</span>
-                          <span className="font-mono font-bold text-amber-400">CNAME</span>
+                          <span className="font-mono font-bold text-amber-400">{isDirectVps ? 'CNAME / A' : 'CNAME'}</span>
                         </div>
                         <div>
                           <span className="text-neutral-500 block text-[9px] uppercase font-bold">Host / Subdomain</span>
@@ -464,15 +455,15 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
                         <div>
                           <span className="text-neutral-500 block text-[9px] uppercase font-bold">Target Server</span>
                           <div className="flex items-center gap-1">
-                            <span className="font-mono font-bold text-[#c4a661] truncate">luxury.absenta.id</span>
+                            <span className="font-mono font-bold text-[#c4a661] truncate">{targetCname}</span>
                             <button
                               type="button"
                               onClick={() => {
-                                navigator.clipboard.writeText('luxury.absenta.id');
+                                navigator.clipboard.writeText(targetCname);
                                 setCopiedDns(true);
                                 setTimeout(() => setCopiedDns(false), 2000);
                               }}
-                              className="p-0.5 text-neutral-400 hover:text-white"
+                              className="p-0.5 text-neutral-400 hover:text-white cursor-pointer"
                               title="Salin Target"
                             >
                               {copiedDns ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
@@ -633,16 +624,45 @@ export const ResellerPartnerHubModal: React.FC<ResellerPartnerHubModalProps> = (
             )}
           </div>
 
-          {/* Footer */}
-          <div className="px-4 py-3 sm:px-6 sm:py-3.5 border-t border-[#20202b] bg-[#14141c] flex items-center justify-between text-xs text-neutral-400 shrink-0">
+          {/* 📱 Mobile Bottom Navigation Bar (Fixed Pinned to Phone Screen Bottom) */}
+          <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-[#20202b] bg-[#111116]/95 backdrop-blur-xl grid grid-cols-4 p-1.5 z-40 gap-1 shadow-2xl">
+            {[
+              { id: 'profit', label: 'Laba', icon: DollarSign },
+              { id: 'branding', label: 'Branding', icon: Building2 },
+              { id: 'ledger', label: 'Buku Kas', icon: Coins },
+              { id: 'parser', label: 'WA Parser', icon: MessageSquare }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition cursor-pointer ${
+                    isActive
+                      ? 'text-amber-300 bg-amber-500/15 border border-amber-500/35 font-bold shadow-sm'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 mb-1" />
+                  <span className="text-[9px] tracking-tight truncate max-w-[65px]">
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Desktop Footer (Hidden on Mobile) */}
+          <div className="hidden md:flex px-4 py-2.5 sm:px-6 sm:py-3.5 border-t border-[#20202b] bg-[#111116] items-center justify-between text-xs text-neutral-400 shrink-0">
             <span className="text-[11px] truncate mr-2">
-              💎 Saldo Anda: <strong className="text-amber-400 font-mono">{quotaTokens} Token</strong>
+              💎 Saldo Token: <strong className="text-amber-400 font-mono">{quotaTokens} Token</strong>
             </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold transition cursor-pointer"
+                className="px-4 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold transition cursor-pointer text-xs"
               >
                 Tutup
               </button>

@@ -28,9 +28,35 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
   const particleEffect = data.themeConfig?.particleEffect || (theme.mode === 'dark' ? 'gold_dust' : 'none');
   const waxColor = data.themeConfig?.waxSealColor || (theme.category === 'royal' ? 'gold' : theme.category === 'traditional' ? 'maroon' : 'sage');
 
-  const monogram = data.eventType === 'wedding'
-    ? (data.eventTitle?.split('&')[0]?.trim()?.[0] || 'R') + ' & ' + (data.eventTitle?.split('&')[1]?.trim()?.[0] || 'J')
-    : 'L';
+  const defaultTagline =
+    data.eventType === 'khitanan'
+      ? 'WALIMATUL KHITAN'
+      : data.eventType === 'aqiqah'
+      ? 'TASYAKURAN AQIQAH'
+      : data.eventType === 'birthday'
+      ? 'HAPPY BIRTHDAY'
+      : 'THE WEDDING OF';
+
+  const effectiveTagline = data.tagline || defaultTagline;
+
+  const monogram = (() => {
+    if (data.eventType === 'wedding') {
+      const p1 = data.profiles?.[0]?.name?.trim()?.[0] || data.eventTitle?.split('&')[0]?.trim()?.[0] || 'R';
+      const p2 = data.profiles?.[1]?.name?.trim()?.[0] || data.eventTitle?.split('&')[1]?.trim()?.[0] || 'J';
+      return `${p1.toUpperCase()} & ${p2.toUpperCase()}`;
+    }
+    // Anak / Yang berulang tahun
+    const rawName = data.profiles?.[0]?.name?.trim() || data.eventTitle?.replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Syukuran|Ulang Tahun)\s*/i, '').trim() || '';
+    if (rawName) {
+      const words = rawName.split(/\s+/).filter(Boolean);
+      // Jika kata pertama adalah singkatan "M." atau "M", ambil kata kedua
+      if (words.length > 1 && (words[0].length <= 2 || words[0].endsWith('.'))) {
+        return words[1][0].toUpperCase();
+      }
+      return words[0][0].toUpperCase();
+    }
+    return 'L';
+  })();
 
   return (
     <AnimatePresence>
@@ -74,13 +100,13 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
             <div className="flex items-center justify-center gap-2 mb-2">
               <Sparkles className="w-3.5 h-3.5" style={{ color: activePrimary }} />
               <span className="font-display text-[10px] tracking-[0.3em] uppercase font-semibold" style={{ color: activePrimary }}>
-                {data.tagline || 'THE WEDDING OF'}
+                {effectiveTagline}
               </span>
               <Sparkles className="w-3.5 h-3.5" style={{ color: activePrimary }} />
             </div>
 
             {/* Event Title */}
-            <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight mb-6" style={{ color: theme.textMain }}>
+            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6 leading-tight" style={{ color: theme.textMain }}>
               {data.eventTitle}
             </h1>
 

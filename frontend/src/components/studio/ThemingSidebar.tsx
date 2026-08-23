@@ -13,6 +13,9 @@ import {
   Layers,
   Sparkle,
   Stamp,
+  Maximize2,
+  Minimize2,
+  X,
 } from 'lucide-react';
 import { InvitationData, EventType, ThemeToken, TexturePatternId, ParticleEffectId, WaxSealColorId, CornerOrnamentId } from '../../types';
 import { THEMES, FONT_PRESETS, FRAME_SHAPES } from '../../data/presets';
@@ -773,46 +776,34 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsAdvancedModeMobile(false)}
-                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-[#c4a661] hover:text-white cursor-pointer"
+                    className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-neutral-900/80 border border-neutral-800 text-[#c4a661] hover:text-white transition cursor-pointer flex items-center gap-1"
                   >
-                    ← Switcher Cepat
+                    <span>← Switcher Cepat</span>
                   </button>
 
                   <div className="flex items-center gap-1.5">
-                    {sheetHeight !== 'peek' && (
-                      <button
-                        type="button"
-                        onClick={() => setSheetHeight('peek')}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
-                      >
-                        🔽 25%
-                      </button>
-                    )}
-
-                    {sheetHeight !== 'full' ? (
-                      <button
-                        type="button"
-                        onClick={() => setSheetHeight('full')}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
-                      >
-                        🔼 85%
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setSheetHeight('half')}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
-                      >
-                        🔽 50%
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSheetHeight(sheetHeight === 'full' ? 'half' : 'full')
+                      }
+                      className="p-1.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-[#c4a661] transition cursor-pointer"
+                      title={sheetHeight === 'full' ? 'Ciutkan Tampilan' : 'Perluas Layar Penuh'}
+                    >
+                      {sheetHeight === 'full' ? (
+                        <Minimize2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
 
                     <button
                       type="button"
                       onClick={onCloseMobileView}
-                      className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
+                      className="p-1.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-white transition cursor-pointer"
+                      title="Tutup Sheet"
                     >
-                      ✕
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>

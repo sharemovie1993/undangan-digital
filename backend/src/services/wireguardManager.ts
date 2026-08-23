@@ -164,12 +164,26 @@ export class WireguardManager {
     if (/\[Peer\]/i.test(hardenedConfig) && !/PersistentKeepalive/i.test(hardenedConfig)) {
       hardenedConfig = hardenedConfig.replace(/(\[Peer\][\s\S]*?)(?=\n\[|\s*$)/gi, '$1\nPersistentKeepalive = 25\n');
     }
-    if (/AllowedIPs\s*=\s*10\.0\.0\.1\/32/i.test(hardenedConfig) && !/10\.0\.2\.1/i.test(hardenedConfig)) {
-      hardenedConfig = hardenedConfig.replace(/AllowedIPs\s*=\s*10\.0\.0\.1\/32/gi, 'AllowedIPs = 10.0.0.1/32, 10.0.2.1/32');
+
+    // 1. Ekstrak IP Gateway khusus tunnel ini secara dinamis (misal 10.0.0.1 atau 10.0.2.1)
+    let peerGatewayIp = '10.0.0.1/32';
+    const addressMatch = hardenedConfig.match(/Address\s*=\s*(\d+\.\d+\.\d+)\.\d+/i);
+    const allowedMatch = hardenedConfig.match(/AllowedIPs\s*=\s*([^,\r\n]+)/i);
+    if (addressMatch) {
+      peerGatewayIp = `${addressMatch[1]}.1/32`;
+    } else if (allowedMatch) {
+      peerGatewayIp = allowedMatch[1].trim();
     }
-    // Mencegah error "RTNETLINK answers: File exists" saat multi-tunnel aktif di Linux
+
+    // 2. Pastikan AllowedIPs hanya berisi gateway milik tunnel ini (isolasi route antar interface)
+    if (peerGatewayIp) {
+      hardenedConfig = hardenedConfig.replace(/AllowedIPs\s*=\s*.+/gi, `AllowedIPs = ${peerGatewayIp}`);
+    }
+
+    // 3. Mencegah error "RTNETLINK answers: File exists" saat multi-tunnel aktif di Linux
+    // Setiap interface HANYA mengelola routing gateway miliknya sendiri tanpa mengganggu interface lain
     if (!this.isWindows() && !/Table\s*=/i.test(hardenedConfig)) {
-      hardenedConfig = hardenedConfig.replace(/\[Interface\]/i, '[Interface]\nTable = off\nPostUp = ip -4 route replace 10.0.0.1/32 dev %i 2>/dev/null || true');
+      hardenedConfig = hardenedConfig.replace(/\[Interface\]/i, `[Interface]\nTable = off\nPostUp = ip -4 route replace ${peerGatewayIp} dev %i 2>/dev/null || true`);
     }
 
     fs.writeFileSync(confPath, hardenedConfig, { encoding: 'utf8', mode: 0o600 });

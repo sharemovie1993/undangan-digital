@@ -90,4 +90,15 @@ export const registerApiRoutes = (fastify: FastifyInstance) => {
 
   // 13. Reseller Partner Hub & Profit Analytics Suite
   registerResellerRoutes(fastify);
+
+  // 14. System Topology & Deployment Status (Hybrid CGNAT vs Direct VPS)
+  fastify.get('/api/system/deployment-info', async (_req, reply) => {
+    try {
+      const { getDeploymentInfo } = await import('../services/customDomainRouter');
+      const info = await getDeploymentInfo();
+      return reply.send({ success: true, data: info });
+    } catch (err: any) {
+      return reply.status(500).send({ success: false, message: err.message });
+    }
+  });
 };

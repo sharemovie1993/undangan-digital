@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../db';
+import { syncCustomDomain } from '../services/customDomainRouter';
 
 export class ResellerController {
   /**
@@ -128,6 +129,16 @@ export class ResellerController {
           customDomain: true
         }
       });
+
+      // 🌐 Sync custom domain secara adaptif (otomatis deteksi mode: CGNAT Tunnel vs Direct VPS)
+      if (cleanDomain !== undefined) {
+        try {
+          const previousDomain = updatedUser.customDomain !== cleanDomain ? (updatedUser.customDomain ?? null) : null;
+          await syncCustomDomain(cleanDomain, previousDomain);
+        } catch (gatewayErr: any) {
+          console.warn('[Reseller Domain Sync Warning]', gatewayErr.message);
+        }
+      }
 
       return reply.send({
         success: true,

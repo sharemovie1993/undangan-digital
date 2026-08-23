@@ -276,5 +276,9 @@ export const api = {
   validateEasyTunnelKey: async (key: string) => {
     const res = await apiClient.get(`/api/easy-tunnel/validate/${key}`);
     return res.data;
+  },
+  getDeploymentInfo: async () => {
+    const res = await apiClient.get('/api/system/deployment-info');
+    return res.data;
   }
 };

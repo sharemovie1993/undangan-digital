@@ -32,7 +32,11 @@ import {
   CheckCircle2,
   ShieldCheck,
   Filter,
-  TrendingUp
+  TrendingUp,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { EventType, ThemeToken } from '../types';
 import { VendorAuthModal } from './auth/VendorAuthModal';
@@ -52,6 +56,7 @@ import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { isPrintKitAllowed, getPlanDetails } from '../constants/plans';
+import { api } from '../api/client';
 
 interface MyInvitationsDashboardProps {
   onSelectInvitation: (invitationData: any) => void;
@@ -148,6 +153,38 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   const [customDomainTarget, setCustomDomainTarget] = useState<any>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // 🌐 System Deployment Info (Hybrid CGNAT vs Direct VPS)
+  const [deploymentInfo, setDeploymentInfo] = useState<{
+    scenario: string;
+    isTunnelSupported: boolean;
+    isDirectVps: boolean;
+    isLocalOnly: boolean;
+    serverDomain: string;
+    targetCname?: string;
+  } | null>(null);
+
+  // 🧭 Sidebar Navigation States
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('absenta_sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('absenta_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
+
+  React.useEffect(() => {
+    api.getDeploymentInfo().then((res: any) => {
+      if (res && res.success && res.data) {
+        setDeploymentInfo(res.data);
+      }
+    }).catch(() => {});
+  }, []);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -415,232 +452,311 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
   const activeLicenses = list.filter((i) => !i.isWatermark || i.licenseKey).length;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-[#e2e2e7] flex flex-col font-sans">
-      {/* Top Navbar - Responsive for Mobile, Tablet, Desktop */}
-      <header className="h-16 shrink-0 border-b border-[#1f1f27] bg-[#111115] px-3.5 sm:px-6 lg:px-12 flex items-center justify-between z-30">
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#c4a661] to-[#8a7238] flex items-center justify-center text-neutral-950 font-serif font-bold text-base sm:text-lg shadow-lg shrink-0">
-            L
-          </div>
-          <div>
-            <div className="font-serif font-bold text-sm sm:text-base tracking-wide text-white flex items-center gap-1.5 sm:gap-2">
-              <span>LUXEINVITE</span>
-              <span className="text-[9px] sm:text-[10px] bg-[#c4a661]/15 text-[#c4a661] px-1.5 sm:px-2 py-0.5 rounded-full border border-[#c4a661]/30 font-sans font-semibold">
-                STUDIO
-              </span>
+    <div className="min-h-screen bg-[#0a0a0d] text-[#e2e2e7] flex font-sans overflow-x-hidden">
+      {/* 📱 Mobile Drawer Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
+        />
+      )}
+
+      {/* 🧭 Sidebar Navigation (Desktop & Mobile Drawer) */}
+      <aside
+        className={`fixed md:sticky top-0 left-0 h-screen bg-[#0e0e13] border-r border-[#1e1e26] flex flex-col justify-between z-50 transition-all duration-300 ${
+          isMobileSidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0'
+        } ${isSidebarCollapsed ? 'md:w-20' : 'md:w-64'} shrink-0`}
+      >
+        {/* Brand Header */}
+        <div className="p-4 border-b border-[#1e1e26] flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#c4a661] via-[#d4b97a] to-[#8a7238] flex items-center justify-center text-neutral-950 font-serif font-bold text-lg shadow-lg shrink-0">
+              L
             </div>
-            <div className="text-[9px] sm:text-[10px] text-neutral-500 hidden sm:block">Multi-Invitation & Vendor Hub</div>
+            {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+              <div className="min-w-0">
+                <div className="font-serif font-bold text-sm tracking-wide text-white flex items-center gap-1.5 truncate">
+                  <span>LUXEINVITE</span>
+                  <span className="text-[8px] bg-[#c4a661]/15 text-[#c4a661] px-1.5 py-0.2 rounded-full border border-[#c4a661]/30 font-sans font-bold">
+                    STUDIO
+                  </span>
+                </div>
+                <div className="text-[9px] text-neutral-500 truncate">Multi-Vendor Invitation Hub</div>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Collapse Toggle / Mobile Close Button */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 md:hidden cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleSidebarCollapse}
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 hidden md:flex cursor-pointer transition"
+              title={isSidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'}
+            >
+              {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          {currentUser ? (
-            <>
-              {/* Desktop Only Extra Action Buttons */}
-              <div className="hidden lg:flex items-center gap-2">
-                {/* Partner Hub Button for Reseller / Percetakan / Admin */}
-                {(isReseller || ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes((role || currentUser?.role || '').toUpperCase())) && (
-                  <button
-                    onClick={() => setIsResellerHubOpen(true)}
-                    className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                    title="Pusat Analisis Keuntungan Reseller & Studio Branding"
-                  >
-                    <TrendingUp className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                    <span>Partner Hub</span>
-                  </button>
-                )}
-
-                {isAdmin && (
-                  <>
-                    <button
-                      onClick={() => setIsAdminUserManagementOpen(true)}
-                      className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                      title="Manajemen Pengguna & Saldo Token"
-                    >
-                      <Users className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
-                      <span>Kelola Pengguna</span>
-                    </button>
-
-                    <button
-                      onClick={() => setIsEasyTunnelModalOpen(true)}
-                      className="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                      title="Akses Publik Instan & Terowongan WireGuard"
-                    >
-                      <Globe className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
-                      <span>Easy Tunnel</span>
-                    </button>
-
-                    <button
-                      onClick={() => setIsBackupModalOpen(true)}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                      title="Backup & Restore Data untuk Migrasi Server"
-                    >
-                      <Database className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-                      <span>Backup & Restore</span>
-                    </button>
-                  </>
-                )}
-
-                <button
-                  onClick={() => handleOpenPricingForInvitation()}
-                  className="px-3 py-1.5 rounded-xl bg-[#c4a661]/15 hover:bg-[#c4a661]/25 border border-[#c4a661]/40 text-[#c4a661] font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow"
-                  title="Beli Paket atau Top-Up Saldo Token"
-                >
-                  <CreditCard className="w-3.5 h-3.5 shrink-0" />
-                  <span>Beli Paket / Top-Up</span>
-                </button>
+        {/* Navigation Links Area */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-6 scrollbar-thin scrollbar-thumb-neutral-800">
+          {/* Main Workspace Section */}
+          <div className="space-y-1">
+            {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+              <div className="px-3 text-[9px] font-bold tracking-wider text-neutral-500 uppercase">
+                Menu Utama
               </div>
+            )}
+            <button
+              type="button"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#c4a661]/15 border border-[#c4a661]/35 text-[#c4a661] font-semibold text-xs transition cursor-pointer shadow-sm"
+              title="Semua Proyek Undangan"
+            >
+              <Layers className="w-4 h-4 shrink-0" />
+              {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+                <div className="flex-1 flex items-center justify-between text-left">
+                  <span>Daftar Undangan</span>
+                  <span className="text-[10px] font-mono font-bold bg-[#c4a661]/20 px-1.5 py-0.2 rounded-md">
+                    {totalInvitations}
+                  </span>
+                </div>
+              )}
+            </button>
+          </div>
 
-              {/* Create New Invitation CTA */}
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-neutral-950 font-bold text-xs hover:opacity-95 shadow-lg flex items-center gap-1.5 transition cursor-pointer shrink-0"
-              >
-                <Plus className="w-4 h-4 shrink-0" />
-                <span className="hidden sm:inline">Buat Undangan Baru</span>
-                <span className="sm:hidden font-bold">Buat Baru</span>
-              </button>
+          {/* Partner & Admin Section */}
+          {(isReseller || isAdmin || ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes((role || currentUser?.role || '').toUpperCase())) && (
+            <div className="space-y-1">
+              {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+                <div className="px-3 text-[9px] font-bold tracking-wider text-neutral-500 uppercase">
+                  Mitra & Pengelolaan
+                </div>
+              )}
 
-              {/* User Account Popover Dropdown (Mobile & Desktop) */}
-              <div className="relative" ref={userMenuRef}>
+              {/* Partner Hub */}
+              {(isReseller || ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes((role || currentUser?.role || '').toUpperCase())) && (
                 <button
                   type="button"
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl px-2 py-1.5 text-xs transition cursor-pointer shadow"
+                  onClick={() => {
+                    setIsMobileSidebarOpen(false);
+                    setIsResellerHubOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-neutral-300 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/25 font-semibold text-xs transition cursor-pointer"
+                  title="Reseller Partner Hub & Laba"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#c4a661] to-[#8a7238] flex items-center justify-center text-neutral-950 font-bold text-xs shadow shrink-0">
-                    {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'V'}
-                  </div>
-                  <span className="font-semibold text-white max-w-[90px] sm:max-w-[140px] truncate hidden xs:inline text-[11px] sm:text-xs">
-                    {currentUser.name || 'Vendor'}
-                  </span>
-                  <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider hidden sm:inline ${
-                    (currentUser?.role || 'USER').toUpperCase() === 'RESELLER'
-                      ? 'bg-[#c4a661]/25 text-[#c4a661] border border-[#c4a661]/40'
-                      : (currentUser?.role || 'USER').toUpperCase() === 'ADMIN'
-                      ? 'bg-purple-500/25 text-purple-400 border border-purple-500/40'
-                      : 'bg-neutral-800 text-neutral-400 border border-neutral-700'
-                  }`}>
-                    {(currentUser?.role || 'USER').toUpperCase()}
-                  </span>
+                  <TrendingUp className="w-4 h-4 shrink-0 text-amber-400" />
+                  {(!isSidebarCollapsed || isMobileSidebarOpen) && <span>Partner Hub & Laba</span>}
                 </button>
+              )}
 
-                {/* Floating Dropdown Menu */}
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-[#111115] border border-neutral-800 rounded-2xl shadow-2xl p-2 z-50 text-xs text-neutral-200 animate-in fade-in zoom-in-95 duration-150 space-y-1">
-                    <div className="p-2.5 bg-neutral-950 rounded-xl border border-neutral-800/80 mb-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-white text-xs truncate">{currentUser.name || 'Vendor'}</span>
-                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/40 uppercase">
-                          {currentUser.role || 'USER'}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-neutral-400 font-mono mt-1">
-                        {currentUser.phone || currentUser.email || 'Akun Aktif'}
-                      </div>
+              {/* Admin: Kelola Pengguna */}
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileSidebarOpen(false);
+                    setIsAdminUserManagementOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-neutral-300 hover:text-indigo-300 hover:bg-indigo-500/10 border border-transparent hover:border-indigo-500/25 font-semibold text-xs transition cursor-pointer"
+                  title="Manajemen Pengguna & Saldo Token"
+                >
+                  <Users className="w-4 h-4 shrink-0 text-indigo-400" />
+                  {(!isSidebarCollapsed || isMobileSidebarOpen) && <span>Kelola Pengguna</span>}
+                </button>
+              )}
+
+              {/* Admin: Easy Tunnel WireGuard (Hybrid CGNAT Only) */}
+              {isAdmin && deploymentInfo?.isTunnelSupported && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileSidebarOpen(false);
+                    setIsEasyTunnelModalOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-neutral-300 hover:text-cyan-300 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/25 font-semibold text-xs transition cursor-pointer"
+                  title="Easy Tunnel WireGuard Gateway"
+                >
+                  <Globe className="w-4 h-4 shrink-0 text-cyan-400" />
+                  {(!isSidebarCollapsed || isMobileSidebarOpen) && <span>Easy Tunnel WireGuard</span>}
+                </button>
+              )}
+
+              {/* Admin: Backup & Restore */}
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileSidebarOpen(false);
+                    setIsBackupModalOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-neutral-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/25 font-semibold text-xs transition cursor-pointer"
+                  title="Backup & Restore Studio Data"
+                >
+                  <Database className="w-4 h-4 shrink-0 text-emerald-400" />
+                  {(!isSidebarCollapsed || isMobileSidebarOpen) && <span>Backup & Restore</span>}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Billing & Services */}
+          <div className="space-y-1">
+            {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+              <div className="px-3 text-[9px] font-bold tracking-wider text-neutral-500 uppercase">
+                Layanan & Saldo
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileSidebarOpen(false);
+                handleOpenPricingForInvitation();
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-neutral-300 hover:text-[#c4a661] hover:bg-[#c4a661]/10 border border-transparent hover:border-[#c4a661]/25 font-semibold text-xs transition cursor-pointer"
+              title="Beli Paket atau Top-Up Saldo Token"
+            >
+              <CreditCard className="w-4 h-4 shrink-0 text-[#c4a661]" />
+              {(!isSidebarCollapsed || isMobileSidebarOpen) && <span>Beli Paket / Top-Up</span>}
+            </button>
+          </div>
+        </div>
+
+        {/* Sidebar Footer: System Status & User Profile */}
+        <div className="p-3 border-t border-[#1e1e26] space-y-2 bg-[#0c0c10]">
+          {/* Topology Status Badge */}
+          {deploymentInfo && (
+            <div
+              className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-[10px] font-mono font-bold border transition ${
+                deploymentInfo.isTunnelSupported
+                  ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/25'
+                  : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
+              }`}
+              title={deploymentInfo.isTunnelSupported ? 'Mode Hybrid CGNAT: Trafik via WireGuard Tunnel' : 'Mode Direct Cloud VPS: IP Publik Mandiri'}
+            >
+              <span className={`w-2 h-2 rounded-full shrink-0 ${deploymentInfo.isTunnelSupported ? 'bg-cyan-400 animate-pulse' : 'bg-emerald-400'}`} />
+              {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+                <span className="truncate">
+                  {deploymentInfo.isTunnelSupported ? 'Hybrid Tunnel' : 'Direct Cloud VPS'}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* User Account Card */}
+          {currentUser ? (
+            <div className="p-2.5 rounded-2xl bg-neutral-900/90 border border-neutral-800 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#c4a661] to-[#8a7238] flex items-center justify-center text-neutral-950 font-bold text-xs shadow shrink-0">
+                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'V'}
+                </div>
+                {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+                  <div className="min-w-0">
+                    <div className="font-semibold text-white text-xs truncate">
+                      {currentUser.name || 'Vendor'}
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider ${
+                        (currentUser?.role || 'USER').toUpperCase() === 'RESELLER'
+                          ? 'bg-[#c4a661]/25 text-[#c4a661] border border-[#c4a661]/40'
+                          : (currentUser?.role || 'USER').toUpperCase() === 'ADMIN'
+                          ? 'bg-purple-500/25 text-purple-400 border border-purple-500/40'
+                          : 'bg-neutral-800 text-neutral-400'
+                      }`}>
+                        {currentUser?.role || 'USER'}
+                      </span>
                       {Boolean(currentUser?.quotaTokens) && (
-                        <div className="text-[10px] text-[#c4a661] font-bold mt-1">
-                          💎 Saldo: {currentUser.quotaTokens} Token
-                        </div>
+                        <span className="text-[9px] text-[#c4a661] font-bold">
+                          💎 {currentUser.quotaTokens}
+                        </span>
                       )}
                     </div>
-
-                    {/* Mobile Quick Action Links */}
-                    {/* Partner Hub Menu for Reseller / Admin */}
-                    {(isReseller || ['RESELLER', 'PERCETAKAN', 'ADMIN'].includes((role || currentUser?.role || '').toUpperCase())) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          setIsResellerHubOpen(true);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-amber-300 hover:text-white transition cursor-pointer"
-                      >
-                        <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Reseller Partner Hub & Laba</span>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        handleOpenPricingForInvitation();
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-neutral-300 hover:text-white transition cursor-pointer"
-                    >
-                      <CreditCard className="w-3.5 h-3.5 text-[#c4a661]" />
-                      <span>Beli Paket / Top-Up Token</span>
-                    </button>
-
-                    {isAdmin && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            setIsAdminUserManagementOpen(true);
-                          }}
-                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-indigo-300 hover:text-white transition cursor-pointer"
-                        >
-                          <Users className="w-3.5 h-3.5 text-indigo-400" />
-                          <span>Kelola Pengguna (Admin)</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            setIsEasyTunnelModalOpen(true);
-                          }}
-                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-neutral-300 hover:text-white transition cursor-pointer"
-                        >
-                          <Globe className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>Easy Tunnel WireGuard</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            setIsBackupModalOpen(true);
-                          }}
-                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-800 flex items-center gap-2 text-emerald-300 hover:text-white transition cursor-pointer"
-                        >
-                          <Database className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Backup & Restore Studio</span>
-                        </button>
-                      </>
-                    )}
-
-                    <div className="h-px bg-neutral-800/80 my-1" />
-
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/15 text-rose-400 flex items-center gap-2 transition cursor-pointer font-semibold"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>Keluar / Logout</span>
-                    </button>
                   </div>
                 )}
               </div>
-            </>
+
+              {(!isSidebarCollapsed || isMobileSidebarOpen) && (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="p-1.5 text-neutral-400 hover:text-rose-400 hover:bg-rose-500/15 rounded-lg transition cursor-pointer shrink-0"
+                  title="Keluar / Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           ) : (
             <button
+              type="button"
               onClick={() => setIsAuthModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-[#c4a661] text-neutral-950 font-bold text-xs hover:bg-[#d5b874] transition flex items-center gap-1.5 cursor-pointer shadow"
+              className="w-full py-2 rounded-xl bg-[#c4a661] hover:bg-[#d5b874] text-neutral-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow cursor-pointer"
             >
               <Phone className="w-3.5 h-3.5" />
-              <span>Masuk Akun</span>
+              {(!isSidebarCollapsed || isMobileSidebarOpen) && <span>Masuk Akun</span>}
             </button>
           )}
         </div>
-      </header>
+      </aside>
 
-      {/* Main Content Area - Optimized for Mobile, Tablet & Desktop */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3.5 sm:p-6 lg:p-10 space-y-4 sm:space-y-6">
+      {/* 🚀 Main Workspace Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[#0a0a0d]">
+        {/* Top Header Bar */}
+        <header className="h-16 shrink-0 border-b border-[#1e1e26] bg-[#111116]/80 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="p-2 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white md:hidden cursor-pointer"
+              title="Buka Navigasi"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="font-serif font-bold text-base sm:text-lg text-white tracking-wide truncate">
+                Dashboard Undangan
+              </h1>
+              <p className="text-[10px] text-neutral-400 hidden sm:block">
+                Kelola seluruh proyek undangan digital & cetak klien Anda
+              </p>
+            </div>
+          </div>
+
+          {/* Right Header Actions */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {currentUser && Boolean(currentUser?.quotaTokens) && (
+              <button
+                type="button"
+                onClick={() => handleOpenPricingForInvitation()}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c4a661]/10 hover:bg-[#c4a661]/20 border border-[#c4a661]/30 text-[#c4a661] text-xs font-bold transition cursor-pointer"
+                title="Beli Tambahan Token"
+              >
+                <span>💎 {currentUser.quotaTokens} Token</span>
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* Create New Invitation Primary Button */}
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-3.5 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:opacity-95 text-neutral-950 font-bold text-xs shadow-lg flex items-center gap-2 transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span className="hidden xs:inline">Buat Undangan Baru</span>
+              <span className="xs:hidden">Buat Baru</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {!currentUser ? (
           <div className="py-12 px-6 md:p-14 bg-[#111115] rounded-3xl border border-[#c4a661]/30 text-center max-w-md mx-auto shadow-2xl space-y-5 my-8">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#c4a661] to-[#8a7238] flex items-center justify-center text-neutral-950 font-serif font-bold text-2xl mx-auto shadow-lg">
@@ -1467,6 +1583,7 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
           </>
         )}
       </main>
+    </div>
 
       {/* Modal Buat Undangan Baru */}
       {isCreateModalOpen && (
@@ -1666,6 +1783,8 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
         isOpen={isResellerHubOpen}
         onClose={() => setIsResellerHubOpen(false)}
         quotaTokens={currentUser?.quotaTokens || 0}
+        targetCname={deploymentInfo?.targetCname || 'luxury.absenta.id'}
+        isDirectVps={deploymentInfo?.isDirectVps}
         onOpenPricing={() => handleOpenPricingForInvitation()}
       />
 
@@ -1674,6 +1793,8 @@ export const MyInvitationsDashboard: React.FC<MyInvitationsDashboardProps> = ({
         isOpen={Boolean(customDomainTarget)}
         onClose={() => setCustomDomainTarget(null)}
         invitation={customDomainTarget || {}}
+        targetCname={deploymentInfo?.targetCname || 'luxury.absenta.id'}
+        isDirectVps={deploymentInfo?.isDirectVps}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['invitations-list'] });
           setCustomDomainTarget(null);

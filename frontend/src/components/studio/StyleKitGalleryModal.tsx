@@ -345,7 +345,11 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
                 {/* 3D Monogram Wax Seal */}
                 <div className="mt-1">
                   <WaxSealStamp
-                    monogram={coupleNames.split('&').map(s => s.trim()[0]).join('&')}
+                    monogram={
+                      data?.eventType === 'wedding'
+                        ? coupleNames.split('&').map(s => s.trim()[0]).filter(Boolean).join(' & ') || 'R & J'
+                        : coupleNames.replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Syukuran|Ulang Tahun)\s*/i, '').trim()[0]?.toUpperCase() || 'K'
+                    }
                     colorId={previewWaxColor}
                     className="scale-90"
                   />
@@ -353,7 +357,7 @@ export const StyleKitGalleryModal: React.FC<StyleKitGalleryModalProps> = ({
 
                 {/* Tagline */}
                 <div className="mt-2 text-[8.5px] font-semibold tracking-[0.25em] uppercase" style={{ color: previewKit.primaryColor || previewTheme.primary }}>
-                  {previewKit.tagline || 'THE WEDDING OF'}
+                  {previewKit.tagline || (data?.eventType === 'khitanan' ? 'WALIMATUL KHITAN' : data?.eventType === 'aqiqah' ? 'TASYAKURAN AQIQAH' : data?.eventType === 'birthday' ? 'HAPPY BIRTHDAY' : 'THE WEDDING OF')}
                 </div>
 
                 {/* Couple Names */}

@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../db';
 import { isPrintKitAllowed } from '../constants/plans';
+import { syncCustomDomain } from '../services/customDomainRouter';
 
 /**
  * 🧠 High-Performance In-Memory Micro-Cache for Public Guest Hits
@@ -429,6 +430,18 @@ export class InvitationController {
         parsedEventData = JSON.parse(savedInvitation.eventDataJson || '{}');
       } catch {
         parsedEventData = {};
+      }
+
+      // 🌐 Sync custom domain secara adaptif (otomatis deteksi mode: CGNAT Tunnel vs Direct VPS)
+      if (customDomain !== undefined) {
+        try {
+          // Ambil domain lama untuk cleanup di Caddyfile (Direct VPS mode)
+          const previousDomain = savedInvitation.customDomain !== customDomain
+            ? (savedInvitation.customDomain ?? null) : null;
+          await syncCustomDomain(customDomain || null, previousDomain);
+        } catch (gwErr: any) {
+          console.warn('[Invitation Domain Sync Warning]', gwErr.message);
+        }
       }
 
       return reply.send({

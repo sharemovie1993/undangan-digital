@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
-import { Check } from 'lucide-react';
+import { Check, Maximize2, Minimize2, X } from 'lucide-react';
 import { InvitationData, EventType, ThemeToken, GuestRecipient, WishMessage } from '../types';
 import {
   DEFAULT_WEDDING_DATA,
@@ -59,7 +59,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   // Navigation & Viewport States
   const [activeTab, setActiveTab] = useState<'dashboard' | 'blocks' | 'guests' | 'rsvp' | 'settings'>('blocks');
   const [rightTab, setRightTab] = useState<'content' | 'blocks'>('content');
-  const [contentSection, setContentSection] = useState<'profile' | 'schedule' | 'gift' | 'gallery' | 'music'>('profile');
+  const [contentSection, setContentSection] = useState<'profile' | 'schedule' | 'gift' | 'gallery' | 'music' | 'blocks'>('profile');
   const [deviceFrame, setDeviceFrame] = useState<'mobile' | 'tablet' | 'desktop'>('mobile');
   const [mobileNavView, setMobileNavView] = useState<'preview' | 'content' | 'theme' | 'blocks' | 'guests'>('preview');
   const [contentSheetHeight, setContentSheetHeight] = useState<'peek' | 'half' | 'full'>('half');
@@ -635,6 +635,16 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
               >
                 Musik
               </button>
+              <button
+                onClick={() => setContentSection('blocks')}
+                className={`px-2.5 py-1 rounded-lg shrink-0 font-medium transition cursor-pointer ${
+                  contentSection === 'blocks'
+                    ? 'bg-[#c4a661]/20 text-[#c4a661] border border-[#c4a661]/40 font-bold'
+                    : 'bg-neutral-900 text-neutral-400'
+                }`}
+              >
+                🎛️ Susunan Blok
+              </button>
             </div>
 
             {/* Active Sub-Form */}
@@ -644,6 +654,17 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
               {contentSection === 'gift' && <BankGiftForm data={data} onChange={onUpdateData} />}
               {contentSection === 'gallery' && <GalleryMediaForm data={data} onChange={onUpdateData} />}
               {contentSection === 'music' && <MusicSelectorForm data={data} onChange={onUpdateData} />}
+              {contentSection === 'blocks' && (
+                <BlockManagerPanel
+                  data={data}
+                  wishes={displayWishes}
+                  onToggleBlock={toggleBlock}
+                  onEditSectionJump={(sec) => {
+                    setContentSection(sec);
+                  }}
+                  onFocusSection={handleFocusSection}
+                />
+              )}
             </div>
           </div>
         ) : (
@@ -689,45 +710,35 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
               className="w-10 h-1 rounded-full bg-neutral-500 mb-1.5 cursor-pointer hover:bg-[#c4a661] transition"
             />
             <div className="flex items-center justify-between w-full">
-              <span className="text-xs font-bold text-[#c4a661]">
+              <span className="text-xs font-serif font-bold text-[#c4a661] tracking-wide">
                 {mobileNavView === 'content' ? '✏️ Formulir Konten' : '🎛️ Kelola Blok'}
               </span>
 
               <div className="flex items-center gap-1.5">
-                {contentSheetHeight !== 'peek' && (
-                  <button
-                    type="button"
-                    onClick={() => setContentSheetHeight('peek')}
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
-                  >
-                    🔽 25%
-                  </button>
-                )}
-
-                {contentSheetHeight !== 'full' ? (
-                  <button
-                    type="button"
-                    onClick={() => setContentSheetHeight('full')}
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
-                  >
-                    🔼 85%
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setContentSheetHeight('half')}
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
-                  >
-                    🔽 50%
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setContentSheetHeight(
+                      contentSheetHeight === 'full' ? 'half' : 'full'
+                    )
+                  }
+                  className="p-1.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-[#c4a661] transition cursor-pointer"
+                  title={contentSheetHeight === 'full' ? 'Ciutkan Tampilan' : 'Perluas Layar Penuh'}
+                >
+                  {contentSheetHeight === 'full' ? (
+                    <Minimize2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
 
                 <button
                   type="button"
                   onClick={() => setMobileNavView('preview')}
-                  className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
+                  className="p-1.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-white transition cursor-pointer"
+                  title="Tutup Sheet"
                 >
-                  ✕
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -787,6 +798,16 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
                 >
                   Musik
                 </button>
+                <button
+                  onClick={() => setContentSection('blocks')}
+                  className={`px-2.5 py-1 rounded-lg shrink-0 font-medium transition cursor-pointer ${
+                    contentSection === 'blocks'
+                      ? 'bg-[#c4a661]/20 text-[#c4a661] border border-[#c4a661]/40 font-bold'
+                      : 'bg-neutral-900 text-neutral-400'
+                  }`}
+                >
+                  🎛️ Susunan Blok
+                </button>
               </div>
 
               {contentSection === 'profile' && <CoupleProfileForm data={data} onChange={onUpdateData} />}
@@ -794,6 +815,17 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
               {contentSection === 'gift' && <BankGiftForm data={data} onChange={onUpdateData} />}
               {contentSection === 'gallery' && <GalleryMediaForm data={data} onChange={onUpdateData} />}
               {contentSection === 'music' && <MusicSelectorForm data={data} onChange={onUpdateData} />}
+              {contentSection === 'blocks' && (
+                <BlockManagerPanel
+                  data={data}
+                  wishes={displayWishes}
+                  onToggleBlock={toggleBlock}
+                  onEditSectionJump={(sec) => {
+                    setContentSection(sec);
+                  }}
+                  onFocusSection={handleFocusSection}
+                />
+              )}
             </div>
           ) : (
             <BlockManagerPanel
@@ -898,6 +930,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
       {/* 5. MOBILE & TABLET BOTTOM NAVIGATION BAR */}
       <MobileBottomNav
         mobileNavView={mobileNavView}
+        onOpenDashboard={onOpenDashboard}
         onSelectView={(view) => {
           setMobileNavView(view);
           // Always close any open fullscreen modals so user is returned to the workspace
@@ -916,7 +949,8 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
             setActiveTab('blocks');
           } else if (view === 'blocks') {
             setActiveTab('blocks');
-            setRightTab('blocks');
+            setRightTab('content');
+            setContentSection('blocks');
           } else if (view === 'guests') {
             setActiveTab('guests');
           }

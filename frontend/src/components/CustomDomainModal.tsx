@@ -12,6 +12,8 @@ interface CustomDomainModalProps {
     customDomain?: string | null;
     licenseKey?: string | null;
   };
+  targetCname?: string;
+  isDirectVps?: boolean;
   onSuccess: (updatedDomain: string | null) => void;
 }
 
@@ -19,6 +21,8 @@ export const CustomDomainModal: React.FC<CustomDomainModalProps> = ({
   isOpen,
   onClose,
   invitation,
+  targetCname = 'luxury.absenta.id',
+  isDirectVps = false,
   onSuccess
 }) => {
   const [domainInput, setDomainInput] = useState<string>(invitation.customDomain || '');
@@ -170,7 +174,7 @@ export const CustomDomainModal: React.FC<CustomDomainModalProps> = ({
           <div className="grid grid-cols-3 gap-2 bg-neutral-950 p-2.5 rounded-xl border border-neutral-800/80 text-[11px]">
             <div>
               <span className="text-neutral-500 block text-[9px] uppercase font-bold">Type</span>
-              <span className="font-mono font-bold text-amber-400">CNAME</span>
+              <span className="font-mono font-bold text-amber-400">{isDirectVps ? 'CNAME / A' : 'CNAME'}</span>
             </div>
             <div>
               <span className="text-neutral-500 block text-[9px] uppercase font-bold">Name / Host</span>
@@ -179,11 +183,11 @@ export const CustomDomainModal: React.FC<CustomDomainModalProps> = ({
             <div>
               <span className="text-neutral-500 block text-[9px] uppercase font-bold">Target / Value</span>
               <div className="flex items-center gap-1">
-                <span className="font-mono font-bold text-[#c4a661] truncate">luxury.absenta.id</span>
+                <span className="font-mono font-bold text-[#c4a661] truncate">{targetCname}</span>
                 <button
                   type="button"
-                  onClick={() => handleCopyTarget('luxury.absenta.id')}
-                  className="p-1 text-neutral-400 hover:text-white"
+                  onClick={() => handleCopyTarget(targetCname)}
+                  className="p-1 text-neutral-400 hover:text-white cursor-pointer"
                   title="Salin Target"
                 >
                   {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
@@ -193,7 +197,11 @@ export const CustomDomainModal: React.FC<CustomDomainModalProps> = ({
           </div>
 
           <p className="text-[10px] text-neutral-400 leading-relaxed">
-            💡 <em>Catatan:</em> Setelah DNS CNAME diarahkan, server Caddy akan otomatis menerbitkan sertifikat SSL HTTPS (Let's Encrypt) saat domain pertama kali dibuka.
+            {isDirectVps ? (
+              <>⚡ <em>Mode Direct VPS:</em> Arahkan DNS ke server Anda (<strong className="text-amber-400">{targetCname}</strong>). Caddy lokal akan otomatis menerbitkan sertifikat SSL Let's Encrypt HTTPS saat pertama kali diakses.</>
+            ) : (
+              <>🌐 <em>Mode Hybrid Tunnel:</em> Arahkan CNAME ke <strong className="text-amber-400">{targetCname}</strong> agar trafik dialihkan secara aman melalui Cloud Gateway ke server lokal Anda.</>
+            )}
           </p>
         </div>
 
