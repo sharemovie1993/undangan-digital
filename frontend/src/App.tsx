@@ -507,7 +507,11 @@ export default function App() {
             transition={{ delay: 0.2 }}
             className="font-display text-[10px] tracking-[0.3em] uppercase text-[#c4a661] font-semibold"
           >
-            {invitationData.tagline}
+            {invitationData.tagline || (
+              invitationData.eventType === 'khitanan' ? 'WALIMATUL KHITAN' :
+              invitationData.eventType === 'aqiqah' ? 'TASYAKURAN AQIQAH' :
+              invitationData.eventType === 'birthday' ? 'HAPPY BIRTHDAY' : 'THE WEDDING OF'
+            )}
           </motion.p>
 
           <motion.h1
@@ -516,17 +520,61 @@ export default function App() {
             transition={{ delay: 0.3 }}
             className="font-serif text-3xl md:text-4xl font-normal text-[#d4af37] mt-2 mb-2 tracking-wide"
           >
-            {invitationData.eventTitle}
+            {(() => {
+              const p1 = invitationData.profiles?.[0];
+              const p2 = invitationData.profiles?.[1];
+              const fullName = p1?.fullName || p1?.name;
+
+              if ((invitationData.eventType === 'khitanan' || invitationData.eventType === 'aqiqah' || invitationData.eventType === 'birthday') && fullName) {
+                // Jika eventTitle terpotong (hanya 'Walimatul Khitan M.' atau semacamnya), gantikan dengan nama lengkap
+                if (invitationData.eventTitle && invitationData.eventTitle.length > fullName.length && !invitationData.eventTitle.endsWith('.')) {
+                  return invitationData.eventTitle;
+                }
+                return fullName;
+              }
+
+              if (p1?.name && p2?.name) {
+                return `${p1.name} & ${p2.name}`;
+              }
+
+              return invitationData.eventTitle || 'Undangan Digital';
+            })()}
           </motion.h1>
 
           <div className="flex items-center justify-center gap-3 my-3">
             <div className="h-px w-10 bg-[#c4a661]/40" />
-            <Heart className="w-3.5 h-3.5 text-[#c4a661] fill-[#c4a661]" />
+            {invitationData.eventType === 'khitanan' || invitationData.eventType === 'aqiqah' ? (
+              <Moon className="w-3.5 h-3.5 text-[#c4a661] fill-[#c4a661]" />
+            ) : invitationData.eventType === 'birthday' ? (
+              <Sparkles className="w-3.5 h-3.5 text-[#c4a661] fill-[#c4a661]" />
+            ) : (
+              <Heart className="w-3.5 h-3.5 text-[#c4a661] fill-[#c4a661]" />
+            )}
             <div className="h-px w-10 bg-[#c4a661]/40" />
           </div>
 
           <p className="font-display text-xs tracking-widest text-gray-400 font-medium uppercase">
-            SABTU, 24 OKTOBER 2026
+            {(() => {
+              const rawDate = invitationData.sessions?.[0]?.date || invitationData.eventDate;
+              if (!rawDate) return 'SABTU, 24 OKTOBER 2026';
+              try {
+                const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+                const months = [
+                  'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                  'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                ];
+                const isoMatch = rawDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+                if (isoMatch) {
+                  const d = new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10));
+                  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+                }
+                const d = new Date(rawDate);
+                if (!isNaN(d.getTime())) {
+                  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+                }
+              } catch {}
+              return rawDate;
+            })()}
           </p>
         </section>
 

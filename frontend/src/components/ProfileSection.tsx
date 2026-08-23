@@ -94,13 +94,28 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ data }) => {
         className="max-w-md mx-auto mb-10 px-4"
       >
         <p className="text-xs md:text-sm leading-relaxed font-light" style={{ color: theme.textMuted }}>
-          {data.openingQuoteText || 'Maha Suci Allah yang telah menciptakan makhluk-Nya berpasang-pasangan.'}
+          {(() => {
+            if (data.openingQuoteText && !data.openingQuoteText.includes('berpasang-pasangan')) {
+              return data.openingQuoteText;
+            }
+            if (isKhitan) {
+              return 'Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara Walimatul Khitan putra kami, seraya memanjatkan doa agar ananda menjadi anak yang sholeh, cerdas, dan berbakti.';
+            }
+            if (isBirthday) {
+              return 'Puji syukur atas nikmat dan berkah usia yang telah diberikan. Mari bersama-sama merayakan momen istimewa dan penuh keceriaan ini.';
+            }
+            return data.openingQuoteText || 'Maha Suci Allah yang telah menciptakan makhluk-Nya berpasang-pasangan.';
+          })()}
         </p>
-        {data.openingQuoteSource && (
+        {data.openingQuoteSource ? (
           <p className="text-[11px] uppercase tracking-widest font-semibold mt-2" style={{ color: activePrimary }}>
             — {data.openingQuoteSource}
           </p>
-        )}
+        ) : isKhitan ? (
+          <p className="text-[11px] uppercase tracking-widest font-semibold mt-2" style={{ color: activePrimary }}>
+            — Doa Keberkahan & Restu
+          </p>
+        ) : null}
       </motion.div>
 
       {/* Profile Cards */}
