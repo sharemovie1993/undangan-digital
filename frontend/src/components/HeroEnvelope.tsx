@@ -1,10 +1,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mail, Sparkles, ChevronDown, Calendar, MapPin, Heart } from 'lucide-react';
+import { Mail, Sparkles, ChevronDown, Calendar, MapPin, Heart, Moon, Star } from 'lucide-react';
 import { InvitationData, ThemeToken } from '../types';
 import { themeRegistry } from '../themes/registry';
 import { WaxSealStamp } from './effects/WaxSealStamp';
 import { AmbientParticleCanvas } from './effects/AmbientParticleCanvas';
+import { CornerOrnaments } from './effects/CornerOrnaments';
+import { FONT_PRESETS } from '../data/presets';
 
 interface HeroEnvelopeProps {
   data: InvitationData;
@@ -27,6 +29,10 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
   const effectiveGuest = guestName || recipientName || 'Tamu Undangan';
   const particleEffect = data.themeConfig?.particleEffect || (theme.mode === 'dark' ? 'gold_dust' : 'none');
   const waxColor = data.themeConfig?.waxSealColor || (theme.category === 'royal' ? 'gold' : theme.category === 'traditional' ? 'maroon' : 'sage');
+
+  // Typography Font Preset
+  const fontPreset = data.themeConfig?.fontPairingId ? FONT_PRESETS[data.themeConfig.fontPairingId] : null;
+  const headingFontFamily = fontPreset?.headingFamily || "'Cinzel', 'Playfair Display', serif";
 
   // 1. Deteksi Jenis Acara Cerdas (dari eventType atau analisis kata kunci di Judul)
   const rawTitle = data.eventTitle || (data as any).title || '';
@@ -73,30 +79,29 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
   // 3. Rekonstruksi Judul Undangan Lengkap (Cegah nama terpotong "M.")
   const effectiveTitle = (() => {
     if (isKhitanDetected) {
-      const childName = data.profiles?.[0]?.name?.trim() || data.profiles?.[0]?.fullName?.trim();
-      // Jika rawTitle terpotong (misal "Walimatul Khitan M." atau hanya "Walimatul Khitan") tapi profil memiliki nama lebih lengkap
+      const childName = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim();
       if (childName && (!rawTitle || /walimatul khitan\s+[a-z]\.?$/i.test(rawTitle.trim()) || rawTitle.trim().toLowerCase() === 'walimatul khitan')) {
         return `Walimatul Khitan ${childName}`;
       }
       return rawTitle || (childName ? `Walimatul Khitan ${childName}` : 'Walimatul Khitan');
     }
     if (isAqiqahDetected) {
-      const childName = data.profiles?.[0]?.name?.trim() || data.profiles?.[0]?.fullName?.trim();
+      const childName = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim();
       if (childName && (!rawTitle || /tasyakuran aqiqah\s+[a-z]\.?$/i.test(rawTitle.trim()) || rawTitle.trim().toLowerCase() === 'tasyakuran aqiqah')) {
         return `Tasyakuran Aqiqah ${childName}`;
       }
       return rawTitle || (childName ? `Tasyakuran Aqiqah ${childName}` : 'Tasyakuran Aqiqah');
     }
     if (isBirthdayDetected) {
-      const name = data.profiles?.[0]?.name?.trim() || data.profiles?.[0]?.fullName?.trim();
+      const name = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim();
       if (name && (!rawTitle || rawTitle.trim().toLowerCase() === 'birthday')) {
         return `Ulang Tahun ${name}`;
       }
       return rawTitle || (name ? `Ulang Tahun ${name}` : 'Birthday Celebration');
     }
     // Wedding
-    const p1 = data.profiles?.[0]?.name?.trim();
-    const p2 = data.profiles?.[1]?.name?.trim();
+    const p1 = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim();
+    const p2 = data.profiles?.[1]?.fullName?.trim() || data.profiles?.[1]?.name?.trim();
     if (p1 && p2 && (!rawTitle || !rawTitle.includes('&'))) {
       return `${p1} & ${p2}`;
     }
@@ -111,10 +116,9 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
       return `${p1.toUpperCase()} & ${p2.toUpperCase()}`;
     }
     // Anak / Yang berulang tahun
-    const rawName = data.profiles?.[0]?.name?.trim() || data.profiles?.[0]?.fullName?.trim() || effectiveTitle?.replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Syukuran|Ulang Tahun)\s*/i, '').trim() || '';
+    const rawName = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim() || effectiveTitle?.replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Syukuran|Ulang Tahun)\s*/i, '').trim() || '';
     if (rawName) {
       const words = rawName.split(/\s+/).filter(Boolean);
-      // Jika kata pertama adalah singkatan "M." atau "M", ambil kata kedua jika tersedia
       if (words.length > 1 && (words[0].length <= 2 || words[0].endsWith('.'))) {
         return words[1][0].toUpperCase();
       }
@@ -122,6 +126,19 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
     }
     return isKhitanDetected ? 'K' : isAqiqahDetected ? 'A' : 'B';
   })();
+
+  // 5. Corner Ornament Type Aware
+  const cornerOrnamentType =
+    data.themeConfig?.cornerOrnament ||
+    (theme.category === 'traditional'
+      ? 'batik_prada'
+      : theme.category === 'royal'
+      ? 'royal_crown'
+      : theme.category === 'islamic'
+      ? 'javanese_flourish'
+      : theme.category === 'modern'
+      ? 'art_deco'
+      : 'royal_crown');
 
   return (
     <AnimatePresence>
@@ -144,46 +161,69 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
           {/* Subtle Ambient Vignette Overlay */}
           <div className="absolute inset-0 bg-black/65 backdrop-blur-[6px]" />
 
-          {/* Luxury Card Frame */}
+          {/* Luxury Card Frame (100% Theme & Corner Ornament Aware) */}
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="relative z-10 w-full max-w-sm rounded-3xl border p-8 shadow-2xl backdrop-blur-md text-[#e2e2e7]"
+            className="relative z-10 w-full max-w-sm rounded-3xl border p-7 sm:p-8 shadow-2xl backdrop-blur-md text-[#e2e2e7] overflow-hidden"
             style={{
               backgroundColor: `${theme.cardBg}F5`,
               borderColor: `${activePrimary}50`,
               boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 30px ${activePrimary}20`
             }}
           >
+            {/* 4 Luxury Corner Ornaments on Envelope Card */}
+            <CornerOrnaments type={cornerOrnamentType} primaryColor={activePrimary} />
+
             {/* Top 3D Monogram Wax Seal */}
-            <div className="mx-auto -mt-16 mb-4 flex items-center justify-center">
+            <div className="mx-auto -mt-15 mb-4 flex items-center justify-center relative z-20">
               <WaxSealStamp monogram={monogram} colorId={waxColor} onClick={onOpen} />
             </div>
 
             {/* Tagline */}
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Sparkles className="w-3.5 h-3.5" style={{ color: activePrimary }} />
+            <div className="flex items-center justify-center gap-2 mb-2 relative z-10">
+              {isKhitanDetected || isAqiqahDetected ? (
+                <Moon className="w-3.5 h-3.5" style={{ color: activePrimary }} />
+              ) : isBirthdayDetected ? (
+                <Star className="w-3.5 h-3.5" style={{ color: activePrimary }} />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" style={{ color: activePrimary }} />
+              )}
               <span className="font-display text-[10px] tracking-[0.3em] uppercase font-semibold" style={{ color: activePrimary }}>
                 {effectiveTagline}
               </span>
-              <Sparkles className="w-3.5 h-3.5" style={{ color: activePrimary }} />
+              {isKhitanDetected || isAqiqahDetected ? (
+                <Moon className="w-3.5 h-3.5" style={{ color: activePrimary }} />
+              ) : isBirthdayDetected ? (
+                <Star className="w-3.5 h-3.5" style={{ color: activePrimary }} />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" style={{ color: activePrimary }} />
+              )}
             </div>
 
             {/* Event Title */}
-            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6 leading-tight" style={{ color: theme.textMain }}>
+            <h1
+              className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6 leading-tight relative z-10"
+              style={{ fontFamily: headingFontFamily, color: theme.textMain }}
+            >
               {effectiveTitle}
             </h1>
 
-            {/* Guest Envelope Recipient Card */}
+            {/* Guest Envelope Recipient Card (with inner corner filigree & theme border) */}
             <div
-              className="rounded-2xl p-4 mb-8 border"
-              style={{ backgroundColor: theme.accentBg, borderColor: `${activePrimary}30` }}
+              className="rounded-2xl p-4 mb-6 border relative overflow-hidden z-10 shadow-md"
+              style={{
+                backgroundColor: theme.accentBg,
+                borderColor: `${activePrimary}35`,
+              }}
             >
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: theme.textMuted }}>
+              <CornerOrnaments type={cornerOrnamentType} primaryColor={activePrimary} />
+
+              <p className="text-[10px] uppercase tracking-widest mb-1 font-medium" style={{ color: theme.textMuted }}>
                 Kepada Yth. Bapak/Ibu/Saudara/i:
               </p>
-              <h2 className="font-serif text-lg font-bold tracking-wide" style={{ color: theme.textMain }}>
+              <h2 className="text-lg font-bold tracking-wide" style={{ fontFamily: headingFontFamily, color: theme.textMain }}>
                 {effectiveGuest}
               </h2>
               <p className="text-[9px] mt-1 italic opacity-70" style={{ color: theme.textMuted }}>
@@ -196,7 +236,12 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={onOpen}
-              className={`w-full py-3.5 px-6 rounded-xl font-sans font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg ${theme.button}`}
+              className={`w-full py-3.5 px-6 rounded-xl font-sans font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg relative z-10 ${theme.button}`}
+              style={{
+                backgroundColor: activePrimary,
+                color: theme.mode === 'light' ? '#ffffff' : '#0a0a0b',
+                boxShadow: `0 8px 25px ${activePrimary}40`,
+              }}
             >
               <Mail className="w-4 h-4" />
               <span>Buka Undangan</span>
@@ -204,7 +249,7 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
 
             {/* Trial Watermark Badge */}
             {data.isWatermarked !== false && !data.licenseKey && (
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-center gap-2 text-[10px] text-neutral-400">
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-center gap-2 text-[10px] text-neutral-400 relative z-10">
                 <span className="text-[#c4a661] font-semibold">✨ Versi Percobaan (Free Trial)</span>
                 <span>•</span>
                 <span className="text-neutral-300">LuxeInvite Studio</span>
