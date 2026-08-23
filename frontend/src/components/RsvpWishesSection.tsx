@@ -8,6 +8,7 @@ import { DEFAULT_WISHES, FONT_PRESETS } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
 import { api } from '../api/client';
 import { queryClient } from '../query/queryClient';
+import { CornerOrnaments } from './effects/CornerOrnaments';
 
 interface RsvpWishesSectionProps {
   data: InvitationData;
@@ -304,7 +305,7 @@ export const RsvpWishesSection = memo(function RsvpWishesSection({
       </div>
 
       <div className="max-w-md mx-auto space-y-8">
-        {/* RSVP Form Card */}
+        {/* RSVP Form Card (Theme-Aware with 4 Corner Ornaments) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -316,6 +317,23 @@ export const RsvpWishesSection = memo(function RsvpWishesSection({
             borderColor: `${activePrimary}35`,
           }}
         >
+          {/* 4 Luxury Corner Ornaments */}
+          <CornerOrnaments
+            type={
+              data.themeConfig?.cornerOrnament ||
+              (theme.category === 'traditional'
+                ? 'batik_prada'
+                : theme.category === 'royal'
+                ? 'royal_crown'
+                : theme.category === 'islamic'
+                ? 'javanese_flourish'
+                : theme.category === 'modern'
+                ? 'art_deco'
+                : 'royal_crown')
+            }
+            primaryColor={activePrimary}
+          />
+
           {submitted ? (
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}

@@ -8,7 +8,7 @@ interface CornerOrnamentsProps {
 }
 
 export const CornerOrnaments = memo(function CornerOrnaments({
-  type = 'none',
+  type = 'royal_crown',
   primaryColor = '#c4a661',
   className = '',
 }: CornerOrnamentsProps) {
@@ -41,28 +41,32 @@ export const CornerOrnaments = memo(function CornerOrnaments({
     );
   }
 
-  if (type === 'royal_crown') {
+  if (type === 'javanese_flourish') {
     return (
       <div className={`pointer-events-none absolute inset-0 z-10 ${className}`}>
         {/* Top-Left */}
         <svg className="absolute top-2 left-2 w-7 h-7" viewBox="0 0 28 28" fill="none">
-          <path d="M2 14 C2 6, 6 2, 14 2 M2 2 L8 8" stroke={primaryColor} strokeWidth="1.2" opacity="0.8" />
-          <circle cx="4" cy="4" r="1" fill={primaryColor} />
+          <path d="M2 2 Q14 2 14 14 Q2 14 2 26" stroke={primaryColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+          <path d="M2 2 Q2 14 14 14 Q14 2 26 2" stroke={primaryColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+          <circle cx="6" cy="6" r="1.5" fill={primaryColor} opacity="0.9" />
         </svg>
         {/* Top-Right */}
         <svg className="absolute top-2 right-2 w-7 h-7 -scale-x-100" viewBox="0 0 28 28" fill="none">
-          <path d="M2 14 C2 6, 6 2, 14 2 M2 2 L8 8" stroke={primaryColor} strokeWidth="1.2" opacity="0.8" />
-          <circle cx="4" cy="4" r="1" fill={primaryColor} />
+          <path d="M2 2 Q14 2 14 14 Q2 14 2 26" stroke={primaryColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+          <path d="M2 2 Q2 14 14 14 Q14 2 26 2" stroke={primaryColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+          <circle cx="6" cy="6" r="1.5" fill={primaryColor} opacity="0.9" />
         </svg>
         {/* Bottom-Left */}
         <svg className="absolute bottom-2 left-2 w-7 h-7 -scale-y-100" viewBox="0 0 28 28" fill="none">
-          <path d="M2 14 C2 6, 6 2, 14 2 M2 2 L8 8" stroke={primaryColor} strokeWidth="1.2" opacity="0.8" />
-          <circle cx="4" cy="4" r="1" fill={primaryColor} />
+          <path d="M2 2 Q14 2 14 14 Q2 14 2 26" stroke={primaryColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+          <path d="M2 2 Q2 14 14 14 Q14 2 26 2" stroke={primaryColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+          <circle cx="6" cy="6" r="1.5" fill={primaryColor} opacity="0.9" />
         </svg>
         {/* Bottom-Right */}
         <svg className="absolute bottom-2 right-2 w-7 h-7 -scale-x-100 -scale-y-100" viewBox="0 0 28 28" fill="none">
-          <path d="M2 14 C2 6, 6 2, 14 2 M2 2 L8 8" stroke={primaryColor} strokeWidth="1.2" opacity="0.8" />
-          <circle cx="4" cy="4" r="1" fill={primaryColor} />
+          <path d="M2 2 Q14 2 14 14 Q2 14 2 26" stroke={primaryColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+          <path d="M2 2 Q2 14 14 14 Q14 2 26 2" stroke={primaryColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+          <circle cx="6" cy="6" r="1.5" fill={primaryColor} opacity="0.9" />
         </svg>
       </div>
     );
@@ -91,7 +95,31 @@ export const CornerOrnaments = memo(function CornerOrnaments({
     );
   }
 
-  return null;
+  // Default: Royal Crown
+  return (
+    <div className={`pointer-events-none absolute inset-0 z-10 ${className}`}>
+      {/* Top-Left */}
+      <svg className="absolute top-2 left-2 w-7 h-7" viewBox="0 0 28 28" fill="none">
+        <path d="M2 14 C2 6, 6 2, 14 2 M2 2 L8 8" stroke={primaryColor} strokeWidth="1.2" opacity="0.8" />
+        <circle cx="4" cy="4" r="1" fill={primaryColor} />
+      </svg>
+      {/* Top-Right */}
+      <svg className="absolute top-2 right-2 w-7 h-7 -scale-x-100" viewBox="0 0 28 28" fill="none">
+        <path d="M2 14 C2 6, 6 2, 14 2 M2 2 L8 8" stroke={primaryColor} strokeWidth="1.2" opacity="0.8" />
+        <circle cx="4" cy="4" r="1" fill={primaryColor} />
+      </svg>
+      {/* Bottom-Left */}
+      <svg className="absolute bottom-2 left-2 w-7 h-7 -scale-y-100" viewBox="0 0 28 28" fill="none">
+        <path d="M2 14 C2 6, 6 2, 14 2 M2 2 L8 8" stroke={primaryColor} strokeWidth="1.2" opacity="0.8" />
+        <circle cx="4" cy="4" r="1" fill={primaryColor} />
+      </svg>
+      {/* Bottom-Right */}
+      <svg className="absolute bottom-2 right-2 w-7 h-7 -scale-x-100 -scale-y-100" viewBox="0 0 28 28" fill="none">
+        <path d="M2 14 C2 6, 6 2, 14 2 M2 2 L8 8" stroke={primaryColor} strokeWidth="1.2" opacity="0.8" />
+        <circle cx="4" cy="4" r="1" fill={primaryColor} />
+      </svg>
+    </div>
+  );
 });
 
 CornerOrnaments.displayName = 'CornerOrnaments';

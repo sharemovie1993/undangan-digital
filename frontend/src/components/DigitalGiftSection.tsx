@@ -4,6 +4,7 @@ import { Copy, Check, QrCode, Gift, Building2, MapPin, Sparkles, X, Phone, Exter
 import { InvitationData, BankAccount, PhysicalGiftAddress } from '../types';
 import { FONT_PRESETS, THEMES } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
+import { CornerOrnaments } from './effects/CornerOrnaments';
 
 interface DigitalGiftSectionProps {
   data: InvitationData;
@@ -85,114 +86,149 @@ export const DigitalGiftSection: React.FC<DigitalGiftSectionProps> = ({ data, th
         />
       </div>
 
-      {/* Bank Account & Gift Cards Container */}
-      <div className="space-y-4 max-w-md mx-auto">
-        {data.bankAccounts?.map((account, index) => {
-          const isCopied = copiedId === account.id;
-          const isDarkCard = index % 2 === 0;
+        {/* Bank Account & Gift Cards Container */}
+        <div className="space-y-4 max-w-md mx-auto">
+          {data.bankAccounts?.map((account, index) => {
+            const isCopied = copiedId === account.id;
+            const isDarkCard = index % 2 === 0;
 
-          return (
+            const cornerOrnamentType =
+              data.themeConfig?.cornerOrnament ||
+              (theme.category === 'traditional'
+                ? 'batik_prada'
+                : theme.category === 'royal'
+                ? 'royal_crown'
+                : theme.category === 'islamic'
+                ? 'javanese_flourish'
+                : theme.category === 'modern'
+                ? 'art_deco'
+                : 'royal_crown');
+
+            return (
+              <motion.div
+                key={account.id || index}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-xl border"
+                style={{
+                  background: isDarkCard
+                    ? `linear-gradient(135deg, ${cardBg} 0%, ${theme.accentBg || cardBg} 100%)`
+                    : `linear-gradient(135deg, ${activePrimary}20 0%, ${cardBg} 100%)`,
+                  borderColor: `${activePrimary}40`,
+                }}
+              >
+                {/* 4 Corner Ornaments Aware */}
+                <CornerOrnaments
+                  type={cornerOrnamentType}
+                  primaryColor={activePrimary}
+                />
+
+                {/* Background ambient shine */}
+                <div
+                  className="absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-2xl pointer-events-none opacity-20"
+                  style={{ backgroundColor: activePrimary }}
+                />
+
+                {/* Card Header: Bank Name & Icon */}
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-xs sm:text-sm font-bold tracking-widest uppercase font-mono"
+                    style={{ color: activePrimary }}
+                  >
+                    {account.bankName}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {account.qrisImageUrl && (
+                      <button
+                        onClick={() => setSelectedQris(account)}
+                        className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition border cursor-pointer"
+                        style={{
+                          backgroundColor: `${activePrimary}20`,
+                          borderColor: `${activePrimary}40`,
+                          color: theme.textMain,
+                        }}
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>QRIS</span>
+                      </button>
+                    )}
+                    <Building2 className="w-5 h-5 opacity-70" style={{ color: theme.textMain }} />
+                  </div>
+                </div>
+
+                {/* Account Number */}
+                <div className="mt-4 mb-3">
+                  <p className="text-xl sm:text-2xl font-bold tracking-wider font-mono" style={{ color: theme.textMain }}>
+                    {account.accountNumber}
+                  </p>
+                  <p className="text-[10px] tracking-widest uppercase mt-0.5" style={{ color: theme.textMuted }}>
+                    A.N {account.accountHolder}
+                  </p>
+                </div>
+
+                {/* Salin No. Rekening Button */}
+                <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/10">
+                  <span className="text-[10px] text-neutral-400">
+                    {isCopied ? 'Tersalin ke clipboard!' : 'Klik tombol untuk menyalin'}
+                  </span>
+                  <button
+                    id={`copy-bank-${account.id || index}`}
+                    onClick={() => copyToClipboard(account.accountNumber, account.id || `acc-${index}`)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
+                    style={{
+                      backgroundColor: isCopied ? '#10b981' : activePrimary,
+                      color: theme.mode === 'light' ? '#ffffff' : '#0a0a0b',
+                    }}
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-white" />
+                        <span className="text-white">Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Salin No. Rekening</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+
+          {/* Physical Gift Delivery Address (100% Theme-Aware with Corner Ornaments) */}
+          {physicalGift && physicalGift.isEnabled !== false && (physicalGift.fullAddress || physicalGift.recipientName) && (
             <motion.div
-              key={account.id || index}
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-xl border"
+              className="rounded-2xl border p-5 sm:p-6 shadow-xl backdrop-blur-md relative overflow-hidden"
               style={{
-                background: isDarkCard
-                  ? `linear-gradient(135deg, ${cardBg} 0%, ${theme.accentBg || cardBg} 100%)`
-                  : `linear-gradient(135deg, ${activePrimary}20 0%, ${cardBg} 100%)`,
+                backgroundColor: `${cardBg}f5`,
                 borderColor: `${activePrimary}40`,
               }}
             >
-              {/* Background ambient shine */}
-              <div
-                className="absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-2xl pointer-events-none opacity-20"
-                style={{ backgroundColor: activePrimary }}
+              {/* 4 Corner Ornaments Aware */}
+              <CornerOrnaments
+                type={
+                  data.themeConfig?.cornerOrnament ||
+                  (theme.category === 'traditional'
+                    ? 'batik_prada'
+                    : theme.category === 'royal'
+                    ? 'royal_crown'
+                    : theme.category === 'islamic'
+                    ? 'javanese_flourish'
+                    : theme.category === 'modern'
+                    ? 'art_deco'
+                    : 'royal_crown')
+                }
+                primaryColor={activePrimary}
               />
 
-              {/* Card Header: Bank Name & Icon */}
-              <div className="flex items-center justify-between">
-                <span
-                  className="text-xs sm:text-sm font-bold tracking-widest uppercase font-mono"
-                  style={{ color: activePrimary }}
-                >
-                  {account.bankName}
-                </span>
-                <div className="flex items-center gap-2">
-                  {account.qrisImageUrl && (
-                    <button
-                      onClick={() => setSelectedQris(account)}
-                      className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition border cursor-pointer"
-                      style={{
-                        backgroundColor: `${activePrimary}20`,
-                        borderColor: `${activePrimary}40`,
-                        color: theme.textMain,
-                      }}
-                    >
-                      <QrCode className="w-3.5 h-3.5" />
-                      <span>QRIS</span>
-                    </button>
-                  )}
-                  <Building2 className="w-5 h-5 opacity-70" style={{ color: theme.textMain }} />
-                </div>
-              </div>
-
-              {/* Account Number */}
-              <div className="mt-4 mb-3">
-                <p className="text-xl sm:text-2xl font-bold tracking-wider font-mono" style={{ color: theme.textMain }}>
-                  {account.accountNumber}
-                </p>
-                <p className="text-[10px] tracking-widest uppercase mt-0.5" style={{ color: theme.textMuted }}>
-                  A.N {account.accountHolder}
-                </p>
-              </div>
-
-              {/* Salin No. Rekening Button */}
-              <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/10">
-                <span className="text-[10px] text-neutral-400">
-                  {isCopied ? 'Tersalin ke clipboard!' : 'Klik tombol untuk menyalin'}
-                </span>
-                <button
-                  id={`copy-bank-${account.id || index}`}
-                  onClick={() => copyToClipboard(account.accountNumber, account.id || `acc-${index}`)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
-                  style={{
-                    backgroundColor: isCopied ? '#10b981' : activePrimary,
-                    color: '#0a0a0b',
-                  }}
-                >
-                  {isCopied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-white" />
-                      <span className="text-white">Tersalin!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Salin No. Rekening</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          );
-        })}
-
-        {/* Physical Gift Delivery Address (100% Theme-Aware & Fully Integrated) */}
-        {physicalGift && physicalGift.isEnabled !== false && (physicalGift.fullAddress || physicalGift.recipientName) && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="rounded-2xl border p-5 sm:p-6 shadow-xl backdrop-blur-md relative overflow-hidden"
-            style={{
-              backgroundColor: `${cardBg}f5`,
-              borderColor: `${activePrimary}40`,
-            }}
-          >
-            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 font-bold text-base">
                 <Gift className="w-5 h-5" style={{ color: activePrimary }} />
                 <span className="text-white" style={{ fontFamily: headingFont }}>
