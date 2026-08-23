@@ -255,6 +255,36 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
     }
   };
 
+  const handleToggleGuestSentStatus = async (id: string, isSent?: boolean) => {
+    const nextGuests = guests.map((g) => {
+      if (g.id === id) {
+        const nextSent = isSent !== undefined ? isSent : !g.isSent;
+        return {
+          ...g,
+          isSent: nextSent,
+          sentAt: nextSent ? (g.sentAt || new Date().toISOString()) : undefined,
+        };
+      }
+      return g;
+    });
+
+    onUpdateGuests(nextGuests);
+
+    // Auto-sync with SQLite backend
+    try {
+      const cleanSlug = data.slug ? generateSlug(data.slug) : generateSlug(data.eventTitle || data.title);
+      await api.saveInvitation({
+        ...data,
+        title: data.eventTitle || data.title || 'Undangan Digital',
+        slug: cleanSlug,
+        id: data.id || cleanSlug,
+        guestList: nextGuests,
+      });
+    } catch (err) {
+      console.warn('Auto sync guest sent status failed:', err);
+    }
+  };
+
   const handleBulkImportGuests = async (importedGuests: GuestRecipient[], mode: 'merge' | 'replace' = 'merge') => {
     if (!importedGuests || importedGuests.length === 0) return;
 
@@ -538,6 +568,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
                 onOpenBulkModal={() => setIsBulkModalOpen(true)}
                 onOpenScanner={() => setIsScannerOpen(true)}
                 copiedLink={copiedLink}
+                onToggleGuestSentStatus={handleToggleGuestSentStatus}
               />
             </div>
           ) : (

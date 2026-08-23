@@ -145,10 +145,19 @@ export interface WishMessage {
 export interface GuestRecipient {
   id: string;
   name: string;
-  addressOrCity: string;
+  addressOrCity?: string;
+  city?: string;
   group?: string; // "Keluarga", "VVIP", "Teman Kuliah", "Rekan Kerja"
   paxQuota?: number;
+  paxCount?: number;
   hasOpened?: boolean;
+  openedAt?: string;
+  isSent?: boolean; // 📤 Status pengiriman undangan (sudah dikirim / belum)
+  sentAt?: string; // Waktu pengiriman
+  isCheckedIn?: boolean;
+  isAttending?: boolean | null;
+  slug?: string;
+  phoneNumber?: string;
 }
 
 export interface GalleryItem {

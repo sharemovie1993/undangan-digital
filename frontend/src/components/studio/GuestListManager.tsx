@@ -1,5 +1,5 @@
 import React, { useState, memo, useMemo, useCallback } from 'react';
-import { Plus, Upload, QrCode, Copy, Eye, Trash2, AlertTriangle, FileSpreadsheet, Search, MessageSquare, MapPin, Users, Check, Mail, MailOpen, UserCheck, UserX, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Upload, QrCode, Copy, Eye, Trash2, AlertTriangle, FileSpreadsheet, Search, MessageSquare, MapPin, Users, Check, CheckCheck, Mail, MailOpen, UserCheck, UserX, X, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { GuestRecipient, InvitationData } from '../../types';
 import { exportGuestsToExcel } from '../../utils/excelGuests';
 import { generateWhatsAppMessage } from '../../utils/whatsappTemplate';
@@ -20,6 +20,7 @@ interface GuestListManagerProps {
   onOpenBulkModal: () => void;
   onOpenScanner: () => void;
   copiedLink: string | null;
+  onToggleGuestSentStatus?: (id: string, isSent?: boolean) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,6 +33,7 @@ interface GuestCardItemProps {
   onCopyLinkOnly: (guest: GuestRecipient) => void;
   onViewGuestMode: (name: string) => void;
   onDeleteGuest: (id: string) => void;
+  onToggleSent?: (id: string, isSent?: boolean) => void;
 }
 
 const GuestCardItem = memo(function GuestCardItem({
@@ -41,31 +43,39 @@ const GuestCardItem = memo(function GuestCardItem({
   onCopyLinkOnly,
   onViewGuestMode,
   onDeleteGuest,
+  onToggleSent,
 }: GuestCardItemProps) {
   const cityText = guest.addressOrCity || guest.city;
   const isAttending = guest.isAttending === true || (guest as any).attendance === 'HADIR' || (guest as any).status === 'hadir';
   const isNotAttending = guest.isAttending === false || (guest as any).attendance === 'TIDAK_HADIR' || (guest as any).status === 'tidak_hadir';
   const isOpened = Boolean(guest.hasOpened || guest.isCheckedIn || isAttending || isNotAttending);
+  const isSent = Boolean(guest.isSent);
 
   return (
     <div className="bg-[#111115] hover:bg-[#16161c] border border-white/5 hover:border-white/10 rounded-xl px-2.5 py-2 flex items-center justify-between gap-2 transition shadow-xs">
       {/* 1. NAMA & STATUS (KIRI) */}
       <div className="min-w-0 flex-1 flex items-center gap-2">
-        <span
-          className={`w-2 h-2 rounded-full shrink-0 ${
-            isAttending
-              ? 'bg-emerald-400 ring-2 ring-emerald-400/20'
-              : isNotAttending
-              ? 'bg-rose-400 ring-2 ring-rose-400/20'
-              : isOpened
-              ? 'bg-blue-400 ring-2 ring-blue-400/20'
-              : 'bg-amber-400 ring-2 ring-amber-400/20'
-          }`}
-          title={isAttending ? 'Hadir' : isNotAttending ? 'Tidak Hadir' : isOpened ? 'Sudah Dibuka' : 'Belum Dibuka'}
-        />
+        {/* Status Pengiriman Interaktif (Klik untuk Toggle Sent/Unsent) */}
+        <button
+          type="button"
+          onClick={() => onToggleSent?.(guest.id, !isSent)}
+          className="shrink-0 cursor-pointer group"
+          title={isSent ? 'Terkirim (Klik untuk ubah ke Belum Kirim)' : 'Belum Kirim (Klik untuk tandai Terkirim)'}
+        >
+          {isSent ? (
+            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px] group-hover:scale-110 transition">
+              <CheckCheck className="w-3 h-3" />
+            </span>
+          ) : (
+            <span className="w-5 h-5 rounded-full bg-neutral-900 text-neutral-500 border border-neutral-800 flex items-center justify-center text-[10px] group-hover:text-amber-300 group-hover:border-amber-500/50 transition">
+              <Send className="w-2.5 h-2.5" />
+            </span>
+          )}
+        </button>
+
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h4 className="font-bold text-xs sm:text-sm text-white truncate">
+            <h4 className={`font-bold text-xs sm:text-sm truncate ${isSent ? 'text-white' : 'text-neutral-200'}`}>
               {guest.name}
             </h4>
             {guest.paxQuota && guest.paxQuota > 1 && (
@@ -73,6 +83,16 @@ const GuestCardItem = memo(function GuestCardItem({
                 {guest.paxQuota}p
               </span>
             )}
+            {/* Status Buka / Hadir Badge Mini */}
+            {isAttending ? (
+              <span className="text-[8.5px] px-1.5 py-0.2 rounded-md font-bold bg-emerald-500/20 text-emerald-400 shrink-0">
+                Hadir
+              </span>
+            ) : isOpened ? (
+              <span className="text-[8.5px] px-1.5 py-0.2 rounded-md bg-blue-500/20 text-blue-400 shrink-0">
+                Dibuka
+              </span>
+            ) : null}
           </div>
           {cityText && (
             <p className="text-[9.5px] text-neutral-500 truncate flex items-center gap-0.5 mt-0.5">
@@ -99,17 +119,21 @@ const GuestCardItem = memo(function GuestCardItem({
 
       {/* 3. AKSI (KANAN - 1 BARIS COMPACT) */}
       <div className="flex items-center gap-1 shrink-0">
-        {/* Tombol Kirim WA */}
+        {/* Tombol Kirim WA (Otomatis Menandai Terkirim) */}
         <button
           type="button"
           onClick={() => onSendWhatsApp(guest)}
-          className="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 transition cursor-pointer flex items-center justify-center"
-          title="Kirim Undangan ke WhatsApp"
+          className={`p-1.5 rounded-lg border transition cursor-pointer flex items-center justify-center ${
+            isSent
+              ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/50'
+              : 'bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30'
+          }`}
+          title="Kirim Undangan ke WhatsApp (Otomatis Tandai Terkirim)"
         >
           <MessageSquare className="w-3.5 h-3.5" />
         </button>
 
-        {/* Tombol Salin Link */}
+        {/* Tombol Salin Link (Otomatis Menandai Terkirim) */}
         <button
           type="button"
           onClick={() => onCopyLinkOnly(guest)}
@@ -118,7 +142,7 @@ const GuestCardItem = memo(function GuestCardItem({
               ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
               : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-300'
           }`}
-          title="Salin Link Undangan"
+          title="Salin Link Undangan Khusus"
         >
           {isCopiedOnly ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
@@ -164,9 +188,10 @@ export const GuestListManager = memo(function GuestListManager({
   onOpenBulkModal,
   onOpenScanner,
   copiedLink,
+  onToggleGuestSentStatus,
 }: GuestListManagerProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'unopened' | 'opened' | 'attending' | 'not_attending'>('all');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'unsent' | 'sent' | 'unopened' | 'opened' | 'attending' | 'not_attending'>('all');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [showLimitBanner, setShowLimitBanner] = useState(false);
@@ -199,18 +224,20 @@ export const GuestListManager = memo(function GuestListManager({
   }, [guests]);
 
   // Realtime Live Analytics Calculations (Memoized O(N) only on guests changes)
-  const { totalCount, openedCount, unopenedCount, attendingCount, notAttendingCount, familyCount } = useMemo(() => {
+  const { totalCount, openedCount, unopenedCount, attendingCount, notAttendingCount, familyCount, sentCount, unsentCount } = useMemo(() => {
     const total = guests.length;
     let opened = 0;
     let attending = 0;
     let notAttending = 0;
     let family = 0;
+    let sent = 0;
 
     guests.forEach((g) => {
       if (isGuestAttending(g)) attending++;
       if (isGuestNotAttending(g)) notAttending++;
       if (isGuestOpened(g)) opened++;
       if ((g.group || '').toLowerCase() === 'keluarga') family++;
+      if (g.isSent) sent++;
     });
 
     return {
@@ -220,10 +247,12 @@ export const GuestListManager = memo(function GuestListManager({
       attendingCount: attending,
       notAttendingCount: notAttending,
       familyCount: family,
+      sentCount: sent,
+      unsentCount: total - sent,
     };
   }, [guests, isGuestAttending, isGuestNotAttending, isGuestOpened]);
 
-  // Filter guests by search query, open/attendance status, and group/keluarga filter (Memoized)
+  // Filter guests by search query, open/attendance/sent status, and group/keluarga filter (Memoized)
   const filteredGuests = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
 
@@ -246,8 +275,14 @@ export const GuestListManager = memo(function GuestListManager({
 
       // Status Filter
       const isOpened = isGuestOpened(guest);
+      const isSent = Boolean(guest.isSent);
+
       return selectedStatusFilter === 'all'
         ? true
+        : selectedStatusFilter === 'unsent'
+        ? !isSent
+        : selectedStatusFilter === 'sent'
+        ? isSent
         : selectedStatusFilter === 'unopened'
         ? !isOpened
         : selectedStatusFilter === 'opened'
@@ -270,9 +305,12 @@ export const GuestListManager = memo(function GuestListManager({
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://luxury.absenta.id';
     const text = generateWhatsAppMessage(guest, data, baseUrl);
 
+    // Otomatis tandai sebagai Terkirim
+    onToggleGuestSentStatus?.(guest.id, true);
+
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank');
-  }, [data]);
+  }, [data, onToggleGuestSentStatus]);
 
   const [copiedGuestId, setCopiedGuestId] = useState<string | null>(null);
 
@@ -283,8 +321,12 @@ export const GuestListManager = memo(function GuestListManager({
 
     navigator.clipboard.writeText(shareUrl);
     setCopiedGuestId(guest.id);
+
+    // Otomatis tandai sebagai Terkirim
+    onToggleGuestSentStatus?.(guest.id, true);
+
     setTimeout(() => setCopiedGuestId(null), 2000);
-  }, [data.slug, data.id]);
+  }, [data.slug, data.id, onToggleGuestSentStatus]);
 
   return (
     <div className="w-full space-y-3 max-w-full overflow-x-hidden pb-12">
@@ -499,7 +541,7 @@ export const GuestListManager = memo(function GuestListManager({
           </div>
         )}
 
-        {/* 📊 Status Kehadiran / Buka Filter Chips */}
+        {/* 📊 Status Kehadiran / Pengiriman / Buka Filter Chips */}
         {guests.length > 0 && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
             <span className="text-[10px] uppercase font-bold text-neutral-500 shrink-0 mr-0.5">
@@ -517,6 +559,33 @@ export const GuestListManager = memo(function GuestListManager({
               Semua
             </button>
 
+            {/* 📤 Filter Belum Kirim */}
+            <button
+              onClick={() => setSelectedStatusFilter('unsent')}
+              className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
+                selectedStatusFilter === 'unsent'
+                  ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40'
+                  : 'text-neutral-400 hover:text-amber-300'
+              }`}
+            >
+              <Send className="w-2.5 h-2.5" />
+              <span>Belum Kirim ({unsentCount})</span>
+            </button>
+
+            {/* ✓ Filter Terkirim */}
+            <button
+              onClick={() => setSelectedStatusFilter('sent')}
+              className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
+                selectedStatusFilter === 'sent'
+                  ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40'
+                  : 'text-neutral-400 hover:text-emerald-300'
+              }`}
+            >
+              <CheckCheck className="w-2.5 h-2.5" />
+              <span>Terkirim ({sentCount})</span>
+            </button>
+
+            {/* Filter Belum Buka */}
             <button
               onClick={() => setSelectedStatusFilter('unopened')}
               className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
@@ -529,6 +598,7 @@ export const GuestListManager = memo(function GuestListManager({
               <span>Belum Buka ({unopenedCount})</span>
             </button>
 
+            {/* Filter Sudah Buka */}
             <button
               onClick={() => setSelectedStatusFilter('opened')}
               className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
@@ -541,6 +611,7 @@ export const GuestListManager = memo(function GuestListManager({
               <span>Sudah Buka ({openedCount})</span>
             </button>
 
+            {/* Filter Hadir */}
             <button
               onClick={() => setSelectedStatusFilter('attending')}
               className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
@@ -553,6 +624,7 @@ export const GuestListManager = memo(function GuestListManager({
               <span>Hadir ({attendingCount})</span>
             </button>
 
+            {/* Filter Tidak Hadir */}
             <button
               onClick={() => setSelectedStatusFilter('not_attending')}
               className={`px-2 py-0.5 rounded-lg shrink-0 font-medium transition cursor-pointer flex items-center gap-1 ${
@@ -615,6 +687,7 @@ export const GuestListManager = memo(function GuestListManager({
               onCopyLinkOnly={handleCopyLinkOnly}
               onViewGuestMode={onViewGuestMode}
               onDeleteGuest={onDeleteGuest}
+              onToggleSent={onToggleGuestSentStatus}
             />
           ))}
 
