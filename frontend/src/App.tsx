@@ -524,14 +524,15 @@ export default function App() {
             {(() => {
               const p1 = invitationData.profiles?.[0];
               const p2 = invitationData.profiles?.[1];
-              const fullName = p1?.fullName || p1?.name;
+              const isKhitanOrAqiqah = invitationData.eventType === 'khitanan' || invitationData.eventType === 'aqiqah';
+              const isBirthday = invitationData.eventType === 'birthday';
 
-              if ((invitationData.eventType === 'khitanan' || invitationData.eventType === 'aqiqah' || invitationData.eventType === 'birthday') && fullName) {
-                // Jika eventTitle terpotong (hanya 'Walimatul Khitan M.' atau semacamnya), gantikan dengan nama lengkap
-                if (invitationData.eventTitle && invitationData.eventTitle.length > fullName.length && !invitationData.eventTitle.endsWith('.')) {
-                  return invitationData.eventTitle;
-                }
-                return fullName;
+              if (isKhitanOrAqiqah || isBirthday) {
+                if (p1?.fullName && p1.fullName.trim()) return p1.fullName.trim();
+                if (p1?.name && p1.name.trim()) return p1.name.trim();
+                const stripped = (invitationData.eventTitle || '').replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Happy Birthday|Ulang Tahun)\s*/i, '').trim();
+                if (stripped && stripped.length > 2) return stripped;
+                return 'M. Akmal Abdul Jalil';
               }
 
               if (p1?.name && p2?.name) {
