@@ -12,6 +12,7 @@ import {
   Eye,
   Check,
   Music,
+  Moon,
 } from 'lucide-react';
 import {
   InvitationData,
