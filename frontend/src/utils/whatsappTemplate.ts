@@ -79,11 +79,28 @@ export const generateWhatsAppMessage = (
   const rawDate = firstSession?.date || data.eventDate;
   const formattedDate = formatIndonesianDate(rawDate);
 
+  // Format Jam/Waktu Bersih (Cegah "08:00 s/d Selesai - Selesai WIB")
+  const formattedTime = (() => {
+    if (!firstSession?.startTime) return '';
+    const start = firstSession.startTime.trim();
+    const end = (firstSession.endTime || '').trim();
+    const tz = firstSession.timeZone || 'WIB';
+
+    if (/selesai/i.test(start)) {
+      return start.includes(tz) ? start : `${start} ${tz}`;
+    }
+    if (end && !/selesai/i.test(end) && start !== end) {
+      return `${start} - ${end} ${tz}`;
+    }
+    if (/selesai/i.test(end)) {
+      return `${start} ${tz} s/d Selesai`;
+    }
+    return `${start} ${tz} s/d Selesai`;
+  })();
+
   const sessionTitle = firstSession?.title ? `\n🏷️ *Acara:* ${firstSession.title}` : '';
   const dateInfo = formattedDate ? `\n🗓️ *Hari/Tanggal:* ${formattedDate}` : '';
-  const timeInfo = firstSession?.startTime
-    ? `\n⏰ *Waktu:* ${firstSession.startTime} ${firstSession.endTime ? `- ${firstSession.endTime}` : ''} ${firstSession.timeZone || 'WIB'}`.trim()
-    : '';
+  const timeInfo = formattedTime ? `\n⏰ *Waktu:* ${formattedTime}` : '';
   const locationInfo = firstSession?.venueName
     ? `\n📍 *Tempat / Lokasi:* ${firstSession.venueName}${firstSession.venueAddress ? ` (${firstSession.venueAddress})` : ''}`
     : '';
