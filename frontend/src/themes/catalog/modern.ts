@@ -83,6 +83,7 @@ export const MODERN_STYLE_KITS: Record<string, MasterStyleKitDefinition> = {
     description: 'Dark obsidian premium dengan sans-serif Montserrat modern dan bingkai garis ganda.',
     badge: 'Modern Trend',
     tags: ['modern', 'obsidian', 'minimalist'],
+    cornerOrnament: 'art_deco',
   },
   celestial_blue_modern: {
     id: 'celestial_blue_modern',
@@ -97,5 +98,6 @@ export const MODERN_STYLE_KITS: Record<string, MasterStyleKitDefinition> = {
     description: 'Nuansa biru es lembut kontemporer dengan garis ganda modern yang bersih dan segar.',
     badge: '☀️ Modern Cerah',
     tags: ['blue', 'modern', 'cerah'],
+    cornerOrnament: 'art_deco',
   },
 };
