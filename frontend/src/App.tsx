@@ -121,15 +121,28 @@ export default function App() {
         ? pathSegments[0]
         : null;
 
+    // 1. Flexible Guest Name Extraction (supports manual edits like to=vera+suami, to=vera%20dan%20suami, etc.)
+    let rawTo = params.get('to');
+    if (!rawTo && window.location.search.includes('to=')) {
+      const match = window.location.search.match(/[?&]to=([^&#]*)/i);
+      if (match && match[1]) {
+        try {
+          rawTo = decodeURIComponent(match[1].replace(/\+/g, ' '));
+        } catch {
+          rawTo = match[1].replace(/\+/g, ' ');
+        }
+      }
+    }
     const toParam =
-      params.get('to') ||
-      (pathSegments.length >= 3 && pathSegments[1] === 'to' ? decodeURIComponent(pathSegments[2]) : null);
+      rawTo ||
+      (pathSegments.length >= 3 && pathSegments[1] === 'to' ? decodeURIComponent(pathSegments[2].replace(/\+/g, ' ')) : null);
+
     const modeParam = params.get('mode');
     const eventParam = params.get('event');
     const themeParam = params.get('theme');
 
-    if (toParam) {
-      setGuestName(toParam);
+    if (toParam && toParam.trim()) {
+      setGuestName(toParam.trim());
     }
     if (modeParam === 'studio') {
       setViewMode('studio');
