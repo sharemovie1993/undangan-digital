@@ -566,19 +566,26 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
               </div>
             </div>
 
-            {/* Corner Filigree Ornaments */}
+            {/* Corner Filigree Ornaments (10+ Luxury Variants) */}
             <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1.5">
               <div className="flex items-center justify-between text-[10px] text-neutral-400">
-                <span className="font-semibold text-neutral-300">Ornamen 4 Sudut Kartu (Filigree)</span>
+                <span className="font-semibold text-neutral-300">Ornamen 4 Sudut Kartu (10 Gaya Koleksi)</span>
               </div>
               <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                 {[
-                  { id: 'none', label: 'Polos (Tanpa Sudut)' },
-                  { id: 'batik_prada', label: '🏛️ Sudut Batik Prada' },
-                  { id: 'royal_crown', label: '👑 Sudut Mahkota Royal' },
-                  { id: 'art_deco', label: '📐 Sudut Art Deco' },
+                  { id: 'none', label: '⚪ Polos (Tanpa Sudut)' },
+                  { id: 'royal_crown', label: '👑 Mahkota Royal' },
+                  { id: 'batik_prada', label: '🏛️ Batik Prada Keraton' },
+                  { id: 'javanese_flourish', label: '🪵 Sulur Kayu Joglo' },
+                  { id: 'islamic_arabesque', label: '🌙 Bintang Arabesque' },
+                  { id: 'botanical_leaves', label: '🍃 Daun Botanical' },
+                  { id: 'vintage_scroll', label: '📜 Filigri Victorian' },
+                  { id: 'art_deco', label: '📐 Modern Art Deco' },
+                  { id: 'minang_gonjong', label: '🏔️ Gonjong Minang' },
+                  { id: 'sunda_parahyangan', label: '🌊 Sunda Parahyangan' },
+                  { id: 'bali_patra', label: '🛕 Patra Punggel Bali' },
                 ].map((c) => {
-                  const isSelected = (data.themeConfig?.cornerOrnament || 'none') === c.id;
+                  const isSelected = (data.themeConfig?.cornerOrnament || 'royal_crown') === c.id;
                   return (
                     <button
                       key={c.id}
@@ -589,13 +596,13 @@ export const ThemingSidebar: React.FC<ThemingSidebarProps> = ({
                           themeConfig: { ...data.themeConfig, cornerOrnament: c.id as CornerOrnamentId },
                         })
                       }
-                      className={`p-1.5 rounded-lg border text-center transition cursor-pointer ${
+                      className={`p-1.5 rounded-lg border text-left px-2 transition cursor-pointer ${
                         isSelected
-                          ? 'border-[#c4a661] bg-[#c4a661]/15 text-[#c4a661] font-bold'
+                          ? 'border-[#c4a661] bg-[#c4a661]/15 text-[#c4a661] font-bold shadow-xs'
                           : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
                       }`}
                     >
-                      <span className="truncate max-w-full">{c.label}</span>
+                      <span className="truncate block max-w-full">{c.label}</span>
                     </button>
                   );
                 })}

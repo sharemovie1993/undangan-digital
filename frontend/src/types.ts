@@ -52,8 +52,18 @@ export type FrameShapeId =
 
 export type TexturePatternId = 'none' | 'linen' | 'cotton' | 'marble' | 'grain';
 export type ParticleEffectId = 'none' | 'gold_dust' | 'jasmine_petals' | 'rose_petals' | 'bokeh_glow';
-export type WaxSealColorId = 'maroon' | 'gold' | 'sage' | 'navy' | 'rose';
-export type CornerOrnamentId = 'none' | 'royal_crown' | 'batik_prada' | 'art_deco' | 'javanese_flourish';
+export type CornerOrnamentId =
+  | 'none'
+  | 'royal_crown'
+  | 'batik_prada'
+  | 'javanese_flourish'
+  | 'islamic_arabesque'
+  | 'botanical_leaves'
+  | 'art_deco'
+  | 'vintage_scroll'
+  | 'minang_gonjong'
+  | 'sunda_parahyangan'
+  | 'bali_patra';
 export type SectionDividerId = 'none' | 'gold_line' | 'batik_parang' | 'olive_branch' | 'flourish';
 
 export interface MasterStyleKit {
