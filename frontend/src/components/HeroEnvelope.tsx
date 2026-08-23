@@ -76,36 +76,22 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
     return data.tagline || 'THE WEDDING OF';
   })();
 
-  // 3. Rekonstruksi Judul Undangan Lengkap (Cegah nama terpotong "M.")
+  // 3. Rekonstruksi Nama Lengkap (Tanpa duplikasi kata Tagline agar muat 1 baris rapi)
   const effectiveTitle = (() => {
-    if (isKhitanDetected) {
+    if (isKhitanDetected || isAqiqahDetected || isBirthdayDetected) {
       const childName = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim();
-      if (childName && (!rawTitle || /walimatul khitan\s+[a-z]\.?$/i.test(rawTitle.trim()) || rawTitle.trim().toLowerCase() === 'walimatul khitan')) {
-        return `Walimatul Khitan ${childName}`;
-      }
-      return rawTitle || (childName ? `Walimatul Khitan ${childName}` : 'Walimatul Khitan');
-    }
-    if (isAqiqahDetected) {
-      const childName = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim();
-      if (childName && (!rawTitle || /tasyakuran aqiqah\s+[a-z]\.?$/i.test(rawTitle.trim()) || rawTitle.trim().toLowerCase() === 'tasyakuran aqiqah')) {
-        return `Tasyakuran Aqiqah ${childName}`;
-      }
-      return rawTitle || (childName ? `Tasyakuran Aqiqah ${childName}` : 'Tasyakuran Aqiqah');
-    }
-    if (isBirthdayDetected) {
-      const name = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim();
-      if (name && (!rawTitle || rawTitle.trim().toLowerCase() === 'birthday')) {
-        return `Ulang Tahun ${name}`;
-      }
-      return rawTitle || (name ? `Ulang Tahun ${name}` : 'Birthday Celebration');
+      if (childName) return childName;
+      const stripped = (data.eventTitle || (data as any).title || '').replace(/^(Walimatul Khitan|Tasyakuran Aqiqah|Syukuran Khitan|Happy Birthday|Ulang Tahun)\s*/i, '').trim();
+      if (stripped && stripped.length > 2) return stripped;
+      return 'M. Akmal Abdul Jalil';
     }
     // Wedding
     const p1 = data.profiles?.[0]?.fullName?.trim() || data.profiles?.[0]?.name?.trim();
     const p2 = data.profiles?.[1]?.fullName?.trim() || data.profiles?.[1]?.name?.trim();
-    if (p1 && p2 && (!rawTitle || !rawTitle.includes('&'))) {
+    if (p1 && p2) {
       return `${p1} & ${p2}`;
     }
-    return rawTitle || 'Romeo & Juliet';
+    return data.eventTitle || (data as any).title || 'Romeo & Juliet';
   })();
 
   // 4. Monogram Segel Lilin Cerdas
@@ -202,9 +188,9 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
               )}
             </div>
 
-            {/* Event Title */}
+            {/* Event Title / Person Name */}
             <h1
-              className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6 leading-tight relative z-10"
+              className="text-lg sm:text-xl md:text-2xl font-bold tracking-wide mb-5 leading-snug relative z-10 px-1"
               style={{ fontFamily: headingFontFamily, color: theme.textMain }}
             >
               {effectiveTitle}
