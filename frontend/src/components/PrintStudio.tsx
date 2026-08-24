@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import {
   Printer,
@@ -12,7 +12,12 @@ import {
   Moon,
   Star,
   Heart,
+  Image as ImageIcon,
+  Download,
+  Share2,
+  Copy,
 } from 'lucide-react';
+import { toPng, toBlob } from 'html-to-image';
 import { InvitationData, GuestRecipient, CornerOrnamentId } from '../types';
 import { FONT_PRESETS } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
@@ -37,13 +42,11 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
   const [printMode, setPrintMode] = useState<'card' | 'label' | 'souvenir' | 'standee'>('card');
   const [cardSize, setCardSize] = useState<'A5' | '4R'>('A5');
   const [cardStyle, setCardStyle] = useState<'royal' | 'traditional' | 'islamic' | 'modern' | 'botanical'>('royal');
+  const [showPhoto, setShowPhoto] = useState<boolean>(true);
+  const [isDownloadingImage, setIsDownloadingImage] = useState<boolean>(false);
+  const [copiedImage, setCopiedImage] = useState<boolean>(false);
 
-  // Label configuration
-  const [selectedGuests, setSelectedGuests] = useState<string[]>(guests.map((g) => g.id));
-  const [labelPrefix, setLabelPrefix] = useState('Kepada Yth. Bapak/Ibu/Saudara/i:');
-  const [labelSubtext, setLabelSubtext] = useState('Di Tempat');
-
-  const invId = data.id || data.slug || 'undangan-digital';
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // Event Type Detection yang tangguh & akurat
   const rawTitle = (data.eventTitle || (data as any).title || '').toLowerCase();
@@ -239,7 +242,7 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
           </div>
         </div>
 
-        {/* Action Buttons */}
+          {/* Action Buttons */}
         <div className="flex items-center gap-2.5 flex-wrap">
           <div className="flex rounded-xl bg-neutral-900 p-1 border border-neutral-800">
             <button
@@ -275,6 +278,65 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
               Standee QR
             </button>
           </div>
+
+          {printMode === 'card' && (
+            <>
+              <button
+                onClick={async () => {
+                  if (!cardRef.current) return;
+                  try {
+                    setIsDownloadingImage(true);
+                    const dataUrl = await toPng(cardRef.current, {
+                      quality: 1.0,
+                      pixelRatio: 2.5,
+                      cacheBust: true,
+                    });
+                    const link = document.createElement('a');
+                    link.download = `kartu-undangan-${data.slug || 'digital'}.png`;
+                    link.href = dataUrl;
+                    link.click();
+                  } catch (err) {
+                    console.error('Failed to download image:', err);
+                  } finally {
+                    setIsDownloadingImage(false);
+                  }
+                }}
+                disabled={isDownloadingImage}
+                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 text-xs shadow-lg transition cursor-pointer disabled:opacity-50"
+                title="Download Gambar HD untuk dibagikan di WhatsApp"
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span>{isDownloadingImage ? 'Memproses...' : 'Download Gambar (PNG)'}</span>
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!cardRef.current) return;
+                  try {
+                    const blob = await toBlob(cardRef.current, {
+                      quality: 1.0,
+                      pixelRatio: 2.0,
+                      cacheBust: true,
+                    });
+                    if (blob && (navigator.clipboard as any)?.write) {
+                      await (navigator.clipboard as any).write([
+                        new ClipboardItem({ 'image/png': blob })
+                      ]);
+                      setCopiedImage(true);
+                      setTimeout(() => setCopiedImage(false), 2500);
+                    }
+                  } catch (err) {
+                    console.error('Clipboard copy failed:', err);
+                  }
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-neutral-900 border border-neutral-800 px-3 py-2 text-xs font-semibold text-neutral-300 hover:bg-neutral-800 transition cursor-pointer"
+                title="Salin Gambar ke Clipboard"
+              >
+                {copiedImage ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                <span>{copiedImage ? 'Tersalin!' : 'Salin Gambar'}</span>
+              </button>
+            </>
+          )}
 
           <button
             onClick={handlePrint}
@@ -329,6 +391,26 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
 
               <div className="h-4 w-px bg-neutral-800 hidden sm:block" />
 
+              {/* Photo Toggle */}
+              {Boolean(data.profiles?.[0]?.photoUrl || data.heroImageUrl || data.gallery?.[0]?.url) && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPhoto(!showPhoto)}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                      showPhoto
+                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                        : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>{showPhoto ? '✓ Foto Aktif' : 'Foto Nonaktif'}</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="h-4 w-px bg-neutral-800 hidden sm:block" />
+
               {/* Layout Styles */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-neutral-400 font-medium flex items-center gap-1">
@@ -361,8 +443,9 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
 
             {/* Visual Card Canvas (100% Theme-Aware & 300 DPI Print Calibrated) */}
             <div
+              ref={cardRef}
               className={`relative bg-[#FAF8F5] text-neutral-900 shadow-2xl p-6 sm:p-8 rounded-2xl border-4 flex flex-col items-center justify-between text-center transition-all overflow-hidden ${
-                cardSize === 'A5' ? 'w-[420px] min-h-[595px]' : 'w-[310px] min-h-[440px]'
+                cardSize === 'A5' ? 'w-[420px] min-h-[595px]' : 'w-[320px] min-h-[460px]'
               }`}
               style={{
                 borderColor: activePrimary,
@@ -375,7 +458,7 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
 
               {/* Inner Double Line Border Frame */}
               <div
-                className="w-full h-full p-6 sm:p-7 flex flex-col justify-between rounded-xl border relative z-10"
+                className="w-full h-full p-5 sm:p-6 flex flex-col justify-between rounded-xl border relative z-10"
                 style={{
                   borderColor: `${activePrimary}40`,
                   backgroundColor: theme.mode === 'dark' ? '#17161f50' : '#ffffff80',
@@ -406,15 +489,36 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                     )}
                   </div>
 
+                  {/* Optional Child / Honoree Photo (Arch Gold Frame) */}
+                  {showPhoto && Boolean(data.profiles?.[0]?.photoUrl || data.heroImageUrl || data.gallery?.[0]?.url) && (
+                    <div className="my-2 flex justify-center">
+                      <div
+                        className="relative p-1 rounded-t-full rounded-b-2xl border-2 shadow-md overflow-hidden"
+                        style={{
+                          borderColor: activePrimary,
+                          backgroundColor: `${activePrimary}15`,
+                        }}
+                      >
+                        <img
+                          src={data.profiles?.[0]?.photoUrl || data.heroImageUrl || data.gallery?.[0]?.url}
+                          alt={displayTitle}
+                          className={`object-cover rounded-t-full rounded-b-xl ${
+                            cardSize === 'A5' ? 'w-24 h-32 sm:w-28 sm:h-36' : 'w-20 h-24'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <h2
-                    className="text-2xl sm:text-3xl font-bold mt-1 tracking-tight leading-tight"
+                    className="text-xl sm:text-2xl font-bold mt-1 tracking-tight leading-tight"
                     style={{ fontFamily: headingFont, color: theme.mode === 'dark' ? '#ffffff' : activePrimary }}
                   >
                     {displayTitle}
                   </h2>
                   {parentsSubtitle && (
                     <p
-                      className="text-[11px] font-medium mt-1 tracking-wide opacity-80"
+                      className="text-[11px] font-medium mt-1 tracking-wide opacity-85"
                       style={{ color: activePrimary }}
                     >
                       {parentsSubtitle}
@@ -423,9 +527,9 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                 </div>
 
                 {/* Body: Opening Blessing Quote */}
-                <div className="my-3 max-w-xs mx-auto">
+                <div className="my-2 max-w-xs mx-auto">
                   <p
-                    className="text-xs sm:text-sm leading-relaxed italic opacity-85"
+                    className="text-[11px] sm:text-xs leading-relaxed italic opacity-85"
                     style={{ color: theme.mode === 'dark' ? '#d4d4dc' : '#4b5563' }}
                   >
                     "{displayQuote}"
@@ -434,30 +538,30 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
 
                 {/* Event Schedule & Venue */}
                 <div
-                  className="p-3.5 rounded-xl border my-2"
+                  className="p-3 rounded-xl border my-1.5"
                   style={{
                     backgroundColor: theme.mode === 'dark' ? '#211f2c' : '#f4eee4',
                     borderColor: `${activePrimary}30`,
                   }}
                 >
-                  <div className="font-bold text-sm sm:text-base tracking-wide" style={{ color: activePrimary }}>
+                  <div className="font-bold text-xs sm:text-sm tracking-wide" style={{ color: activePrimary }}>
                     {displayDate}
                   </div>
                   <div
-                    className="text-xs font-semibold mt-0.5"
+                    className="text-[11px] font-semibold mt-0.5"
                     style={{ color: theme.mode === 'dark' ? '#e2e2e7' : '#374151' }}
                   >
                     {displayTime}
                   </div>
                   <div
-                    className="text-xs font-bold mt-1 uppercase tracking-wider"
+                    className="text-xs font-bold mt-0.5 uppercase tracking-wider"
                     style={{ color: theme.mode === 'dark' ? '#ffffff' : '#111827' }}
                   >
                     {displayVenue}
                   </div>
                   {displayAddress && (
                     <div
-                      className="text-[10px] mt-0.5 opacity-75 max-w-[260px] mx-auto line-clamp-2"
+                      className="text-[9.5px] mt-0.5 opacity-75 max-w-[260px] mx-auto line-clamp-2"
                       style={{ color: theme.mode === 'dark' ? '#9ca3af' : '#6b7280' }}
                     >
                       {displayAddress}
@@ -466,15 +570,15 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                 </div>
 
                 {/* Footer: Live QR Code to Open Digital Invitation */}
-                <div className="flex flex-col items-center mt-2">
+                <div className="flex flex-col items-center mt-1.5">
                   <div
-                    className="p-2 bg-white rounded-xl border shadow-sm flex items-center justify-center"
+                    className="p-1.5 bg-white rounded-xl border shadow-sm flex items-center justify-center"
                     style={{ borderColor: `${activePrimary}50` }}
                   >
-                    <QrCode className="w-14 h-14 sm:w-16 sm:h-16 text-neutral-950" />
+                    <QrCode className="w-12 h-12 sm:w-14 sm:h-14 text-neutral-950" />
                   </div>
                   <span
-                    className="text-[9px] font-semibold mt-1.5 uppercase tracking-widest"
+                    className="text-[8.5px] font-semibold mt-1 uppercase tracking-widest"
                     style={{ color: activePrimary }}
                   >
                     Scan untuk Buka Undangan Digital
