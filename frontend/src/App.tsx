@@ -690,10 +690,60 @@ export default function App() {
           <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
             Merupakan suatu kehormatan dan kebahagiaan bagi kami atas kehadiran dan doa restu Bapak/Ibu/Saudara/i sekalian.
           </p>
+
+          {/* Closing Signature — Hormat Kami, Kedua Orang Tua */}
+          {(() => {
+            const p1 = invitationData.profiles?.[0];
+            const p2 = invitationData.profiles?.[1];
+            const isKhitan = invitationData.eventType === 'khitanan' || invitationData.eventType === 'aqiqah';
+            const isBirthday = invitationData.eventType === 'birthday';
+            const isWedding = !isKhitan && !isBirthday;
+
+            if (isWedding) {
+              // Pernikahan: Hormat kami, Mempelai
+              const bride = p1?.name?.trim() || p1?.fullName?.trim();
+              const groom = p2?.name?.trim() || p2?.fullName?.trim();
+              if (bride && groom) {
+                return (
+                  <div className="mt-5">
+                    <p className="text-[10px] text-[#c4a661]/70 uppercase tracking-widest font-semibold">Hormat Kami</p>
+                    <p className="text-sm font-serif font-semibold text-[#c4a661] mt-0.5">{bride} & {groom}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Beserta Keluarga</p>
+                  </div>
+                );
+              }
+            } else {
+              // Khitanan / Aqiqah / Birthday: Hormat Kami, Kedua Orang Tua
+              const fatherName = p1?.fatherName?.trim();
+              const motherName = p1?.motherName?.trim();
+              if (fatherName || motherName) {
+                return (
+                  <div className="mt-5">
+                    <p className="text-[10px] text-[#c4a661]/70 uppercase tracking-widest font-semibold">Hormat Kami</p>
+                    {fatherName && motherName ? (
+                      <>
+                        <p className="text-sm font-serif font-semibold text-[#c4a661] mt-0.5">Bpk. {fatherName}</p>
+                        <p className="text-xs text-gray-400">&</p>
+                        <p className="text-sm font-serif font-semibold text-[#c4a661]">Ibu {motherName}</p>
+                      </>
+                    ) : fatherName ? (
+                      <p className="text-sm font-serif font-semibold text-[#c4a661] mt-0.5">Bpk. {fatherName}</p>
+                    ) : (
+                      <p className="text-sm font-serif font-semibold text-[#c4a661] mt-0.5">Ibu {motherName}</p>
+                    )}
+                    <p className="text-[10px] text-gray-500 mt-0.5">Kedua Orang Tua</p>
+                  </div>
+                );
+              }
+            }
+            return null;
+          })()}
+
           <div className="mt-4 font-display text-[9px] tracking-[0.25em] text-[#c4a661]/80 uppercase font-semibold">
             LUXURY DIGITAL INVITATION
           </div>
         </footer>
+
 
         {/* Watermark Banner for Trial / Draft Invitations */}
         {invitationData.isWatermarked !== false && !invitationData.licenseKey && (
