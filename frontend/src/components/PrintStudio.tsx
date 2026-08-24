@@ -203,19 +203,25 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
 
   const selectedGuestObjects = guests.filter((g) => selectedGuests.includes(g.id));
 
-  // Determine active PDF download URL
+  // Invitation ID used for all print/PDF API calls
+  const invId = data.id || data.slug || 'undangan-digital';
+
+  // Determine active PDF download URL (with Bearer token as query param for direct <a> download)
   const getActivePdfUrl = () => {
+    const token = localStorage.getItem('absenta_auth_token') || '';
+    const t = token ? `&token=${encodeURIComponent(token)}` : '';
     switch (printMode) {
       case 'card':
-        return api.getCardPdfUrl(invId, cardSize);
+        return `${api.getCardPdfUrl(invId, cardSize)}${t}`;
       case 'label':
-        return api.getStickersPdfUrl(invId);
+        return `${api.getStickersPdfUrl(invId)}?token=${encodeURIComponent(token)}`;
       case 'souvenir':
-        return api.getSouvenirTagsPdfUrl(invId);
+        return `${api.getSouvenirTagsPdfUrl(invId)}?token=${encodeURIComponent(token)}`;
       case 'standee':
-        return api.getTableStandeePdfUrl(invId);
+        return `${api.getTableStandeePdfUrl(invId)}?token=${encodeURIComponent(token)}`;
     }
   };
+
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 p-4 md:p-8 selection:bg-[#c4a661] selection:text-neutral-950">

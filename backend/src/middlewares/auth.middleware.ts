@@ -16,16 +16,21 @@ declare module 'fastify' {
 
 export const verifyAuth = async (request: FastifyRequest, reply: FastifyReply) => {
   const authHeader = request.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // Also support ?token= query param for direct browser download links (PDF, CSV, etc.)
+  const queryToken = (request.query as any)?.token;
+  const rawToken = authHeader?.startsWith('Bearer ')
+    ? authHeader.split(' ')[1]
+    : (queryToken || null);
+
+  if (!rawToken) {
     return reply.status(401).send({
       success: false,
       message: 'Akses ditolak. Token otentikasi tidak ditemukan.'
     });
   }
 
-  const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
+    const decoded = jwt.verify(rawToken, config.jwtSecret) as JwtPayload;
     request.user = decoded;
   } catch (err: any) {
     return reply.status(401).send({
@@ -37,13 +42,15 @@ export const verifyAuth = async (request: FastifyRequest, reply: FastifyReply) =
 
 export const optionalAuth = async (request: FastifyRequest, _reply: FastifyReply) => {
   const authHeader = request.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return;
-  }
+  const queryToken = (request.query as any)?.token;
+  const rawToken = authHeader?.startsWith('Bearer ')
+    ? authHeader.split(' ')[1]
+    : (queryToken || null);
 
-  const token = authHeader.split(' ')[1];
+  if (!rawToken) return;
+
   try {
-    const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
+    const decoded = jwt.verify(rawToken, config.jwtSecret) as JwtPayload;
     request.user = decoded;
   } catch {}
 };
