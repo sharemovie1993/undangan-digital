@@ -22,10 +22,11 @@ import {
 } from 'lucide-react';
 import { toPng, toBlob } from 'html-to-image';
 import { InvitationData, GuestRecipient, CornerOrnamentId } from '../types';
-import { FONT_PRESETS } from '../data/presets';
+import { FONT_PRESETS, FRAME_SHAPES } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
 import { TEXTURE_PRESETS } from '../themes/textures';
 import { CornerOrnaments } from './effects/CornerOrnaments';
+import { BatikFrameWrapper } from './effects/BatikFrames';
 import { api } from '../api/client';
 
 interface PrintStudioProps {
@@ -532,26 +533,50 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                     )}
                   </div>
 
-                  {/* Optional Child / Honoree Photo (Arch Gold Frame) */}
-                  {showPhoto && Boolean(data.profiles?.[0]?.photoUrl || data.heroImageUrl || data.gallery?.[0]?.url) && (
-                    <div className="my-2 flex justify-center">
-                      <div
-                        className="relative p-1 rounded-t-full rounded-b-2xl border-2 shadow-md overflow-hidden"
-                        style={{
-                          borderColor: activePrimary,
-                          backgroundColor: `${activePrimary}15`,
-                        }}
-                      >
-                        <img
-                          src={data.profiles?.[0]?.photoUrl || data.heroImageUrl || data.gallery?.[0]?.url}
-                          alt={displayTitle}
-                          className={`object-cover rounded-t-full rounded-b-xl ${
-                            cardSize === 'A5' ? 'w-24 h-32 sm:w-28 sm:h-36' : 'w-20 h-24'
-                          }`}
-                        />
+                  {/* Photo — menggunakan frame shape dari tema undangan digital */}
+                  {showPhoto && Boolean(data.profiles?.[0]?.photoUrl || data.heroImageUrl || data.gallery?.[0]?.url) && (() => {
+                    const childPhoto = data.profiles?.[0]?.photoUrl || data.heroImageUrl || data.gallery?.[0]?.url || '';
+                    const frameShapeKey = data.themeConfig?.frameShape;
+                    const frameClass = frameShapeKey
+                      ? (FRAME_SHAPES[frameShapeKey as keyof typeof FRAME_SHAPES]?.className || 'arch-frame')
+                      : (isAqiqah || isBirthday ? 'rounded-full' : isKhitan ? 'rounded-t-[100px] rounded-b-2xl' : 'arch-frame');
+                    const isBatikFrame = frameShapeKey && (frameShapeKey as string).startsWith('batik_');
+                    const isCircle = frameClass.includes('rounded-full');
+                    const photoSize = cardSize === 'A5'
+                      ? (isCircle ? 'w-28 h-28' : 'w-24 h-36')
+                      : (isCircle ? 'w-20 h-20' : 'w-20 h-30');
+
+                    return (
+                      <div className="my-2 flex justify-center">
+                        {isBatikFrame ? (
+                          <BatikFrameWrapper shapeId={frameShapeKey} primaryColor={activePrimary} className={cardSize === 'A5' ? 'w-24 h-36' : 'w-20 h-28'}>
+                            <img src={childPhoto} alt={displayTitle} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                          </BatikFrameWrapper>
+                        ) : (
+                          <div className="relative">
+                            {/* Glow ring — identik dengan ProfileSection */}
+                            <div
+                              className={`absolute -inset-1.5 ${frameClass} opacity-50 blur-sm`}
+                              style={{ background: `linear-gradient(135deg, ${activePrimary}, #ffffff 50%, ${activePrimary})` }}
+                            />
+                            <div
+                              className={`relative ${photoSize} ${frameClass} border-2 shadow-xl overflow-hidden`}
+                              style={{ backgroundColor: theme.cardBg, borderColor: `${activePrimary}90` }}
+                            >
+                              <img
+                                src={childPhoto}
+                                alt={displayTitle}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   <h2
                     className="text-xl sm:text-2xl font-bold mt-1 tracking-tight leading-tight"
