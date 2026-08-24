@@ -43,8 +43,10 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
   const [cardSize, setCardSize] = useState<'A5' | '4R'>('A5');
   const [cardStyle, setCardStyle] = useState<'royal' | 'traditional' | 'islamic' | 'modern' | 'botanical'>('royal');
   const [showPhoto, setShowPhoto] = useState<boolean>(true);
+  const [showQr, setShowQr] = useState<boolean>(true);
   const [isDownloadingImage, setIsDownloadingImage] = useState<boolean>(false);
   const [copiedImage, setCopiedImage] = useState<boolean>(false);
+
 
   // Label / Stiker configuration
   const [selectedGuests, setSelectedGuests] = useState<string[]>(guests.map((g) => g.id));
@@ -421,6 +423,22 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                 </div>
               )}
 
+              {/* QR Code Toggle */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowQr(!showQr)}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                    showQr
+                      ? 'bg-sky-500/20 border-sky-500/40 text-sky-300'
+                      : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>{showQr ? '✓ QR Aktif' : 'QR Nonaktif'}</span>
+                </button>
+              </div>
+
               <div className="h-4 w-px bg-neutral-800 hidden sm:block" />
 
               {/* Layout Styles */}
@@ -622,20 +640,22 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                 })()}
 
                 {/* Footer: Live QR Code to Open Digital Invitation */}
-                <div className="flex flex-col items-center mt-1">
-                  <div
-                    className="p-1.5 bg-white rounded-xl border shadow-sm flex items-center justify-center"
-                    style={{ borderColor: `${activePrimary}50` }}
-                  >
-                    <QrCode className="w-12 h-12 sm:w-14 sm:h-14 text-neutral-950" />
+                {showQr && (
+                  <div className="flex flex-col items-center mt-1">
+                    <div
+                      className="p-1.5 bg-white rounded-xl border shadow-sm flex items-center justify-center"
+                      style={{ borderColor: `${activePrimary}50` }}
+                    >
+                      <QrCode className="w-12 h-12 sm:w-14 sm:h-14 text-neutral-950" />
+                    </div>
+                    <span
+                      className="text-[8.5px] font-semibold mt-1 uppercase tracking-widest"
+                      style={{ color: activePrimary }}
+                    >
+                      Scan untuk Buka Undangan Digital
+                    </span>
                   </div>
-                  <span
-                    className="text-[8.5px] font-semibold mt-1 uppercase tracking-widest"
-                    style={{ color: activePrimary }}
-                  >
-                    Scan untuk Buka Undangan Digital
-                  </span>
-                </div>
+                )}
               </div>
             </div>
           </div>
