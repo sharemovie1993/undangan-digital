@@ -566,8 +566,8 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                 {/* Body: Opening Blessing Quote */}
                 <div className="my-2 max-w-xs mx-auto">
                   <p
-                    className="text-[11px] sm:text-xs leading-relaxed italic opacity-85"
-                    style={{ color: theme.mode === 'dark' ? '#d4d4dc' : '#4b5563' }}
+                    className="text-[11px] sm:text-xs leading-relaxed italic"
+                    style={{ color: theme.textMuted || (theme.mode === 'dark' ? '#d4d4dc' : '#4b5563'), opacity: 0.9 }}
                   >
                     "{displayQuote}"
                   </p>
@@ -577,8 +577,8 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                 <div
                   className="p-3 rounded-xl border my-1.5"
                   style={{
-                    backgroundColor: theme.mode === 'dark' ? '#211f2c' : '#f4eee4',
-                    borderColor: `${activePrimary}30`,
+                    backgroundColor: theme.accentBg || (theme.mode === 'dark' ? '#211f2c' : '#f4eee4'),
+                    borderColor: `${activePrimary}40`,
                   }}
                 >
                   <div className="font-bold text-xs sm:text-sm tracking-wide" style={{ color: activePrimary }}>
@@ -586,20 +586,20 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                   </div>
                   <div
                     className="text-[11px] font-semibold mt-0.5"
-                    style={{ color: theme.mode === 'dark' ? '#e2e2e7' : '#374151' }}
+                    style={{ color: theme.textMuted || (theme.mode === 'dark' ? '#e2e2e7' : '#374151') }}
                   >
                     {displayTime}
                   </div>
                   <div
                     className="text-xs font-bold mt-0.5 uppercase tracking-wider"
-                    style={{ color: theme.mode === 'dark' ? '#ffffff' : '#111827' }}
+                    style={{ color: theme.textMain || (theme.mode === 'dark' ? '#ffffff' : '#111827') }}
                   >
                     {displayVenue}
                   </div>
                   {displayAddress && (
                     <div
-                      className="text-[9.5px] mt-0.5 opacity-75 max-w-[260px] mx-auto line-clamp-2"
-                      style={{ color: theme.mode === 'dark' ? '#9ca3af' : '#6b7280' }}
+                      className="text-[9.5px] mt-0.5 max-w-[260px] mx-auto line-clamp-2"
+                      style={{ color: theme.textMuted || (theme.mode === 'dark' ? '#9ca3af' : '#6b7280'), opacity: 0.8 }}
                     >
                       {displayAddress}
                     </div>
