@@ -581,8 +581,48 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                   )}
                 </div>
 
+                {/* Closing Signature: Hormat Kami, Kedua Orang Tua */}
+                {(() => {
+                  const p1 = data.profiles?.[0];
+                  const fatherName = p1?.fatherName?.trim();
+                  const motherName = p1?.motherName?.trim();
+                  if (!fatherName && !motherName) return null;
+                  return (
+                    <div className="my-1.5 text-center">
+                      <p
+                        className="text-[8px] font-semibold uppercase tracking-[0.2em]"
+                        style={{ color: `${activePrimary}99` }}
+                      >
+                        Hormat Kami
+                      </p>
+                      {fatherName && motherName ? (
+                        <p
+                          className="text-[10px] font-serif font-bold mt-0.5 leading-snug"
+                          style={{ color: activePrimary }}
+                        >
+                          Bpk. {fatherName} &amp; Ibu {motherName}
+                        </p>
+                      ) : fatherName ? (
+                        <p className="text-[10px] font-serif font-bold mt-0.5" style={{ color: activePrimary }}>
+                          Bpk. {fatherName}
+                        </p>
+                      ) : (
+                        <p className="text-[10px] font-serif font-bold mt-0.5" style={{ color: activePrimary }}>
+                          Ibu {motherName}
+                        </p>
+                      )}
+                      <p
+                        className="text-[7.5px] mt-0.5 tracking-wide"
+                        style={{ color: theme.mode === 'dark' ? '#9ca3af' : '#6b7280' }}
+                      >
+                        Kedua Orang Tua
+                      </p>
+                    </div>
+                  );
+                })()}
+
                 {/* Footer: Live QR Code to Open Digital Invitation */}
-                <div className="flex flex-col items-center mt-1.5">
+                <div className="flex flex-col items-center mt-1">
                   <div
                     className="p-1.5 bg-white rounded-xl border shadow-sm flex items-center justify-center"
                     style={{ borderColor: `${activePrimary}50` }}
@@ -600,6 +640,7 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
             </div>
           </div>
         )}
+
 
         {printMode === 'label' && (
           <div className="space-y-6">
