@@ -309,9 +309,12 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                   if (!cardRef.current) return;
                   try {
                     setIsDownloadingImage(true);
+                    // A5 (420px × 2.5 = 1050px) → naik ke 3x = 1260px
+                    // 4R (320px × 3.5 = 1120px) → cukup untuk WhatsApp HD
+                    const ratio = cardSize === 'A5' ? 3 : 3.5;
                     const dataUrl = await toPng(cardRef.current, {
                       quality: 1.0,
-                      pixelRatio: 2.5,
+                      pixelRatio: ratio,
                       cacheBust: true,
                     });
                     const link = document.createElement('a');
@@ -338,7 +341,7 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                   try {
                     const blob = await toBlob(cardRef.current, {
                       quality: 1.0,
-                      pixelRatio: 2.0,
+                      pixelRatio: cardSize === 'A5' ? 3 : 3.5,
                       cacheBust: true,
                     });
                     if (blob && (navigator.clipboard as any)?.write) {
