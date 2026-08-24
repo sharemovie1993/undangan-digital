@@ -46,7 +46,13 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
   const [isDownloadingImage, setIsDownloadingImage] = useState<boolean>(false);
   const [copiedImage, setCopiedImage] = useState<boolean>(false);
 
+  // Label / Stiker configuration
+  const [selectedGuests, setSelectedGuests] = useState<string[]>(guests.map((g) => g.id));
+  const [labelPrefix, setLabelPrefix] = useState('Kepada Yth. Bapak/Ibu/Saudara/i:');
+  const [labelSubtext, setLabelSubtext] = useState('Di Tempat');
+
   const cardRef = useRef<HTMLDivElement>(null);
+
 
   // Event Type Detection yang tangguh & akurat
   const rawTitle = (data.eventTitle || (data as any).title || '').toLowerCase();
