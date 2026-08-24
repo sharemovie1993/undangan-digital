@@ -16,6 +16,9 @@ import {
   Download,
   Share2,
   Copy,
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
 } from 'lucide-react';
 import { toPng, toBlob } from 'html-to-image';
 import { InvitationData, GuestRecipient, CornerOrnamentId } from '../types';
@@ -573,38 +576,105 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                   </p>
                 </div>
 
-                {/* Event Schedule & Venue */}
-                <div
-                  className="p-3 rounded-xl border my-1.5"
-                  style={{
-                    backgroundColor: theme.accentBg || (theme.mode === 'dark' ? '#211f2c' : '#f4eee4'),
-                    borderColor: `${activePrimary}40`,
-                  }}
-                >
-                  <div className="font-bold text-xs sm:text-sm tracking-wide" style={{ color: activePrimary }}>
-                    {displayDate}
-                  </div>
-                  <div
-                    className="text-[11px] font-semibold mt-0.5"
-                    style={{ color: theme.textMuted || (theme.mode === 'dark' ? '#e2e2e7' : '#374151') }}
-                  >
-                    {displayTime}
-                  </div>
-                  <div
-                    className="text-xs font-bold mt-0.5 uppercase tracking-wider"
-                    style={{ color: theme.textMain || (theme.mode === 'dark' ? '#ffffff' : '#111827') }}
-                  >
-                    {displayVenue}
-                  </div>
-                  {displayAddress && (
-                    <div
-                      className="text-[9.5px] mt-0.5 max-w-[260px] mx-auto line-clamp-2"
-                      style={{ color: theme.textMuted || (theme.mode === 'dark' ? '#9ca3af' : '#6b7280'), opacity: 0.8 }}
-                    >
-                      {displayAddress}
-                    </div>
-                  )}
-                </div>
+                {/* Event Schedule & Venue — identik dengan undangan digital, tanpa tombol Maps */}
+                {(() => {
+                  const cardBg = data.themeConfig?.cardBgColor || theme.cardBg || '#121216';
+                  const activeSessions = data.events && data.events.length > 0 ? data.events : data.sessions || [];
+
+                  // Fallback ke single session dari data langsung
+                  const sessions = activeSessions.length > 0 ? activeSessions : [{
+                    title: '',
+                    date: data.eventDate,
+                    time: data.eventTime,
+                    venueName: data.venueName,
+                    address: data.venueAddress,
+                  }];
+
+                  return sessions.map((item: any, index: number) => {
+                    const isGenericTitle = !item.title || /^sesi\s*\d+$/i.test(item.title.trim());
+                    let resolvedTitle = item.title;
+                    if (isGenericTitle) {
+                      if (isWedding) resolvedTitle = index === 0 ? 'Akad Nikah' : 'Resepsi Pernikahan';
+                      else if (isKhitan) resolvedTitle = 'Tasyakuran & Walimah Khitan';
+                      else if (isAqiqah) resolvedTitle = 'Tasyakuran & Aqiqah';
+                      else resolvedTitle = 'Pesta Ulang Tahun';
+                    }
+
+                    const badgeText = sessions.length === 1 ? 'ACARA UTAMA' : `SESI 0${index + 1}`;
+                    const venue = item.venueName || item.venue || displayVenue;
+                    const address = item.address || item.venueAddress || displayAddress;
+                    const formattedDate = item.date ? (() => {
+                      try {
+                        const parts = (item.date as string).split('-');
+                        if (parts.length === 3) {
+                          const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+                          return new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+                        }
+                      } catch { }
+                      return item.date;
+                    })() : displayDate;
+                    const formattedTime = item.time || (item.startTime ? `${item.startTime} - ${item.endTime || 'Selesai'} WIB` : displayTime);
+
+                    return (
+                      <div
+                        key={index}
+                        className="relative overflow-hidden rounded-2xl border p-4 my-1.5 text-left"
+                        style={{
+                          backgroundColor: `${cardBg}f5`,
+                          borderColor: `${activePrimary}35`,
+                        }}
+                      >
+                        {/* Corner Ornaments */}
+                        <CornerOrnaments type={data.themeConfig?.cornerOrnament || 'none'} primaryColor={activePrimary} />
+
+                        {/* Ambient glow */}
+                        <div
+                          className="absolute top-0 right-0 -mt-6 -mr-6 h-16 w-16 rounded-full blur-2xl pointer-events-none opacity-20"
+                          style={{ backgroundColor: activePrimary }}
+                        />
+
+                        {/* Header: Badge + Icon */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <span className="text-[9px] tracking-widest uppercase font-bold" style={{ color: activePrimary }}>
+                              {badgeText}
+                            </span>
+                            <h3 className="text-sm font-bold mt-0.5 leading-tight" style={{ fontFamily: headingFont, color: theme.textMain }}>
+                              {resolvedTitle}
+                            </h3>
+                          </div>
+                          <div
+                            className="p-2 rounded-xl border flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: `${activePrimary}15`, borderColor: `${activePrimary}30`, color: activePrimary }}
+                          >
+                            <CalendarIcon className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="space-y-1.5 text-[11px]" style={{ color: theme.textMuted }}>
+                          <div className="flex items-center gap-2">
+                            <CalendarIcon className="w-3.5 h-3.5 shrink-0" style={{ color: activePrimary }} />
+                            <span className="font-semibold" style={{ color: theme.textMain }}>{formattedDate}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 shrink-0" style={{ color: activePrimary }} />
+                            <span>{formattedTime}</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: activePrimary }} />
+                            <div>
+                              <p className="font-semibold" style={{ color: theme.textMain }}>{venue}</p>
+                              {address && (
+                                <p className="text-[9.5px] leading-relaxed mt-0.5 opacity-80">{address}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
 
                 {/* Closing Signature: Hormat Kami, Kedua Orang Tua */}
                 {(() => {
