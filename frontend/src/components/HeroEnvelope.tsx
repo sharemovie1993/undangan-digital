@@ -190,11 +190,40 @@ export const HeroEnvelope: React.FC<HeroEnvelopeProps> = ({
 
             {/* Event Title / Person Name */}
             <h1
-              className="text-lg sm:text-xl md:text-2xl font-bold tracking-wide mb-5 leading-snug relative z-10 px-1"
+              className="text-lg sm:text-xl md:text-2xl font-bold tracking-wide mb-1 leading-snug relative z-10 px-1"
               style={{ fontFamily: headingFontFamily, color: theme.textMain }}
             >
               {effectiveTitle}
             </h1>
+
+            {/* Parents Subtitle (Putra tercinta dari Bpk. ... & Ibu ...) */}
+            {(() => {
+              const p1 = data.profiles?.[0];
+              if (isKhitanDetected || isAqiqahDetected || isBirthdayDetected) {
+                if (p1?.fatherName && p1?.motherName) {
+                  return (
+                    <p className="text-[11px] font-medium tracking-wide mb-5 relative z-10 opacity-85" style={{ color: activePrimary }}>
+                      Putra dari Bpk. {p1.fatherName} & Ibu {p1.motherName}
+                    </p>
+                  );
+                }
+                if (p1?.fatherName) {
+                  return (
+                    <p className="text-[11px] font-medium tracking-wide mb-5 relative z-10 opacity-85" style={{ color: activePrimary }}>
+                      Putra dari Bpk. {p1.fatherName}
+                    </p>
+                  );
+                }
+                if (p1?.motherName) {
+                  return (
+                    <p className="text-[11px] font-medium tracking-wide mb-5 relative z-10 opacity-85" style={{ color: activePrimary }}>
+                      Putra dari Ibu {p1.motherName}
+                    </p>
+                  );
+                }
+              }
+              return <div className="mb-4" />;
+            })()}
 
             {/* Guest Envelope Recipient Card (Clean Minimalist with theme border) */}
             <div

@@ -35,37 +35,62 @@ export class PrintController {
       }
 
       const invitation = perm.invitation;
-      let cardData: CardPrintData;
+      let cardData: any;
       if (invitation) {
-
         const eventData = JSON.parse(invitation.eventDataJson || '{}');
         const profiles = eventData.profiles || [];
-        const p1 = profiles[0]?.name || 'Romeo Aris';
-        const p2 = profiles[1]?.name || 'Juliet Sarah';
-        const names = invitation.eventType === 'WEDDING' ? `${p1} & ${p2}` : (eventData.eventTitle || invitation.title);
-        const sessions = eventData.events || [];
+        const p1 = profiles[0] || {};
+        const p2 = profiles[1] || {};
+        const isKhitan = invitation.eventType?.toLowerCase() === 'khitanan' || /khitan/i.test(invitation.title);
+        const isAqiqah = invitation.eventType?.toLowerCase() === 'aqiqah' || /aqiqah/i.test(invitation.title);
+        const isBirthday = invitation.eventType?.toLowerCase() === 'birthday';
+
+        let names = '';
+        if (isKhitan || isAqiqah || isBirthday) {
+          names = p1.fullName?.trim() || p1.name?.trim() || invitation.title;
+        } else if (p1.name && p2.name) {
+          names = `${p1.name} & ${p2.name}`;
+        } else {
+          names = eventData.eventTitle || invitation.title;
+        }
+
+        const parents = (isKhitan || isAqiqah || isBirthday) && p1.fatherName && p1.motherName
+          ? `Putra dari Bpk. ${p1.fatherName} & Ibu ${p1.motherName}`
+          : (p1.fatherName ? `Putra dari Bpk. ${p1.fatherName}` : '');
+
+        const sessions = eventData.sessions || eventData.events || [];
         const s1 = sessions[0] || {};
 
         cardData = {
           title: invitation.title,
           eventType: invitation.eventType,
+          taglineText: isKhitan ? 'WALIMATUL KHITAN' : isAqiqah ? 'TASYAKURAN AQIQAH' : isBirthday ? 'HAPPY BIRTHDAY' : 'THE WEDDING OF',
           names,
+          parents,
+          quoteText: isKhitan
+            ? 'Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara Walimatul Khitan putra kami:'
+            : isAqiqah
+            ? 'Puji syukur kami panjatkan atas kelahiran buah hati tercinta. Kami mengundang kehadiran Anda dalam acara Tasyakuran Aqiqah:'
+            : 'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan acara:',
           dateText: s1.date ? `Sabtu, ${s1.date}` : 'Sabtu, 24 Oktober 2026',
-          timeText: s1.time || '09:00 - 13:00 WIB',
-          locationName: s1.venueName || 'Grand Ballroom Graha Kencana',
-          address: s1.address || 'Jl. Gatot Subroto No. 45, Bandung',
-          qrUrl: `http://localhost:3000/invitation/${invitation.slug}`
+          timeText: s1.time || s1.startTime ? `${s1.startTime || s1.time} WIB s/d Selesai` : '08:00 WIB s/d Selesai',
+          locationName: s1.venueName || 'Kediaman Mempelai / Tuan Rumah',
+          address: s1.address || s1.venueAddress || '',
+          qrUrl: `https://luxury.absenta.id/?slug=${invitation.slug}`
         };
       } else {
         cardData = {
           title: 'The Wedding of Romeo & Juliet',
           eventType: 'WEDDING',
+          taglineText: 'THE WEDDING OF',
           names: 'Romeo Aris & Juliet Sarah',
+          parents: '',
+          quoteText: 'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan acara:',
           dateText: 'Sabtu, 24 Oktober 2026',
           timeText: '09:00 - 13:00 WIB',
           locationName: 'Grand Ballroom Hotel Horison',
           address: 'Jl. Pelajar Pejuang 45 No. 121, Bandung',
-          qrUrl: 'http://localhost:3000'
+          qrUrl: 'https://luxury.absenta.id'
         };
       }
 

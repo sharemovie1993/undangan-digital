@@ -569,6 +569,29 @@ export default function App() {
             })()}
           </motion.h1>
 
+          {/* Parents Subtitle (Putra dari Bpk. ... & Ibu ...) */}
+          {(() => {
+            const p1 = invitationData.profiles?.[0];
+            const isKhitanOrAqiqah = invitationData.eventType === 'khitanan' || invitationData.eventType === 'aqiqah';
+            if (isKhitanOrAqiqah) {
+              if (p1?.fatherName && p1?.motherName) {
+                return (
+                  <p className="text-xs text-[#c4a661]/90 font-medium tracking-wide mb-1">
+                    Putra dari Bpk. {p1.fatherName} & Ibu {p1.motherName}
+                  </p>
+                );
+              }
+              if (p1?.fatherName) {
+                return (
+                  <p className="text-xs text-[#c4a661]/90 font-medium tracking-wide mb-1">
+                    Putra dari Bpk. {p1.fatherName}
+                  </p>
+                );
+              }
+            }
+            return null;
+          })()}
+
           <div className="flex items-center justify-center gap-3 my-3">
             <div className="h-px w-10 bg-[#c4a661]/40" />
             {invitationData.eventType === 'khitanan' || invitationData.eventType === 'aqiqah' ? (

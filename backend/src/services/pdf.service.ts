@@ -77,26 +77,34 @@ export class PdfPrintService {
           .stroke();
 
         // Header Title
-        doc.moveDown(1.5);
+        doc.moveDown(1.2);
         doc.font('Helvetica')
           .fontSize(10)
           .fillColor('#706E6B')
-          .text(data.eventType === 'WEDDING' ? 'THE WEDDING OF' : 'UNDANGAN SYUKURAN', {
+          .text((data as any).taglineText || (data.eventType === 'WEDDING' ? 'THE WEDDING OF' : 'UNDANGAN SYUKURAN'), {
             align: 'center',
             characterSpacing: 2
           });
 
-        doc.moveDown(0.8);
+        doc.moveDown(0.6);
         doc.font('Helvetica-Bold')
-          .fontSize(format === 'A5' ? 24 : 18)
+          .fontSize(format === 'A5' ? 22 : 16)
           .fillColor('#1A1A1A')
           .text(data.names, { align: 'center' });
 
-        doc.moveDown(1);
+        if ((data as any).parents) {
+          doc.moveDown(0.3);
+          doc.font('Helvetica')
+            .fontSize(format === 'A5' ? 10 : 8.5)
+            .fillColor('#D4AF37')
+            .text((data as any).parents, { align: 'center' });
+        }
+
+        doc.moveDown(0.8);
         doc.font('Helvetica')
-          .fontSize(10)
+          .fontSize(9.5)
           .fillColor('#555555')
-          .text('Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan acara:', {
+          .text((data as any).quoteText || 'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan acara:', {
             align: 'center',
             width: width - 80
           });

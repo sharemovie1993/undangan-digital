@@ -82,18 +82,43 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
     return data.eventTitle || 'Romeo & Juliet';
   })();
 
-  // Quote
+  // Parents Subtitle
+  const parentsSubtitle = (() => {
+    const p1 = data.profiles?.[0];
+    const p2 = data.profiles?.[1];
+    if (isKhitan || isAqiqah || isBirthday) {
+      if (p1?.fatherName && p1?.motherName) {
+        return `Putra dari Bpk. ${p1.fatherName} & Ibu ${p1.motherName}`;
+      }
+      if (p1?.fatherName) {
+        return `Putra dari Bpk. ${p1.fatherName}`;
+      }
+      if (p1?.motherName) {
+        return `Putra dari Ibu ${p1.motherName}`;
+      }
+      return '';
+    }
+    if (p1?.fatherName && p2?.fatherName) {
+      return `Putra-Putri dari Bpk. ${p1.fatherName} & Bpk. ${p2.fatherName}`;
+    }
+    return '';
+  })();
+
+  // Quote / Pengantar Sesuai Jenis Acara
   const displayQuote = (() => {
-    if (data.openingQuoteText && !data.openingQuoteText.includes('berpasang-pasangan')) {
+    if (data.openingQuoteText && !data.openingQuoteText.includes('berpasang-pasangan') && !data.openingQuoteText.includes('Ar-Rum')) {
       return data.openingQuoteText;
     }
     if (isKhitan) {
-      return 'Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara Walimatul Khitan putra kami, seraya memanjatkan doa agar ananda menjadi anak yang sholeh dan berbakti.';
+      return 'Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara Walimatul Khitan putra kami, seraya memanjatkan doa agar ananda menjadi anak yang sholeh, cerdas, dan berbakti kepada orang tua.';
+    }
+    if (isAqiqah) {
+      return 'Puji syukur atas kelahiran buah hati tercinta kami. Kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara Tasyakuran Aqiqah seraya memohon doa keberkahan.';
     }
     if (isBirthday) {
-      return 'Puji syukur atas usia yang penuh berkah dan kebahagiaan. Merupakan suatu kehormatan atas kehadiran Anda di hari istimewa ini.';
+      return 'Puji syukur atas usia yang penuh berkah dan kebahagiaan. Merupakan suatu kehormatan dan sukacita atas kehadiran Anda di hari istimewa ini.';
     }
-    return data.openingQuoteText || 'Dan di antara tanda-tanda kebesaran-Nya ialah Dia menciptakan pasangan-pasangan untukmu...';
+    return data.openingQuoteText || 'Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri hari bahagia pernikahan kami.';
   })();
 
   // Event Date & Time
@@ -365,6 +390,14 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                   >
                     {displayTitle}
                   </h2>
+                  {parentsSubtitle && (
+                    <p
+                      className="text-[11px] font-medium mt-1 tracking-wide opacity-80"
+                      style={{ color: activePrimary }}
+                    >
+                      {parentsSubtitle}
+                    </p>
+                  )}
                 </div>
 
                 {/* Body: Opening Blessing Quote */}
@@ -473,12 +506,14 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
                 >
                   <CornerOrnaments type={cornerOrnamentType} primaryColor={activePrimary} />
                   <span className="text-[8px] uppercase tracking-widest font-semibold" style={{ color: activePrimary }}>
-                    THANK YOU FOR CELEBRATING
+                    {isKhitan ? 'SYUKURAN KHITANAN' : isAqiqah ? 'TASYAKURAN AQIQAH' : isBirthday ? 'BIRTHDAY CELEBRATION' : 'WEDDING RECEPTION'}
                   </span>
-                  <h4 className="font-bold text-base mt-1" style={{ fontFamily: headingFont, color: theme.mode === 'dark' ? '#ffffff' : activePrimary }}>
+                  <h4 className="font-bold text-base mt-0.5" style={{ fontFamily: headingFont, color: theme.mode === 'dark' ? '#ffffff' : activePrimary }}>
                     {displayTitle}
                   </h4>
-                  <p className="text-[10px] opacity-70">Kupon Penukaran Souvenir & Makanan</p>
+                  <p className="text-[10px] opacity-70">
+                    {isKhitan ? 'Kupon Souvenir & Berkat Khitan' : isAqiqah ? 'Kupon Souvenir & Berkat Aqiqah' : isBirthday ? 'Kupon Souvenir & Birthday Treat' : 'Kupon Penukaran Souvenir & Makanan'}
+                  </p>
                   <span className="text-[11px] font-bold font-mono mt-1" style={{ color: activePrimary }}>
                     NO. 00{num}
                   </span>
@@ -505,11 +540,16 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
 
               <div className="relative z-10">
                 <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: activePrimary }}>
-                  WELCOME TO THE EVENT OF
+                  {isKhitan ? 'WELCOME TO WALIMATUL KHITAN OF' : isAqiqah ? 'WELCOME TO TASYAKURAN AQIQAH OF' : isBirthday ? 'HAPPY BIRTHDAY CELEBRATION OF' : 'WELCOME TO THE WEDDING OF'}
                 </span>
                 <h3 className="text-xl font-bold mt-1" style={{ fontFamily: headingFont, color: theme.mode === 'dark' ? '#ffffff' : activePrimary }}>
                   {displayTitle}
                 </h3>
+                {parentsSubtitle && (
+                  <p className="text-[10px] opacity-80 mt-0.5" style={{ color: activePrimary }}>
+                    {parentsSubtitle}
+                  </p>
+                )}
               </div>
 
               <div className="p-3 bg-white border rounded-2xl shadow-md relative z-10" style={{ borderColor: `${activePrimary}50` }}>
