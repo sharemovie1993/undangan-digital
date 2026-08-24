@@ -45,20 +45,29 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
 
   const invId = data.id || data.slug || 'undangan-digital';
 
-  // Event Type Detection
-  const rawTitle = data.eventTitle || (data as any).title || '';
+  // Event Type Detection yang tangguh & akurat
+  const rawTitle = (data.eventTitle || (data as any).title || '').toLowerCase();
+  const rawTagline = (data.tagline || '').toLowerCase();
+  const eventTypeStr = (data.eventType || '').toLowerCase();
+
   const isKhitan =
-    data.eventType === 'khitanan' ||
-    /khitan/i.test(rawTitle) ||
-    /khitan/i.test(data.tagline || '');
+    eventTypeStr === 'khitanan' ||
+    rawTitle.includes('khitan') ||
+    rawTagline.includes('khitan');
+
   const isAqiqah =
-    data.eventType === 'aqiqah' ||
-    /aqiqah/i.test(rawTitle) ||
-    /aqiqah/i.test(data.tagline || '');
+    eventTypeStr === 'aqiqah' ||
+    rawTitle.includes('aqiqah') ||
+    rawTagline.includes('aqiqah');
+
   const isBirthday =
-    data.eventType === 'birthday' ||
-    /birthday|ulang tahun/i.test(rawTitle) ||
-    /birthday|ulang tahun/i.test(data.tagline || '');
+    eventTypeStr === 'birthday' ||
+    rawTitle.includes('birthday') ||
+    rawTitle.includes('ulang tahun') ||
+    rawTagline.includes('birthday') ||
+    rawTagline.includes('ulang tahun');
+
+  const isWedding = !isKhitan && !isAqiqah && !isBirthday;
 
   // Tagline & Clean Full Name
   const displayTagline = (() => {
@@ -104,21 +113,34 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
     return '';
   })();
 
-  // Quote / Pengantar Sesuai Jenis Acara
+  // Quote / Pengantar Cetak 100% Sesuai Jenis Acara
   const displayQuote = (() => {
-    if (data.openingQuoteText && !data.openingQuoteText.includes('berpasang-pasangan') && !data.openingQuoteText.includes('Ar-Rum')) {
-      return data.openingQuoteText;
-    }
     if (isKhitan) {
+      if (data.openingQuoteText && /khitan|anak|sholeh|berbakti|sunat/i.test(data.openingQuoteText)) {
+        return data.openingQuoteText;
+      }
       return 'Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara Walimatul Khitan putra kami, seraya memanjatkan doa agar ananda menjadi anak yang sholeh, cerdas, dan berbakti kepada orang tua.';
     }
+
     if (isAqiqah) {
-      return 'Puji syukur atas kelahiran buah hati tercinta kami. Kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara Tasyakuran Aqiqah seraya memohon doa keberkahan.';
+      if (data.openingQuoteText && /aqiqah|kelahiran|buah hati|bayi/i.test(data.openingQuoteText)) {
+        return data.openingQuoteText;
+      }
+      return 'Puji syukur kami panjatkan atas kelahiran buah hati tercinta kami. Kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara Tasyakuran Aqiqah seraya memohon doa keberkahan.';
     }
+
     if (isBirthday) {
+      if (data.openingQuoteText && /ulang tahun|birthday|usia|pesta/i.test(data.openingQuoteText)) {
+        return data.openingQuoteText;
+      }
       return 'Puji syukur atas usia yang penuh berkah dan kebahagiaan. Merupakan suatu kehormatan dan sukacita atas kehadiran Anda di hari istimewa ini.';
     }
-    return data.openingQuoteText || 'Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri hari bahagia pernikahan kami.';
+
+    // Wedding
+    if (data.openingQuoteText && !data.openingQuoteText.includes('khitan') && !data.openingQuoteText.includes('aqiqah')) {
+      return data.openingQuoteText;
+    }
+    return 'Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri hari bahagia pernikahan kami.';
   })();
 
   // Event Date & Time
