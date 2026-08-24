@@ -30,8 +30,6 @@ export const CoupleProfileForm: React.FC<CoupleProfileFormProps> = ({ data, onCh
 
     if (key === 'name') {
       updated[index] = { ...updated[index], name: value, fullName: value };
-    } else if (key === 'bio') {
-      updated[index] = { ...updated[index], bio: value, fatherName: undefined, motherName: undefined };
     } else {
       updated[index] = { ...updated[index], [key]: value };
     }
@@ -69,6 +67,8 @@ export const CoupleProfileForm: React.FC<CoupleProfileFormProps> = ({ data, onCh
   const [localTagline, setLocalTagline] = useLocalField(data.tagline || '', useCallback((v: string) => onChange({ ...data, tagline: v }), [data, onChange]));
   const [localP1Name, setLocalP1Name] = useLocalField(p1.name || '', useCallback((v: string) => updateProfile(0, 'name', v), [updateProfile]));
   const [localP1Bio, setLocalP1Bio] = useLocalField(p1.bio || '', useCallback((v: string) => updateProfile(0, 'bio', v), [updateProfile]));
+  const [localP1FatherName, setLocalP1FatherName] = useLocalField((p1 as any).fatherName || '', useCallback((v: string) => updateProfile(0, 'fatherName', v), [updateProfile]));
+  const [localP1MotherName, setLocalP1MotherName] = useLocalField((p1 as any).motherName || '', useCallback((v: string) => updateProfile(0, 'motherName', v), [updateProfile]));
   const [localP1Photo, setLocalP1Photo] = useLocalField(p1.photoUrl || '', useCallback((v: string) => updateProfile(0, 'photoUrl', v), [updateProfile]));
   const [localP2Name, setLocalP2Name] = useLocalField(p2.name || '', useCallback((v: string) => updateProfile(1, 'name', v), [updateProfile]));
   const [localP2Bio, setLocalP2Bio] = useLocalField(p2.bio || '', useCallback((v: string) => updateProfile(1, 'bio', v), [updateProfile]));
@@ -189,6 +189,38 @@ export const CoupleProfileForm: React.FC<CoupleProfileFormProps> = ({ data, onCh
             placeholder={getProfile1BioPlaceholder()}
           />
         </div>
+
+        {/* Field Nama Ayah & Nama Ibu — khusus Khitanan / Aqiqah / Birthday */}
+        {(isKhitan || isAqiqah || isBirthday) && (
+          <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-neutral-950/60 border border-[#c4a661]/20">
+            <div className="col-span-2">
+              <p className="text-[10px] text-[#c4a661]/70 font-semibold uppercase tracking-wider mb-1.5">
+                ✍️ Nama Orang Tua (untuk tanda tangan penutup)
+              </p>
+            </div>
+            <div>
+              <label className="block text-neutral-400 mb-1 text-[11px]">Nama Ayah</label>
+              <input
+                type="text"
+                value={localP1FatherName}
+                onChange={(e) => setLocalP1FatherName(e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-[#c4a661]"
+                placeholder="Contoh: Ahmad Fauzi"
+              />
+            </div>
+            <div>
+              <label className="block text-neutral-400 mb-1 text-[11px]">Nama Ibu</label>
+              <input
+                type="text"
+                value={localP1MotherName}
+                onChange={(e) => setLocalP1MotherName(e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-[#c4a661]"
+                placeholder="Contoh: Siti Nurhasanah"
+              />
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="block text-neutral-400 mb-1">Foto Profil (URL atau Upload File)</label>
           <div className="flex gap-2">
