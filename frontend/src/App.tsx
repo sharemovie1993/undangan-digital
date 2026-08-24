@@ -415,7 +415,7 @@ export default function App() {
         <PrintStudio
           data={invitationData}
           guests={guests}
-          onBackToStudio={() => setViewMode('studio')}
+          onBack={() => setViewMode('studio')}
         />
       </React.Suspense>
     );
