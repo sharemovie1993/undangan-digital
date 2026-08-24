@@ -21,6 +21,7 @@ import { toPng, toBlob } from 'html-to-image';
 import { InvitationData, GuestRecipient, CornerOrnamentId } from '../types';
 import { FONT_PRESETS } from '../data/presets';
 import { themeRegistry } from '../themes/registry';
+import { TEXTURE_PRESETS } from '../themes/textures';
 import { CornerOrnaments } from './effects/CornerOrnaments';
 import { api } from '../api/client';
 
@@ -195,6 +196,11 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
       : cardStyle === 'botanical'
       ? 'botanical_leaves'
       : data.themeConfig?.cornerOrnament || 'royal_crown';
+
+  // Texture background — mengikuti tema undangan digital
+  const textureId = data.themeConfig?.textureId || 'none';
+  const texturePreset = TEXTURE_PRESETS[textureId] || TEXTURE_PRESETS['none'];
+  const textureStyle = texturePreset.getStyle(theme.mode === 'dark');
 
   const toggleGuestSelect = (id: string) => {
     setSelectedGuests((prev) =>
@@ -474,13 +480,14 @@ export const PrintStudio: React.FC<PrintStudioProps> = ({ data, guests, onBack }
             {/* Visual Card Canvas (100% Theme-Aware & 300 DPI Print Calibrated) */}
             <div
               ref={cardRef}
-              className={`relative bg-[#FAF8F5] text-neutral-900 shadow-2xl p-6 sm:p-8 rounded-2xl border-4 flex flex-col items-center justify-between text-center transition-all overflow-hidden ${
+              className={`relative text-neutral-900 shadow-2xl p-6 sm:p-8 rounded-2xl border-4 flex flex-col items-center justify-between text-center transition-all overflow-hidden ${
                 cardSize === 'A5' ? 'w-[420px] min-h-[595px]' : 'w-[320px] min-h-[460px]'
               }`}
               style={{
                 borderColor: activePrimary,
                 backgroundColor: theme.mode === 'dark' ? '#0f0e13' : '#faf8f5',
                 color: theme.mode === 'dark' ? '#f5f5f7' : '#1a191e',
+                ...textureStyle,
               }}
             >
               {/* 4 Luxury Corner Ornaments */}
