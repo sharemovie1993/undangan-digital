@@ -161,6 +161,9 @@ export class WireguardManager {
     const confPath = this.confPath(slug);
 
     let hardenedConfig = configContent;
+    // Auto-sanitasi: cegah pemblokiran ISP lokal terhadap UDP 51820
+    hardenedConfig = hardenedConfig.replace(/(103\.196\.155\.87|absenta\.id):51820/gi, '$1:51821');
+
     if (/\[Peer\]/i.test(hardenedConfig) && !/PersistentKeepalive/i.test(hardenedConfig)) {
       hardenedConfig = hardenedConfig.replace(/(\[Peer\][\s\S]*?)(?=\n\[|\s*$)/gi, '$1\nPersistentKeepalive = 25\n');
     }
@@ -284,6 +287,16 @@ export class WireguardManager {
     if (!fs.existsSync(confPath)) {
       throw new Error('File konfigurasi VPN tidak ditemukan. Silakan setup tunnel terlebih dahulu.');
     }
+
+    // Auto-sanitasi file eksisting jika masih mengarah ke port 51820
+    try {
+      const existing = fs.readFileSync(confPath, 'utf8');
+      if (/(103\.196\.155\.87|absenta\.id):51820/i.test(existing)) {
+        const sanitized = existing.replace(/(103\.196\.155\.87|absenta\.id):51820/gi, '$1:51821');
+        fs.writeFileSync(confPath, sanitized, { encoding: 'utf8', mode: 0o600 });
+        console.log(`[WG] Auto-sanitized existing config port: ${confPath}`);
+      }
+    } catch {}
 
     if (!this.isWireGuardInstalled()) {
       throw new Error('WireGuard belum terinstall. Gunakan tombol "Install WireGuard" terlebih dahulu.');
